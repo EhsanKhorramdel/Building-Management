@@ -251,12 +251,12 @@ const registerBtn = document.querySelector(".register-btn");
 if (home.classList.contains("active"))
     registerBtn.classList.add("reg-btn-none");
 
-// upload notification 's picture
+// upload notification's picture
 function previewImage(event) {
     let input = event.target;
     const uploadedImage = document.getElementById("uploaded-image");
     const imagePreview = document.getElementById("image-preview");
-    const dropzoneFile = document.querySelector(".dropzone-file");
+    const dropzoneFileLabel = document.querySelector(".dropzoneFileLabel");
     const removeFileBtn = document.querySelector(".removeFileBtn");
     if (input.files && input.files[0]) {
         let reader = new FileReader();
@@ -264,7 +264,7 @@ function previewImage(event) {
             uploadedImage.src = e.target.result;
             uploadedImage.style.display = "block";
             imagePreview.style.display = "block";
-            dropzoneFile.classList.add("hidden");
+            dropzoneFileLabel.classList.add("hidden");
             removeFileBtn.classList.remove("hidden");
             removeFileBtn.style = "margin-top: 0";
         };
@@ -275,14 +275,16 @@ function previewImage(event) {
 function removeFile() {
     const removeFileBtn = document.querySelector(".removeFileBtn");
     const uploadedImage = document.getElementById("uploaded-image");
-    const dropzoneFile = document.querySelector(".dropzone-file");
+    const dropzoneFileLabel = document.querySelector(".dropzoneFileLabel");
     const imagePreview = document.getElementById("image-preview");
+    const input = document.getElementById("dropzone-file");
 
     uploadedImage.src = "";
     uploadedImage.style.display = "none";
     imagePreview.style.display = "none";
-    dropzoneFile.classList.remove("hidden");
+    dropzoneFileLabel.classList.remove("hidden");
     removeFileBtn.classList.add("hidden");
+    input.value = "";
 }
 
 const copyButton = document.getElementById("copyButton");
