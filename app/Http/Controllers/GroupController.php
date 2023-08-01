@@ -287,7 +287,12 @@ class GroupController extends Controller
             return response()->json(['last_message_seen_id' => $lastMessage->message_id]);
         }
 
-        return response()->json(['last_message_seen_id' => null]);
+        $lastMessageOfGroup = Message::where('group_id', $group->id)
+            ->where('deleted', false)
+            ->orderBy('id', 'desc')
+            ->first();
+
+        return response()->json(['last_message_seen_id' => $lastMessageOfGroup->id]);
     }
 
     public function getMessagesBeforeFrom(Complex $complex, int $fromFirstMessageId)

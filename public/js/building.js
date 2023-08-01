@@ -1337,6 +1337,8 @@ const scrollToBottomBtn = document.querySelector(".scrollToBottomBtn");
 scrollToBottomBtn.addEventListener("click", scrollToBottom);
 
 const chatContainer = document.querySelector(".chatContainer");
+
+let InitialScrollValue = chatContainer.scrollTop;
 chatContainer.addEventListener("scroll", handleScroll);
 
 let lastSeenMessageId = null;
@@ -1344,10 +1346,11 @@ function handleScroll() {
     const scrolled = chatContainer.scrollTop;
     const clientHeight = chatContainer.clientHeight;
     const messages = chatContainer.querySelectorAll(".messageContent");
-    if (scrolled < 200)
+
+    if (scrolled < 200 && InitialScrollValue >= scrolled)
         if (currentFromFirstMessageId != fromFirstMessageId)
             getMessagesBeforeMessageId(fromFirstMessageId);
-
+    InitialScrollValue = scrolled;
     if (scrolled + clientHeight < chatContainer.scrollHeight - 20) {
         scrollToBottomBtn.classList.remove("hidden");
         if (currentFromLastMessageId != fromLastMessageId)
