@@ -84,7 +84,7 @@
             <div class="mb-6">
                 <input class="border border-gray-300 px-4 py-2 rounded w-full" step="0.01" type="hidden"
                     placeholder="مبلغ پرداختی" autocomplete="off" name="Amount" min="1" required
-                    value="{{ $incidentalCost->share_amount }}" />
+                    value="{{ $incidentalCost->share_amount ?? 0}}" />
             </div>
             <div class="flex">
                 <button
