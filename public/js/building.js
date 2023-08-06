@@ -811,12 +811,15 @@ fileInput.addEventListener("change", (event) => {
         textOperationBox.textContent = file.name;
         showOperationBoxContainer.style.display = "flex";
         closeButton.style.display = "flex";
+        sendBtn.classList.add("cursor-pointer", "bg-green-500", "text-white");
     } else {
         textOperationBox.textContent = "";
         showOperationBoxContainer.style.display = "none";
         closeButton.style.display = "none";
     }
 });
+
+textOperationBox.addEventListener("input", (event) => {});
 
 closeButton.addEventListener("click", closeOperationBoxContainer);
 
