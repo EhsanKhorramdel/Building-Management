@@ -278,13 +278,23 @@ class GroupController extends Controller
         $group = Group::where('complex_id', $complex->id)->first();
         $userId = auth()->id();
 
-        $lastMessage = SeenMessage::where('group_id', $group->id)
+        $lastSeenMessages = SeenMessage::where('group_id', $group->id)
             ->where('user_id', $userId)
             ->orderBy('id', 'desc')
-            ->first();
+            ->get();
+
+        $lastMessage = '';
+
+        foreach ($lastSeenMessages as $lastSeenMessage) {
+            $lastMessage =  Message::where('id', $lastSeenMessage->message_id)
+                ->where('deleted', false)
+                ->first();
+            if ($lastMessage)
+                break;
+        }
 
         if ($lastMessage) {
-            return response()->json(['last_message_seen_id' => $lastMessage->message_id]);
+            return response()->json(['last_message_seen_id' => $lastMessage->id]);
         }
 
         $lastMessageOfGroup = Message::where('group_id', $group->id)

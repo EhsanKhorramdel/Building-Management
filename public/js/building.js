@@ -645,6 +645,7 @@ const handleChatClick = async () => {
     currentDate = null;
     const lastMessageSeenId = await getLastMessageSeenId();
     await getMessages(lastMessageSeenId);
+    seenIfNotScroll();
     scrollToMessage(lastMessageSeenId);
 };
 
@@ -658,11 +659,39 @@ function scrollToMessage(lastMessageSeenId) {
         const chatContainerHeight = chatContainer.clientHeight;
         const scrollToPosition =
             messageOffsetTop + messageHeight / 2 - chatContainerHeight / 2;
-        chatContainer.scrollTo({ top: scrollToPosition, behavior: "smooth" });
+        chatContainer.scrollTo({
+            top: scrollToPosition,
+            behavior: "smooth",
+        });
+    }
+}
+
+function seenIfNotScroll() {
+    if (chatContainer.scrollHeight <= chatContainer.clientHeight) {
+        const messages = chatContainer.querySelectorAll(".messageContent");
+        const messagesLength = messages.length;
+
+        for (let i = 0; i < messagesLength; i++) {
+            const message = messages[i];
+            const messageId = extractNumericId(
+                message.parentElement.getAttribute("id")
+            );
+            if (messageId && messageId > lastSeenMessageId) {
+                lastSeenMessageId = messageId;
+                seen(lastSeenMessageId);
+            }
+        }
     }
 }
 
 chat.addEventListener("click", handleChatClick);
+
+const appSidebar = document.querySelector(".app-sidebar");
+let isChatClicked = false;
+appSidebar.addEventListener("click", function (event) {
+    if (chat.contains(event.target)) isChatClicked = true;
+    else isChatClicked = false;
+});
 
 const getLastMessageSeenId = async () => {
     const complexId = document
@@ -714,6 +743,7 @@ const sendMessage = async () => {
     if (messageText || messageImage) {
         messageForm.reset();
         closeOperationBoxContainer();
+        seenIfNotScroll();
         const response = await fetch("/dashboard/building/group/send", {
             method: "POST",
             headers: {
@@ -1438,10 +1468,16 @@ const channel = pusher.subscribe("group");
 
 channel.bind("NewChatMessage", function (data) {
     const message = data.message;
+
     if (message.user_id == userLogInId)
         message.is_owned_by_logged_in_user = true;
     displayMessages([message]);
     if (message.user_id == userLogInId) scrollToBottom();
+    if (isChatClicked) {
+        fromLastMessageId = message.message_id;
+        currentFromLastMessageId = fromLastMessageId;
+        seenIfNotScroll();
+    }
 });
 
 channel.bind("DeleteChatMessage", function (data) {
