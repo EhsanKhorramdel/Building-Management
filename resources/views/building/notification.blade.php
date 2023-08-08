@@ -28,7 +28,7 @@
                             @endif
                             <a class="text-center open-Btn">مشاهده تصویر</a>
                             <p class="hidden">
-                                {{ asset($announcement->image_url ? '/storage/notificationFiles/' . $announcement->image_url : '/storage/notificationFiles/default.png') }}
+                                {{ asset($announcement->image_url ? '/storage/notificationFiles/' . $announcement->image_url : '/storage/default.png') }}
                             </p>
 
                         </div>

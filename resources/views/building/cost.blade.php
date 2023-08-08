@@ -21,13 +21,8 @@
                         <p class="hidden">{{ $incidentalCost->id }}</p>
                         <a class="text-center cost-open-Btn">مشاهده فاکتور</a>
                         <p class="hidden">
-                            @if ($incidentalCost->cost_invoice)
-                                {{ '/storage/incidentalCostFiles/' . $incidentalCost->cost_invoice }}
-                            @else
-                                {{ '/storage/notificationFiles/default.png' }}
-                            @endif
+                            {{ asset($incidentalCost->cost_invoice ? '/storage/incidentalCostFiles/' . $incidentalCost->cost_invoice : '/storage/default.png') }}
                         </p>
-
                     </div>
                 </div>
             </div>
@@ -84,7 +79,7 @@
             <div class="mb-6">
                 <input class="border border-gray-300 px-4 py-2 rounded w-full" step="0.01" type="hidden"
                     placeholder="مبلغ پرداختی" autocomplete="off" name="Amount" min="1" required
-                    value="{{ $incidentalCost->share_amount ?? 0}}" />
+                    value="{{ $incidentalCost->share_amount ?? 0 }}" />
             </div>
             <div class="flex">
                 <button
