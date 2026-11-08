@@ -114,6 +114,7 @@ Findings remain open unless a closing commit is recorded below. The named phases
 - **Closed by:** Phase 4.
 
 ### [Baseline] No uniqueness in the database
+- **Status:** CLOSED in 13e8b7d0220cc220f88f0c5de3bdeedd5e51f274 for the six requested domain keys. See [Phase 3] Persist Jalali charge-payment periods: the charge key includes period_year/period_month and is never lifetime-scoped.
 - **Before:** no unique constraints on votes, seen_messages, units (per complex), payments; integrity kept only by in-code checks.
 - **Why it matters:** concurrent requests create duplicates the UI assumes impossible.
 - **Cause:** constraints were left to application code.
@@ -554,3 +555,10 @@ Findings remain open unless a closing commit is recorded below. The named phases
 - **Files:** app/Http/Controllers/AdminController.php; tests/Feature/Admin/MembershipDecisionTest.php.
 - **Verified by:** Sequential double acceptance leaves exactly one complex, manager role and group; a rejected request remains rejected; an injected NULL group name raises QueryException and rolls back the complex, role and request decision. Full suite: 305 passed, 0 failed, 4 skipped, 678 assertions (arrival: 287/0/4, 599 assertions). All four skips remain Phase 4.
 - **Risk & rollback:** Re-accepting any decided request now returns an error rather than creating another building. No reject-action or route changes. Revert this controller/test commit to restore the former approval behavior; previously created duplicate buildings are not removed by this change.
+### [Phase 3] Record database baseline closure
+- **Before:** The baseline uniqueness finding still pointed to planned Phase 3 work.
+- **After:** It references schema commit 13e8b7d0220cc220f88f0c5de3bdeedd5e51f274 and the Jalali period-scoping note. Approval transaction commit: 9236f3c25d619511db444237232792b0b870a42d.
+- **Why:** Closure must name the implementation that enforces the constraints, including the recurring-payment exception.
+- **Files:** docs/REFACTOR_LOG.md.
+- **Verified by:** Reviewed the six unique keys, period boundary test, rollback evidence and full suite (305 passed, 0 failed, 4 Phase 4 skips, 678 assertions). Pre-commit added-line style scans and diff whitespace checks pass.
+- **Risk & rollback:** Documentation only; reopen the finding if the schema commit is reverted. MySQL execution remains unverified as recorded above.
