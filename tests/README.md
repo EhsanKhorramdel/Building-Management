@@ -1,6 +1,6 @@
 # Tests and local demo data
 
-The current lockfiles use PHP 8.3.36, laravel/framework v11.57.1, nesbot/carbon 3.15.1, laravel/sanctum v4.3.3, pestphp/pest v3.8.7, phpunit/phpunit 11.5.56, morilog/jalali v3.5.0, Vite 6.4.5 and Tailwind 3.4.19. Install dependencies with Composer and npm ci, configure a local .env and build the assets before tests. Use D:/tools/php-8.3/php.exe explicitly on this Windows checkout.
+The current lockfiles use PHP 8.3.36, laravel/framework v12.71.0, nesbot/carbon 3.15.1, laravel/sanctum v4.3.3, pestphp/pest v3.8.7, phpunit/phpunit 11.5.56, morilog/jalali v3.5.0, Vite 6.4.5 and Tailwind 3.4.19. Install dependencies with Composer and npm ci, configure a local .env and build the assets before tests. Use D:/tools/php-8.3/php.exe explicitly on this Windows checkout.
 
 Run the full suite:
 

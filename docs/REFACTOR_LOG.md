@@ -385,3 +385,31 @@ Status for all: OPEN — closed by the phase noted, which adds its own entries a
 - **Files:** composer.json; composer.lock; README.md; tests/README.md; .env.example; docs/REFACTOR_LOG.md.
 - **Verified by:** Full suite, SQLite migrate:fresh and explicit DemoSeeder, npm run build, Composer validation/platform checks; existing test source and nine skips retained.
 - **Risk & rollback:** Dependency upgrades only except the separately logged compatibility settings. All commands use D:/tools/php-8.3/php.exe. Optional upstream lock metadata is normalized under the existing wording rule; runtime requirements and package integrity fields are retained. Revert this hop and reinstall its lockfile for rollback.
+
+### [Phase 1B / Hop C] Upgrade dependencies and record verified versions
+- **Before:** Hop B used Laravel 11.
+- **After:** laravel/framework v12.71.0, nesbot/carbon 3.15.1, laravel/sanctum v4.3.3, pestphp/pest v3.8.7, phpunit/phpunit 11.5.56, morilog/jalali v3.5.0. PHP 8.3.36; Vite 6.4.5; Tailwind 3.4.19.
+- **Why:** Follow the official 11-to-12 upgrade path without adopting a new application skeleton.
+- **Files:** composer.json; composer.lock; README.md; tests/README.md; docs/REFACTOR_LOG.md.
+- **Verified by:** Full suite, SQLite migrate:fresh and explicit DemoSeeder, npm run build, Composer validation/platform checks; existing test source and nine skips retained.
+- **Risk & rollback:** Dependency upgrades only except the separately logged compatibility settings. All commands use D:/tools/php-8.3/php.exe. Optional upstream lock metadata is normalized under the existing wording rule; runtime requirements and package integrity fields are retained. Revert this hop and reinstall its lockfile for rollback.
+
+### [Phase 1B / Hop C] Record final platform checks
+- **Before:** Hop A had six Composer advisories and required the PHP runtime upgrade.
+- **After:** Both remaining hops pass 89 tests, with the same nine skipped tests and 298 assertions. Final Composer and npm audits each report zero advisories. No test source was edited.
+- **Why:** Freeze the supported versions and upgrade evidence before later application changes.
+- **Files:** docs/REFACTOR_LOG.md; README.md; tests/README.md.
+- **Verified by:** Explicit D:/tools/php-8.3/php.exe for every Composer/Artisan command; php -v, artisan --version, full suite per hop, SQLite migrate:fresh and DemoSeeder per hop, npm run build per hop, platform checks and read-only audits. Existing local disk root is explicit; schema, HTTP Kernel, providers, aliases and bootstrap remain unchanged.
+- **Risk & rollback:** Known application defects remain deferred by the original skips. Revert Hop C before Hop B to return to the prior platform, reinstalling the matching lockfile each time. No Phase 2 work started.
+
+| Component | Final version |
+| --- | --- |
+| PHP (thread-safe x64) | 8.3.36 |
+| laravel/framework | v12.71.0 |
+| nesbot/carbon | 3.15.1 |
+| laravel/sanctum | v4.3.3 |
+| pestphp/pest | v3.8.7 |
+| phpunit/phpunit | 11.5.56 |
+| morilog/jalali | v3.5.0 |
+| Vite | 6.4.5 |
+| Tailwind | 3.4.19 |
