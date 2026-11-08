@@ -78,18 +78,21 @@ Findings remain open unless a closing commit is recorded below. The named phases
 - **Closed by:** Phase 2.
 
 ### [Baseline] Two broken model relations
+- **Status:** CLOSED in e81d1ba8aeca5be8cbfe61abf1ece5ef8bd2c6af. See the Phase 4 relation/null-safety, poll-defect and query-count entries below.
 - **Before:** `Unit::userRoles()` references non-existent class `UserRoles`; `PollOption::votes()` uses foreign key `role_id` instead of `poll_option_id`.
 - **Why it matters:** calling the first crashes; the second returns unrelated rows.
 - **Cause:** typos never exercised by any test.
 - **Closed by:** Phase 4 (+ tests in Phase 1 style).
 
 ### [Baseline] Null-dereference crashes
+- **Status:** CLOSED in e81d1ba8aeca5be8cbfe61abf1ece5ef8bd2c6af. See the Phase 4 relation/null-safety, poll-defect and query-count entries below.
 - **Before:** unguarded `->first()->…` in chat index/last-seen/viewers/seen and in charge payment; empty group or missing message → 500.
 - **Why it matters:** a brand-new complex (no messages) or a tampered id crashes the page.
 - **Cause:** happy-path-only coding, no empty-state handling.
 - **Closed by:** Phase 4.
 
 ### [Baseline] Voting after poll expiry + option-shift bug
+- **Status:** CLOSED in e81d1ba8aeca5be8cbfe61abf1ece5ef8bd2c6af. See the Phase 4 relation/null-safety, poll-defect and query-count entries below.
 - **Before:** `Poll::isExpired()` exists but vote() never calls it; `pollCreate` drops/shifts options when a middle option is empty.
 - **Why it matters:** results can be changed after deadline; poll options silently differ from what the manager typed.
 - **Cause:** expiry was modelled but never enforced; options were counted instead of filtered.
@@ -102,12 +105,14 @@ Findings remain open unless a closing commit is recorded below. The named phases
 - **Closed by:** Phase 5.
 
 ### [Baseline] Frontend monolith + duplication
+- **Status:** Backend duplication CLOSED in e81d1ba8aeca5be8cbfe61abf1ece5ef8bd2c6af (upload naming, message presentation and controller split). Frontend JS/CSRF duplication remains OPEN for Phase 5.
 - **Before:** `public/js/building.js` is 1495 lines covering chat/polls/payments/uploads; the CSRF-token block repeats 7× (14 total references including usages — corrected in Phase 0 review); PHP builds the same message array 7×; the random upload-filename block repeats 3× (chat, announcement, incidental cost — corrected in Phase 0 review); `BuildingController` is 771 lines / 13 responsibilities.
 - **Why it matters:** every fix must be made in several places; regressions hide easily.
 - **Cause:** features were appended to the same files without extraction points.
 - **Closed by:** Phases 4–5.
 
 ### [Baseline] N+1 query patterns
+- **Status:** CLOSED in e81d1ba8aeca5be8cbfe61abf1ece5ef8bd2c6af. See the Phase 4 relation/null-safety, poll-defect and query-count entries below.
 - **Before:** payments report queries per unit and per payment (`User::findOrFail` inside loops) — true DB-level N+1; vote results counted in PHP; last-seen scans all seen-rows. The building dashboard's residents loop is different (corrected in Phase 0 review): it scans ALREADY-LOADED collections in memory — quadratic CPU, no extra queries; still worth simplifying, but it is not an N+1.
 - **Why it matters:** page cost grows with residents × payments; will crawl on a real building.
 - **Cause:** collection processing in PHP instead of eager loading / aggregate queries.
@@ -649,3 +654,10 @@ Findings remain open unless a closing commit is recorded below. The named phases
 - **Files:** tests/Feature/Services/*.php; tests/Feature/Backend/*.php; tests/Feature/KnownDefectsTest.php; tests/Feature/Building/ChatTest.php; tests/README.md; docs/REFACTOR_LOG.md.
 - **Verified by:** Full suite: 332 passed, 0 failed, 0 skipped, 776 assertions. Existing feature tests edited: KnownDefectsTest.php removes only four skip declarations; Building/ChatTest.php changes only the no-receipts test name/expected null value required by item 1c. All other pre-existing feature files, including the monthly payment and authorization matrix tests, are unchanged. SQLite migrate:fresh + DemoSeeder, Blade compilation, npm run build and node syntax check pass. Every Artisan command used D:/tools/php-8.3/php.exe (PHP 8.3.36, Laravel 12.71.0).
 - **Risk & rollback:** No dependencies or migrations changed. Revert the implementation and matching service/defect tests together. Browser QA remains in its planned phase.
+### [Phase 4] Record backend baseline closures
+- **Before:** Baseline entries still pointed to planned backend work without closing commit references.
+- **After:** Relation, null-crash, voting/options and query-pattern findings reference e81d1ba8aeca5be8cbfe61abf1ece5ef8bd2c6af. The mixed frontend/backend duplication entry closes only its backend portion and leaves frontend JS/CSRF work for Phase 5.
+- **Why:** Closure must identify the implementation while preserving the remaining frontend scope.
+- **Files:** docs/REFACTOR_LOG.md.
+- **Verified by:** Reviewed the implementation against the baseline entries; 332 passed, 0 failed/skipped, 776 assertions; 54 route tuples unchanged; query-count evidence recorded above.
+- **Risk & rollback:** Documentation only. Reopen these findings if the implementation is reverted. Phase 5 has not started.
