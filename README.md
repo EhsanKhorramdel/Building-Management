@@ -1,3 +1,7 @@
+# Building Management
+
+Run the test suite with `composer test`. [Test setup and local demo data](tests/README.md) documents the isolated SQLite connection, optional demo seeder and local accounts.
+
 <p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
 
 <p align="center">

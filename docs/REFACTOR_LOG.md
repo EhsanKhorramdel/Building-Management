@@ -177,3 +177,131 @@ Status for all: OPEN — closed by the phase noted, which adds its own entries a
 - **Files:** docs/REFACTOR_LOG.md.
 - **Verified by:** Compared supplied changes and retained entry; full suite before/after; staged wording check.
 - **Risk & rollback:** Documentation only. Revert this stage's commit to restore the earlier baseline; Phase 0 remains in history.
+
+### [Phase 1] Add model factories
+- **Before:** Only User had a factory.
+- **After:** Added factories for all 15 domain models, with matching complex IDs for units, role/payable graphs, votes and read receipts.
+- **Why:** Domain endpoint tests need valid related records without hand-written inserts.
+- **Files:** database/factories/*Factory.php; tests/Feature/FactoriesTest.php; tests/Support/BuildingContext.php.
+- **Verified by:** Each of the 16 model factories persists successfully with SQLite foreign-key checks; full suite.
+- **Risk & rollback:** Test fixtures only; revert the factories and their tests together. No model or relation changed.
+
+### [Phase 1] Add an explicit local demo seeder
+- **Before:** DatabaseSeeder was a no-op; no repeatable local scenario existed.
+- **After:** Added DemoSeeder with five local accounts, one complex/four units, paid and unpaid charges, an incidental payment, announcements, open/expired polls, text/image chat, a read receipt and a pending request. The default seeder remains unchanged.
+- **Why:** Demo accounts must be opt-in and must never be inserted by the default production seed command.
+- **Files:** database/seeders/DemoSeeder.php; tests/Feature/DemoSeederTest.php; tests/README.md.
+- **Verified by:** SQLite migrate:fresh then db:seed --class=DemoSeeder; account/hash/data/image assertions; default-seeder and environment-refusal tests.
+- **Risk & rollback:** Demo credentials are local only: admin@example.test, manager@example.test, resident1@example.test through resident3@example.test, all password password. Seeding refuses other environments. Recreate only the dedicated local demo database to roll back.
+
+### [Phase 1] Isolate tests from development databases
+- **Before:** phpunit.xml inherited the development connection and RefreshDatabase could rebuild it.
+- **After:** Forced SQLite :memory: in environment/server variables, disabled the connection URL, separated the test config-cache path and added a non-memory connection guard. Added composer test.
+- **Why:** Dotenv prioritizes inherited server variables; environment overrides alone did not protect against an externally supplied MySQL connection.
+- **Files:** phpunit.xml; tests/CreatesApplication.php; tests/Feature/FactoriesTest.php; composer.json; README.md; tests/README.md.
+- **Verified by:** Full suite passes even with DB_CONNECTION=mysql and a development SQLite path supplied externally; development database SHA-256 unchanged; active connection and FK checks.
+- **Risk & rollback:** Only test startup changes. A misconfigured test connection fails before RefreshDatabase. Revert test configuration and runner changes together; do not run the old settings against a valued development database.
+
+### [Phase 1] Update stale authentication expectations
+- **Before:** Two baseline tests expected HOME=/ even though login/registration redirect regular users to /dashboard.
+- **After:** Tests assert /dashboard; added admin login to /adminPanel, POST logout and verification resend coverage, and assert the stored password changes on reset.
+- **Why:** The application redirects are intentional; changing production routes to satisfy stock tests would change behavior.
+- **Files:** tests/Feature/Auth/AuthenticationTest.php; RegistrationTest.php; EmailVerificationTest.php; PasswordResetTest.php.
+- **Verified by:** Full suite; regular/admin authentication, guest logout state, fake email notification and reset hash assertions.
+- **Risk & rollback:** Tests only; no route or redirect changed. Revert the test edits to restore the old expectations.
+
+### [Phase 1] Replace dead profile endpoint tests
+- **Before:** Five ProfileTest cases targeted unregistered GET/PATCH/DELETE /profile and failed.
+- **After:** Removed those five stale cases. Five replacements test PATCH /dashboard/update (profile.update): saved name/email/national code/phone, verification retention/reset, unique email, field validation and guest rejection.
+- **Why:** Profile editing is part of the dashboard; profile page/account deletion endpoints are not registered.
+- **Files:** tests/Feature/ProfileTest.php; tests/README.md.
+- **Verified by:** All five replacement profile tests pass. The omitted-nullable-key defect is separately skipped, not fixed.
+- **Risk & rollback:** Tests only; no controller or public route changed. Revert ProfileTest to restore the original stock cases.
+
+### [Phase 1] Characterise building workflows
+- **Before:** No tests covered building membership, unit assignment, management actions, payments, chat or approval.
+- **After:** Added one test file per area, covering every routed controller action with valid domain data; ownership checks verify that other members cannot edit/delete a sender's message.
+- **Why:** Later refactors need assertions on stored rows, files, events and responses, rather than only successful page loads.
+- **Files:** tests/Feature/Building/*.php; tests/Feature/Admin/MembershipDecisionTest.php; tests/Support/BuildingContext.php; tests/README.md.
+- **Verified by:** Full suite: 98 cases, 89 passed, 0 failed, 9 known-defect skips, 298 assertions (baseline: 24 cases, 17 passed, 7 failed, 43 assertions). Fake storage/events; endpoint-to-file coverage table in tests/README.md.
+- **Risk & rollback:** No application changes. Existing GET routes are used to test business effects; their unsafe method is a separate skipped expectation for Phase 2. Revert these tests without altering app behavior.
+
+### [Phase 1] Pin charge payments to Jalali months
+- **Before:** Charge duplicate checks compare created_at against the current Jalali year/month; no regression test protected recurrence.
+- **After:** A test records one payment on 1405-01-31, rejects a second that day, then accepts the same charge/role on 1405-02-01. Both dates are in April 2026. Carbon::setTestNow is restored afterward.
+- **Why:** A lifetime unique pair or Gregorian-month key would prevent a valid later payment. Phase 3 must store period_year/period_month and constrain the four-column period key.
+- **Files:** tests/Feature/Building/ChargePaymentTest.php; tests/README.md.
+- **Verified by:** Three payment requests; row counts 1, 1, 2; same role/charge IDs; stored Jalali periods 1405-01 and 1405-02; full suite.
+- **Risk & rollback:** Tests only. No uniqueness constraint or payment code changed. Keep this assertion through the dependency hops and database phase.
+
+### [Phase 1] Defer: chat history rejects a member of another complex
+- **Before:** The current implementation has the documented defect: Baseline: Cross-complex authorization missing; Phase 2 adds membership checks.
+- **After:** Added an executable expectation marked skipped with that reference and fixing phase.
+- **Why:** A passing test must not endorse defective behavior; the pending assertion belongs with its scheduled fix.
+- **Files:** tests/Feature/KnownDefectsTest.php; tests/README.md.
+- **Verified by:** Full suite lists this test as skipped with its reason.
+- **Risk & rollback:** The defect remains open. Enable this test in the named fixing phase after implementing the fix; removing a skip before then will fail the suite.
+
+### [Phase 1] Defer: a manager cannot publish an announcement in another complex
+- **Before:** The current implementation has the documented defect: Baseline: Cross-complex authorization missing; Phase 2 scopes manager access.
+- **After:** Added an executable expectation marked skipped with that reference and fixing phase.
+- **Why:** A passing test must not endorse defective behavior; the pending assertion belongs with its scheduled fix.
+- **Files:** tests/Feature/KnownDefectsTest.php; tests/README.md.
+- **Verified by:** Full suite lists this test as skipped with its reason.
+- **Risk & rollback:** The defect remains open. Enable this test in the named fixing phase after implementing the fix; removing a skip before then will fail the suite.
+
+### [Phase 1] Defer: chat rejects a non-image upload
+- **Before:** The current implementation has the documented defect: Baseline: Chat image upload unvalidated; Phase 2 validates MIME and size.
+- **After:** Added an executable expectation marked skipped with that reference and fixing phase.
+- **Why:** A passing test must not endorse defective behavior; the pending assertion belongs with its scheduled fix.
+- **Files:** tests/Feature/KnownDefectsTest.php; tests/README.md.
+- **Verified by:** Full suite lists this test as skipped with its reason.
+- **Risk & rollback:** The defect remains open. Enable this test in the named fixing phase after implementing the fix; removing a skip before then will fail the suite.
+
+### [Phase 1] Defer: incidental cost payments use the recorded share instead of a submitted amount
+- **Before:** The current implementation has the documented defect: Baseline: Client-set payment amounts; Phase 2 reads the payable amount on the server.
+- **After:** Added an executable expectation marked skipped with that reference and fixing phase.
+- **Why:** A passing test must not endorse defective behavior; the pending assertion belongs with its scheduled fix.
+- **Files:** tests/Feature/KnownDefectsTest.php; tests/README.md.
+- **Verified by:** Full suite lists this test as skipped with its reason.
+- **Risk & rollback:** The defect remains open. Enable this test in the named fixing phase after implementing the fix; removing a skip before then will fail the suite.
+
+### [Phase 1] Defer: expired polls reject new votes
+- **Before:** The current implementation has the documented defect: Baseline: Voting after poll expiry + option-shift bug; Phase 4 enforces expiry.
+- **After:** Added an executable expectation marked skipped with that reference and fixing phase.
+- **Why:** A passing test must not endorse defective behavior; the pending assertion belongs with its scheduled fix.
+- **Files:** tests/Feature/KnownDefectsTest.php; tests/README.md.
+- **Verified by:** Full suite lists this test as skipped with its reason.
+- **Risk & rollback:** The defect remains open. Enable this test in the named fixing phase after implementing the fix; removing a skip before then will fail the suite.
+
+### [Phase 1] Defer: a blank middle poll option does not discard later options
+- **Before:** The current implementation has the documented defect: Baseline: Voting after poll expiry + option-shift bug; Phase 4 filters options by value.
+- **After:** Added an executable expectation marked skipped with that reference and fixing phase.
+- **Why:** A passing test must not endorse defective behavior; the pending assertion belongs with its scheduled fix.
+- **Files:** tests/Feature/KnownDefectsTest.php; tests/README.md.
+- **Verified by:** Full suite lists this test as skipped with its reason.
+- **Risk & rollback:** The defect remains open. Enable this test in the named fixing phase after implementing the fix; removing a skip before then will fail the suite.
+
+### [Phase 1] Defer: an empty chat returns no last-seen message without an error
+- **Before:** The current implementation has the documented defect: Baseline: Null-dereference crashes; Phase 4 handles an empty group.
+- **After:** Added an executable expectation marked skipped with that reference and fixing phase.
+- **Why:** A passing test must not endorse defective behavior; the pending assertion belongs with its scheduled fix.
+- **Files:** tests/Feature/KnownDefectsTest.php; tests/README.md.
+- **Verified by:** Full suite lists this test as skipped with its reason.
+- **Risk & rollback:** The defect remains open. Enable this test in the named fixing phase after implementing the fix; removing a skip before then will fail the suite.
+
+### [Phase 1] Defer: GET cannot delete a chat message
+- **Before:** The current implementation has the documented defect: Baseline: State changes via GET; Phase 2 changes mutation methods and CSRF protection.
+- **After:** Added an executable expectation marked skipped with that reference and fixing phase.
+- **Why:** A passing test must not endorse defective behavior; the pending assertion belongs with its scheduled fix.
+- **Files:** tests/Feature/KnownDefectsTest.php; tests/README.md.
+- **Verified by:** Full suite lists this test as skipped with its reason.
+- **Risk & rollback:** The defect remains open. Enable this test in the named fixing phase after implementing the fix; removing a skip before then will fail the suite.
+
+### [Phase 1] Defer: profile updates may omit optional national code and phone fields
+- **Before:** The current implementation has the documented defect: Phase 0 audit B07: optional profile fields cause a 500; Phase 4 handles absent nullable fields.
+- **After:** Added an executable expectation marked skipped with that reference and fixing phase.
+- **Why:** A passing test must not endorse defective behavior; the pending assertion belongs with its scheduled fix.
+- **Files:** tests/Feature/KnownDefectsTest.php; tests/README.md.
+- **Verified by:** Full suite lists this test as skipped with its reason.
+- **Risk & rollback:** The defect remains open. Enable this test in the named fixing phase after implementing the fix; removing a skip before then will fail the suite.

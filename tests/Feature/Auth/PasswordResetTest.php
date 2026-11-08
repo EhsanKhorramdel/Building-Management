@@ -47,11 +47,13 @@ test('password can be reset with valid token', function () {
         $response = $this->post('/reset-password', [
             'token' => $notification->token,
             'email' => $user->email,
-            'password' => 'password',
-            'password_confirmation' => 'password',
+            'password' => 'new-password',
+            'password_confirmation' => 'new-password',
         ]);
 
         $response->assertSessionHasNoErrors();
+
+        expect(\Illuminate\Support\Facades\Hash::check('new-password', $user->refresh()->password))->toBeTrue();
 
         return true;
     });
