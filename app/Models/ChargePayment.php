@@ -11,8 +11,10 @@ class ChargePayment extends Model
     use HasFactory;
 
     protected $fillable = [
-        'role_id', 'monthly_charge_id', 'amount', 'date'
+        'role_id', 'monthly_charge_id', 'amount', 'period_year', 'period_month',
     ];
+
+    protected $casts = ['period_year' => 'integer', 'period_month' => 'integer'];
 
     // Relationships
     public function role(): BelongsTo

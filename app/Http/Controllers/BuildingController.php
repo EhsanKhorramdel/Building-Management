@@ -685,6 +685,8 @@ class BuildingController extends Controller
                     'role_id' => $role->id,
                     'monthly_charge_id' => $request->monthlyChargeId,
                     'amount' => $payable->amount,
+                    'period_year' => $currentJalaliDate->getYear(),
+                    'period_month' => $currentJalaliDate->getMonth(),
                 ];
 
                 ChargePayment::create($ChargePayment);

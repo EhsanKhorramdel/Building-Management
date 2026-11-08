@@ -492,3 +492,58 @@ Findings remain open unless a closing commit is recorded below. The named phases
 - **Files:** docs/REFACTOR_LOG.md.
 - **Verified by:** Compared the seven baseline findings with the eight implementation entries and the committed diff; no application changes in this entry.
 - **Risk & rollback:** Documentation only; revert this closure entry when reverting the implementation.
+### [Phase 3] Enforce domain uniqueness after duplicate cleanup
+- **Before:** votes, seen_messages, units, payment_additional_costs and user_roles relied on request-time duplicate checks.
+- **After:** New migration 2026_11_09_000001_harden_domain_uniqueness adds named unique indexes. Cleanup retains MIN(id), the earliest inserted row, and logs retained/deleted IDs plus per-table totals. Duplicate units first repoint user_roles.unit_id; duplicate roles repoint votes and both payment tables before child cleanup.
+- **Why:** Concurrent writes could bypass controller checks; deleting parent duplicates without remapping would violate existing foreign keys or lose dependent records.
+- **Files:** database/migrations/2026_11_09_000001_harden_domain_uniqueness.php; tests/Feature/Database/ConstraintsTest.php; MigrationTest.php.
+- **Verified by:** Direct violating inserts for all five keys raise QueryException. The upgrade fixture removes one row per constrained table and checks logged IDs and retained dependents. Upgrade of the Phase 2 demo copy removes 0 rows from each of the six constrained tables, including charge_payments. All six keys have direct violation tests.
+- **Risk & rollback:** Duplicate non-key values on deleted rows are not merged. Cleanup is irreversible through down(); restore a database backup to recover deleted rows. down() removes constraints and restores MySQL FK backing indexes if InnoDB replaced them. The user_roles triple uses standard NULL semantics on SQLite and MySQL: repeated NULL unit_id tuples remain valid; only fully non-null duplicates are removed/rejected. SQLite tests verify both cases; MySQL semantics were checked against its documentation, not a live server.
+
+### [Phase 3] Persist Jalali charge-payment periods
+- **Before:** Charge payments had no stored period; the controller compared created_at after Jalalian::fromCarbon conversion.
+- **After:** The same new migration adds smallint period_year and tinyint period_month, backfills each existing row from its real created_at, removes same-period duplicates, makes both columns required and adds charge_payments_role_charge_period_unique(role_id, monthly_charge_id, period_year, period_month). The controller and factory supply the current Jalali year/month; the model allows and integer-casts both fields.
+- **Why:** A lifetime payment unique key would prevent paying a recurring charge in a later Jalali month. Required period columns allow the database to enforce the existing monthly rule.
+- **Files:** database/migrations/2026_11_09_000001_harden_domain_uniqueness.php; app/Http/Controllers/BuildingController.php; app/Models/ChargePayment.php; database/factories/ChargePaymentFactory.php; database tests.
+- **Verified by:** Same-period direct insert fails; different months and years insert successfully. Crafted created_at values at Jalali 1405-01-31 23:59:59 and 1405-02-01 00:00:00 backfill to (1405,1)/(1405,2), although both are in Gregorian April 2026. The Phase 1 ChargePaymentTest.php is unchanged and passes.
+- **Risk & rollback:** No lifetime unique index is introduced. A legacy payment with NULL created_at stops migration rather than inventing its period; restore its date before migrating. MySQL DDL is not transactional, so a failed schema upgrade requires inspection/restoration before retry. down() drops the new columns/index; deploy the old payment writer with that rollback.
+
+### [Phase 3] Remove the nonexistent payment date attribute
+- **Before:** ChargePayment.fillable included date, but charge_payments has no date column.
+- **After:** Removed only the stale date attribute while adding the required period attributes.
+- **Why:** Accepting that attribute through mass assignment could produce an insert for a nonexistent column.
+- **Files:** app/Models/ChargePayment.php; tests/Feature/Database/ConstraintsTest.php.
+- **Verified by:** The model rejects date as fillable; payment feature tests pass.
+- **Risk & rollback:** No stored field or date format changes. Revert the model edit with the period migration rollback if required.
+
+### [Phase 3] Add named lookup indexes
+- **Before:** No composite lookup indexes covered messages(group_id,id), user_roles(user_id,complex_id) or seen_messages(group_id,user_id).
+- **After:** Migration 2026_11_09_000002_add_hot_lookup_indexes adds messages_group_id_id_index, user_roles_user_complex_index and seen_messages_group_user_index.
+- **Why:** The unique keys have different leading columns and do not cover these chat-history, membership and read-receipt lookups.
+- **Files:** database/migrations/2026_11_09_000002_add_hot_lookup_indexes.php; tests/Feature/Database/MigrationTest.php.
+- **Verified by:** SQLite schema assertions check all three index names; all new migrations roll back and reapply. MySQL down() restores a single-column FK index if InnoDB discarded it when adding the composite index.
+- **Risk & rollback:** Index creation can lock populated tables and adds write cost. down() drops the three named lookup indexes without removing FK support.
+
+### [Phase 3] Add location and integration scaffolding
+- **Before:** No coordinate columns or transaction/SMS storage existed.
+- **After:** Migration 2026_11_09_000003_add_future_integration_tables adds nullable decimal(10,7) latitude/longitude; transactions with nullable payable morph pair, nullable user/role foreign keys, decimal(12,2) amount, neutral gateway/authority/reference fields, pending string status and JSON meta; sms_logs with recipient, nullable template/body/driver, logged string status and JSON meta. Transaction and SmsLog models provide fillable fields and decimal/JSON casts.
+- **Why:** A nullable morph pair can later reference either charge/cost type without fixing one payable table or requiring an immediate attachment. String statuses let future drivers add lifecycle states without database enum migrations. Nullable ownership permits later reconciliation; FK deletion remains restrictive to preserve records.
+- **Files:** database/migrations/2026_11_09_000003_add_future_integration_tables.php; app/Models/Transaction.php; app/Models/SmsLog.php; tests/Feature/Database/ScaffoldingTest.php.
+- **Verified by:** Default statuses, nullable ownership, JSON/decimal casts, extensible statuses, nullable/saved coordinates and invalid ownership FK inserts; fresh demo seed and rollback/reapply pass.
+- **Risk & rollback:** Storage only: no gateway, SMS driver, feature flag, route or other behavior is wired to these records. down() removes both tables and coordinates, including any later stored data.
+
+### [Phase 3] Record stored date conventions
+- **Before:** monthly_charges SQL date columns contain Jalali strings, while polls contain real datetimes; these distinct conventions were undocumented at the schema change.
+- **After:** The charge migration documents that distinction and the Jalali meaning of payment periods. Poll.start_date/end_date already have datetime casts; UserRole.start_date/end_date already have date casts; Eloquent supplies timestamp casts. No missing real date casts were found, so none were added.
+- **Why:** Applying a Gregorian date cast to the Jalali charge strings would silently change their meaning.
+- **Files:** database/migrations/2026_11_09_000001_harden_domain_uniqueness.php; tests/Feature/Database/ScaffoldingTest.php; docs/REFACTOR_LOG.md.
+- **Verified by:** Stored 1405-01-31/1405-02-01 charge values remain strings; poll and role values retain their existing Carbon/date casts; boundary backfill test passes.
+- **Risk & rollback:** No stored-format changes. The period note must remain with any future payment/date refactor.
+
+### [Phase 3] Verify schema upgrade and rollback
+- **Before:** Phase 2 suite: 287 passed, 0 failed, 4 skipped, 599 assertions; no constraints or upgrade evidence.
+- **After:** SQLite old-schema upgrade, rollback of all three new migrations, reapply, migrate:fresh and DemoSeeder pass. Database tests add 15 passing cases. A MySQL PDO probe to the configured 127.0.0.1:3306 fails with driver error 2002; no MySQL/MariaDB service, process or port 3306/3307 listener was found.
+- **Why:** Fresh-schema checks alone do not exercise legacy duplicates, backfill or reversal.
+- **Files:** tests/Feature/Database/ConstraintsTest.php; MigrationTest.php; ScaffoldingTest.php; docs/REFACTOR_LOG.md.
+- **Verified by:** All commands use D:/tools/php-8.3/php.exe (8.3.36), Laravel 12.71.0. The phase report includes an offline Connection::pretend SQL appendix for new MySQL up/down statements; no server version or live MySQL execution is claimed. The preview assumes MySQL 8 grammar; data-dependent updates/deletes execute in the SQLite upgrade test, not in the preview.
+- **Risk & rollback:** Live MySQL migration/rollback remains unverified until a server is available. Existing migrations were not edited; rollback removes schema additions but cannot restore duplicate rows.
