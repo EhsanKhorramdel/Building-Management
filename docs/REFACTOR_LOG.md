@@ -2,7 +2,7 @@
 
 This file is the single record of EVERY change made during the refactor.
 One entry per distinct change. No entry = the change did not happen.
-Codex appends entries in every phase; the reviewer checks this file against the diff.
+Each phase adds entries; review checks this file against the diff.
 
 ## Entry template (copy for each change)
 
@@ -89,19 +89,19 @@ Status for all: OPEN — closed by the phase noted, which adds its own entries a
 - **Closed by:** Phase 4.
 
 ### [Baseline] Missing responsive foundation
-- **Before:** building + dashboard pages have no viewport meta; dashboard CSS (1028 lines) has 5 media queries and fixed widths up to 1800px; three conflicting Tailwind versions load on one page (2.2.15 CDN, 0.3 unpkg, Play CDN) on top of hand-written CSS; app pages bypass Vite so assets are unminified/unhashed.
+- **Before:** building + dashboard pages have no viewport meta; dashboard CSS (1028 lines) has 5 media queries and fixed widths up to 1800px; the BUILDING page loads three conflicting Tailwind versions at once (2.2.15 CDN, 0.3 unpkg, Play CDN) on top of hand-written CSS, while the dashboard page loads one (2.2.15 CDN) — corrected in Phase 0 review; app pages bypass Vite so assets are unminified/unhashed.
 - **Why it matters:** mobile layout is broken/unpredictable — the main user device for residents is a phone.
 - **Cause:** pages grew as static files outside the build pipeline; Tailwind was added three times at three moments.
 - **Closed by:** Phase 5.
 
 ### [Baseline] Frontend monolith + duplication
-- **Before:** `public/js/building.js` is 1495 lines covering chat/polls/payments/uploads; the CSRF-token block repeats 14×; PHP builds the same message array 7×; the random upload-filename block repeats 6×; `BuildingController` is 771 lines / 13 responsibilities.
+- **Before:** `public/js/building.js` is 1495 lines covering chat/polls/payments/uploads; the CSRF-token block repeats 7× (14 total references including usages — corrected in Phase 0 review); PHP builds the same message array 7×; the random upload-filename block repeats 3× (chat, announcement, incidental cost — corrected in Phase 0 review); `BuildingController` is 771 lines / 13 responsibilities.
 - **Why it matters:** every fix must be made in several places; regressions hide easily.
 - **Cause:** features were appended to the same files without extraction points.
 - **Closed by:** Phases 4–5.
 
 ### [Baseline] N+1 query patterns
-- **Before:** building dashboard resolves users/units inside nested loops; payments report queries per unit and per payment (`User::findOrFail` inside loops); vote results counted in PHP; last-seen scans all seen-rows.
+- **Before:** payments report queries per unit and per payment (`User::findOrFail` inside loops) — true DB-level N+1; vote results counted in PHP; last-seen scans all seen-rows. The building dashboard's residents loop is different (corrected in Phase 0 review): it scans ALREADY-LOADED collections in memory — quadratic CPU, no extra queries; still worth simplifying, but it is not an N+1.
 - **Why it matters:** page cost grows with residents × payments; will crawl on a real building.
 - **Cause:** collection processing in PHP instead of eager loading / aggregate queries.
 - **Closed by:** Phase 4.
@@ -110,13 +110,14 @@ Status for all: OPEN — closed by the phase noted, which adds its own entries a
 - **Before:** no unique constraints on votes, seen_messages, units (per complex), payments; integrity kept only by in-code checks.
 - **Why it matters:** concurrent requests create duplicates the UI assumes impossible.
 - **Cause:** constraints were left to application code.
-- **Closed by:** Phase 3.
+- **Phase 0 correction (important):** charge-payment duplicate protection is PER JALALI MONTH (the check compares each existing payment's created_at year+month to now) — a lifetime unique on (role_id, monthly_charge_id) would CHANGE behaviour and break paying the same charge in a later month. Phase 3 must therefore use period-scoped uniqueness (period year+month stored on the payment), not a lifetime unique. Incidental-cost payments ARE lifetime one-off, so their lifetime unique stands.
+- **Closed by:** Phase 3 (as corrected above).
 
-### [Baseline] Dark mode does not exist
-- **Before:** light theme only; no `dark` variant anywhere, despite Tailwind being present.
-- **Why it matters:** standard expectation for a resident-facing app used at night; also part of the owner's design goals.
-- **Cause:** never implemented — recorded here as a missing capability, not a bug.
-- **Closed by:** Phase 5 (toggle + system preference + full-screen audit, both themes in screenshot QA).
+### [Baseline] Dark mode exists only as a skeleton (CORRECTED in Phase 0 review)
+- **Before:** a working toggle + persisted setting exists (`darkMode` in the settings object of `public/js/building.js` and `public/js/dashboard/script.js`, toggling `.dark` on `<html>`), but styling coverage is ~9 `.dark` rules in `public/css/dashboard/style.css` (root vars, search/add wrappers, a few buttons) plus scattered Breeze `dark:` utilities in a few fragments. Most screens — chat, tables, modals, most forms — have NO dark styling and stay light.
+- **Why it matters:** enabling the toggle produces a half-light, half-dark UI — worse than no toggle.
+- **Cause:** the theme was started (mechanism first) and never rolled out across components.
+- **Correction note:** the original audit entry claimed "dark mode does not exist" — the Phase 0 audit corrected it against the repository code. Phase 5 COMPLETES dark mode instead of building it from scratch: keep the existing toggle/persistence mechanism, extend coverage to every component, both themes in screenshot QA.
 
 ### [Baseline] Mixed/absent UX states
 - **Before:** fetch calls largely without error handling (1 try/catch for 11 calls), no loading/empty states system, destructive actions without confirm, alerts inconsistent.
@@ -125,10 +126,16 @@ Status for all: OPEN — closed by the phase noted, which adds its own entries a
 - **Closed by:** Phase 5.
 
 ### [Baseline] Tests do not cover the app
-- **Before:** only default Breeze tests exist; ProfileTest targets routes that are commented out, so part of the stock suite fails; no factories except User; no seeders.
+- **Before:** only default Breeze tests exist; measured baseline (Phase 0, commit b4abd08): 24 tests, 17 passed, 7 failed, 43 assertions. The 5 ProfileTest cases target unregistered `/profile` routes; the login/register tests expect redirect to `/` while the app intentionally redirects to `/dashboard` (admins to the admin panel) — the tests are stale, not the app. No factories except User; a DatabaseSeeder file exists but is a no-op (body fully commented out).
 - **Why it matters:** no change can be proven safe.
 - **Cause:** tests were never adopted as part of the workflow.
 - **Closed by:** Phase 1 (+ Phase 9 for browser/E2E).
+
+### [Baseline] End-of-life platform versions
+- **Before:** Laravel framework 10.14.1 (Laravel 10 line is end-of-life — no security fixes; also far behind the last 10.x patch), PHP 8.1 (end-of-life), Vite 4.3.9, Tailwind 3.3.2, Carbon 2, Sanctum 3.2.5, Pest 2.8.2. `jenssegers/date` is required in composer.json but unused anywhere in app code (the used Jalali library is `morilog/jalali`).
+- **Why it matters:** an EOL framework/runtime means newly disclosed vulnerabilities will never be patched on this stack.
+- **Cause:** the project was untouched since August 2023.
+- **Closed by:** Phase 1B (PHP 8.3, Laravel 12 via 11, Carbon 3, Sanctum 4, Pest 3, Vite 6; Tailwind stays on latest 3.x; unused date package removed) — placed right after the Phase 1 test safety net so every upgrade hop is verified by the suite.
 
 ### [Baseline] Payment & SMS not implemented (capability, by design)
 - **Before:** payments are record-only (no gateway); no SMS capability at all.
@@ -144,8 +151,7 @@ Status for all: OPEN — closed by the phase noted, which adds its own entries a
 
 ## Phase entries
 
-(Codex appends here, one entry per change, newest phase last.)
-
+(Append one entry per change, newest phase last.)
 
 ### [Phase 0] Audit inventory and verified baseline
 - **Before:** The supplied baseline had no checked-in inventory or measured test result. Its profile-route failure was known, but two additional redirect failures and several model, tenant-boundary, date, reporting, deployment and UI defects were not recorded.
@@ -155,3 +161,19 @@ Status for all: OPEN — closed by the phase noted, which adds its own entries a
 - **Files:** docs/REFACTOR_AUDIT.md; docs/REFACTOR_LOG.md. Local ignored .env/key, SQLite file, dependencies, caches and frontend build are environment setup only; manifests, lockfiles and application files are unchanged.
 - **Verified by:** Locked Composer install and npm ci; 19 SQLite migrations; identical full-suite before/final-after results with names recorded in the audit; Vite build; 160 tracked *.php syntax checks; Composer platform check; route-list and duplicate-name route-cache check (cache cleared afterward); read-only dependency audits; synthetic in-memory relation/profile/empty-chat probes; docs-only diff and byte-preserved source-log prefix checks.
 - **Risk & rollback:** Documentation only; pre-existing failures and vulnerabilities remain open. Tests used process-level in-memory SQLite overrides because phpunit.xml inherits the dev DB otherwise. Revert this phase's single docs commit to remove the inventory/log import; local ignored setup is outside the commit. No later phase was started.
+
+### [Stage A] Move the checkout to D:
+- **Before:** The checkout and unpushed Phase 0 commit were on C:.
+- **After:** Copied the complete checkout, including .git and dependencies, to D:/Building-Management. Updated the ignored SQLite path. The external runtime and plan are outside the repository.
+- **Why:** A fresh clone would lose the unpushed audit commit.
+- **Files:** docs/REFACTOR_LOG.md; ignored local environment paths.
+- **Verified by:** Original b4abd08850c614d8b84afd687be0dc358e532abf on refactor/phase-0-audit, clean copied tree before the log merge, all source file paths present, every tracked file byte-matched, git fsck, before/after suite unchanged at 17 passed / 7 failed / 43 assertions. The C: checkout is removed after these checks pass.
+- **Risk & rollback:** No application change. Preserve .git and update local paths if relocating again.
+
+### [Stage A] Merge the revised baseline
+- **Before:** The log contained the old baseline and one Phase 0 entry.
+- **After:** Imported the supplied corrections and upgrade sequence, retained the Phase 0 entry, and removed authoring attributions. The external plan is the revised supplied version.
+- **Why:** Theme persistence must remain compatible, charge uniqueness must remain monthly, and upgrades must follow the new test suite.
+- **Files:** docs/REFACTOR_LOG.md.
+- **Verified by:** Compared supplied changes and retained entry; full suite before/after; staged wording check.
+- **Risk & rollback:** Documentation only. Revert this stage's commit to restore the earlier baseline; Phase 0 remains in history.
