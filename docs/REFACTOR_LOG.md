@@ -26,45 +26,52 @@ Rules:
 ## Baseline — audit findings before any change (2026-11-08)
 
 These are the known defects the refactor starts from, each with its cause.
-Status for all: OPEN — closed by the phase noted, which adds its own entries above this section.
+Findings remain open unless a closing commit is recorded below. The named phases own the remaining work.
 
 ### [Baseline] Cross-complex authorization missing
+- **Status:** CLOSED in 1505f640593e5257ee3c78557a6ff822b6612015.
 - **Before:** Controllers check only `auth`; `AccessMiddleware` checks "is manager anywhere" (no complex_id). Chat read/write endpoints have no membership check at all.
 - **Why it matters:** any logged-in user can read/send in another building's chat and a manager of one complex can manage others — data leak + unauthorized actions.
 - **Cause:** authorization was implemented as a global role flag instead of per-resource policy.
 - **Closed by:** Phase 2.
 
 ### [Baseline] Real-time chat is public
+- **Status:** CLOSED in 1505f640593e5257ee3c78557a6ff822b6612015.
 - **Before:** all chat events broadcast on one public `Channel('group')` shared by every complex; Pusher key hardcoded in `public/js/building.js`.
 - **Why it matters:** anyone with the (public) key receives every building's messages live.
 - **Cause:** private channels + channel authorization were never wired (`routes/channels.php` has only the default user channel; Echo config is commented out).
 - **Closed by:** Phase 2.
 
 ### [Baseline] State changes via GET
+- **Status:** CLOSED in 1505f640593e5257ee3c78557a6ff822b6612015.
 - **Before:** delete message, upgrade/downgrade role, cancel announcement, admin accept/reject, logout are `Route::get`.
 - **Why it matters:** no CSRF protection on mutations; a link can trigger them.
 - **Cause:** routes were written for link-click convenience, not HTTP semantics.
 - **Closed by:** Phase 2.
 
 ### [Baseline] Chat image upload unvalidated
+- **Status:** CLOSED in 1505f640593e5257ee3c78557a6ff822b6612015.
 - **Before:** `GroupController@store` stores any uploaded file with no mime/size validation; other uploads in the app do validate.
 - **Why it matters:** arbitrary/oversized file upload.
 - **Cause:** validation rules were only added to the later upload features.
 - **Closed by:** Phase 2.
 
 ### [Baseline] Predictable join links
+- **Status:** CLOSED in 1505f640593e5257ee3c78557a6ff822b6612015.
 - **Before:** `join_link` generated with `uniqid()` in `AdminController@accept`.
 - **Why it matters:** time-based and guessable — anyone can join any complex as resident.
 - **Cause:** `uniqid()` used as if it were a random token.
 - **Closed by:** Phase 2.
 
 ### [Baseline] Client-set payment amounts
+- **Status:** CLOSED for server-side amounts in 1505f640593e5257ee3c78557a6ff822b6612015. Verified gateway flow remains Phase 8.
 - **Before:** charge/cost payment endpoints accept `Amount` from the request and only block double payment.
 - **Why it matters:** a 1-unit payment records as fully paid.
 - **Cause:** amounts were treated as user input instead of being read from the charge record.
 - **Closed by:** Phase 2 (server-side amounts) + Phase 8 (verified gateway flow).
 
 ### [Baseline] Stored XSS in message-viewers list
+- **Status:** CLOSED in 1505f640593e5257ee3c78557a6ff822b6612015.
 - **Before:** viewer names injected via `innerHTML` in `public/js/building.js`; names are user-controlled (registration/profile).
 - **Why it matters:** a crafted name executes script in other residents' browsers.
 - **Cause:** one render path used `innerHTML` while the rest of the chat correctly uses `textContent`.
@@ -477,3 +484,11 @@ Status for all: OPEN — closed by the phase noted, which adds its own entries a
 - **Files:** app/Models/User.php; Security/HardeningTest.php.
 - **Verified by:** isFillable assertion and full authentication suite; reviewed every model fillable list.
 - **Risk & rollback:** Other credential/token fields found: User.password (hashed cast) and Complex.join_link (invitation token). Both remain unchanged as requested. No other service credential fields found. Revert the Phase 2 implementation commit and its dependent log closure together to roll back.
+
+### [Phase 2] Record baseline closures
+- **Before:** Baseline security findings named Phase 2 without a closing commit.
+- **After:** Seven findings reference implementation commit 1505f640593e5257ee3c78557a6ff822b6612015. Gateway verification remains Phase 8; the four remaining skipped tests belong to Phase 4.
+- **Why:** Closing references must identify the completed implementation after its hash exists.
+- **Files:** docs/REFACTOR_LOG.md.
+- **Verified by:** Compared the seven baseline findings with the eight implementation entries and the committed diff; no application changes in this entry.
+- **Risk & rollback:** Documentation only; revert this closure entry when reverting the implementation.
