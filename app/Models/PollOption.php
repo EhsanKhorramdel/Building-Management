@@ -12,7 +12,7 @@ class PollOption extends Model
     use HasFactory;
 
     protected $fillable = [
-        'poll_id', 'option_number', 'option'
+        'poll_id', 'option_number', 'option',
     ];
 
     // Relationships
@@ -23,6 +23,6 @@ class PollOption extends Model
 
     public function votes(): HasMany
     {
-        return $this->hasMany(Vote::class, 'role_id');
+        return $this->hasMany(Vote::class, 'poll_option_id');
     }
 }

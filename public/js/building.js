@@ -646,7 +646,7 @@ const handleChatClick = async () => {
     messagesContainer.innerHTML = "";
     currentDate = null;
     const lastMessageSeenId = await getLastMessageSeenId();
-    await getMessages(lastMessageSeenId);
+    await getMessages(lastMessageSeenId ?? 0);
     seenIfNotScroll();
     scrollToMessage(lastMessageSeenId);
 };

@@ -562,3 +562,90 @@ Findings remain open unless a closing commit is recorded below. The named phases
 - **Files:** docs/REFACTOR_LOG.md.
 - **Verified by:** Reviewed the six unique keys, period boundary test, rollback evidence and full suite (305 passed, 0 failed, 4 Phase 4 skips, 678 assertions). Pre-commit added-line style scans and diff whitespace checks pass.
 - **Risk & rollback:** Documentation only; reopen the finding if the schema commit is reverted. MySQL execution remains unverified as recorded above.
+### [Phase 4] Reject expired votes
+- **Before:** BuildingController.vote wrote votes after the poll deadline.
+- **After:** PollService.vote checks Poll.isExpired() before creating or changing a vote and returns the standard error/page redirect data. The new Persian message is: مهلت شرکت در این رای گیری به پایان رسیده است.
+- **Why:** The existing expiry method was never called from voting.
+- **Files:** app/Services/PollService.php; app/Http/Controllers/PollController.php; tests/Feature/KnownDefectsTest.php; Services/PollServiceTest.php; Backend/DefectRegressionTest.php.
+- **Verified by:** The expired-vote test is un-skipped; an expired change preserves the previous vote, while open voting/change tests pass unchanged. Redirect, status, page and message are tested.
+- **Risk & rollback:** Expired voting is now rejected as specified. Revert the Phase 4 implementation and its closure record together to restore the prior behavior.
+
+### [Phase 4] Preserve sparse poll option order
+- **Before:** pollCreate counted filled options, then stored the first N original positions, losing later options or inserting NULL.
+- **After:** PollService filters empty option values, sorts their numeric positions and stores sequential option_number values starting at 1. Fewer than two non-empty values returns the existing Persian error.
+- **Why:** Counting filled values did not identify their original positions.
+- **Files:** app/Services/PollService.php; app/Http/Requests/PollCreateRequest.php; tests/Feature/KnownDefectsTest.php; Services/PollServiceTest.php; Backend/DefectRegressionTest.php.
+- **Verified by:** The middle-blank test is un-skipped; sparse option2/option4 with blank option3 produces the original texts numbered 1/2; a single option creates no poll.
+- **Risk & rollback:** Empty options no longer shift/drop subsequent text. Revert the Phase 4 implementation to restore the former creation path.
+
+### [Phase 4] Handle empty chat and absent read receipts
+- **Before:** Empty groups crashed last-seen and anchor fetch; populated groups without receipts returned their latest visible message as a last-seen fallback.
+- **After:** lastSeen returns null when no surviving receipt exists, including populated groups without receipts, as required by item 1c. Empty anchor fetch returns messages=[] and null cursors. The single client guard passes cursor 0 for null; cursor 0 loads the latest page when messages exist.
+- **Why:** A missing receipt/message is a valid initial state, not a model to dereference. Loading the initial page remains possible without inventing a read receipt.
+- **Files:** app/Services/ChatService.php; app/Http/Controllers/GroupController.php; public/js/building.js; tests/Feature/KnownDefectsTest.php; Building/ChatTest.php; service/backend tests.
+- **Verified by:** The empty-last-seen test is un-skipped; empty anchor and unread populated-chat tests pass. The one existing ChatTest expectation was changed from latest-message fallback to null and renamed because item 1c explicitly changes that case; its fixtures and other business tests are unchanged.
+- **Risk & rollback:** The last_message_seen_id API now reports null without receipts. The one-line JS guard keeps initial loading usable. Revert the implementation and test expectation together if rolling back this contract.
+
+### [Phase 4] Preserve omitted optional profile fields
+- **Before:** ProfileController.update indexed ncode/phoneNumber even when validation omitted those keys, causing an undefined-key error.
+- **After:** array_key_exists controls updates to national_code and phone_number. Absent keys retain their values; present empty inputs become null through the existing request middleware and clear them. Name/email handling is unchanged.
+- **Why:** Nullable validation does not guarantee an optional key is present.
+- **Files:** app/Http/Controllers/ProfileController.php; tests/Feature/KnownDefectsTest.php; Backend/DefectRegressionTest.php.
+- **Verified by:** The omitted-fields test is un-skipped; populated optional fields survive omission and clear on explicit empty input. Existing ProfileTest.php is unchanged.
+- **Risk & rollback:** Omitted optional values no longer crash or clear data. Revert the guarded assignments and associated defect tests together to roll back.
+
+### [Phase 4] Move payload validation into FormRequests
+- **Before:** Domain and authentication controllers mixed validation, error bags and raw payload reads; several payload readers had no FormRequest.
+- **After:** Added AnnouncementRequest, ChargeRequest, IncidentalCostRequest, ChargePaymentRequest, IncidentalPaymentRequest, PollCreateRequest, VoteRequest, PollResultsRequest, PaymentsReportRequest, ChatStoreRequest, ChatEditRequest, ChatSeenRequest, MessageViewersRequest, UnitStoreRequest, UnitUpdateRequest, MembershipRequestStoreRequest and JoinBuildingRequest. RegistrationRequest, PasswordResetRequest, PasswordResetLinkRequest, PasswordUpdateRequest and PasswordConfirmationRequest cover the remaining authentication payload endpoints. Controllers read validated() data; session/user access and route-bound models remain request context.
+- **Why:** Validation and its named error bags belong at the request boundary rather than beside persistence logic.
+- **Files:** app/Http/Requests/*.php; domain controllers; UserController.php; Auth/{RegisteredUser,NewPassword,PasswordResetLink,Password,ConfirmablePassword}Controller.php.
+- **Verified by:** Compared all 71 existing custom message entries across eight request classes with the baseline: identical keys and strings. Existing error bags and validation rules are retained. Fields previously read without validation use nullable pass-through rules so this extraction does not tighten acceptance. Poll option keys are collected dynamically for the specified sparse-option fix. Existing auth/domain/security tests pass without assertion changes.
+- **Risk & rollback:** No Persian validation message was rewritten. Join-link validation retains its filled-input condition; missing vote selection keeps its existing business error flow. Bound-model/no-payload actions need no payload FormRequest; the unregistered profile delete method remains outside the route surface. Revert request signatures and rules with the implementation if rolling back.
+
+### [Phase 4] Extract uploads messages chat polls and payments
+- **Before:** Three filename blocks, seven message arrays and duplicated cursor queries lived in controllers; polls counted loaded votes in PHP; two controller methods created payments.
+- **After:** FileUploadService owns SHA1/timestamp/two-random-number naming and per-call directories. MessagePresenter owns the HTTP/new-event shape and the existing model-shaped edit/delete payload. ChatService owns cursor fetch, storage, viewers, receipts and last-seen lookup. PollService owns option creation, voting and aggregate results. PaymentService is the only application location that creates either payment type and retains server amounts and Jalali period fields.
+- **Why:** Repeated mapping and persistence logic made fixes diverge across endpoints.
+- **Files:** app/Services/{FileUploadService,MessagePresenter,ChatService,PollService,PaymentService}.php; GroupController.php; domain controllers; app/Events/*ChatMessage.php.
+- **Verified by:** Dedicated tests for all five services; stored names remain 40 lowercase hex characters plus detected extension in the same three directories. HTTP/new-message and model-shaped edit/delete event payloads remain distinct and unchanged. Cursor ordering, deletion filtering, ownership, both directions and exhausted cursors are tested. Payment monthly feature test is unchanged; service tests assert authoritative amounts, duplicate messages and current Jalali period fields. Chat text '0' retains its existing no-write path.
+- **Risk & rollback:** Public event names/private channel scoping and payload field names are unchanged. Revert service delegates, event adapters and their callers together if rolling back the extraction.
+
+### [Phase 4] Split the building controller by domain
+- **Before:** BuildingController had 772 physical lines and mixed dashboard, role, announcement, poll, cost, charge and report actions.
+- **After:** Deleted BuildingController. Routes target BuildingDashboardController (113 lines), RoleController (77), AnnouncementController (56), PollController (32), IncidentalCostController (51), ChargeController (56) and PaymentsReportController (44). GroupController falls from 401 to 97 lines. regenerateJoinLink stays with role/manager actions.
+- **Why:** Independent domain actions should not share one controller's validation, queries and persistence responsibilities.
+- **Files:** app/Http/Controllers/*Controller.php; routes/web.php.
+- **Verified by:** route:list was captured outside the repository as the first action. All 54 method/URI/name tuples match after extraction; 14 controller targets change, with action method names preserved. The existing 168-case authorization matrix remains unchanged and passes.
+- **Risk & rollback:** Member/manager middleware is applied on each new domain controller; admin access is untouched. No route name, HTTP method or URI changes. Revert routes and domain controller files together to roll back.
+
+### [Phase 4] Guard missing models and correct the two named relations
+- **Before:** Null-sensitive sites were BuildingController.index (announcement manager and resident user lookups), upgradeRole (complex), vote (option), buildingChargePayment (charge); GroupController index/store/last-seen/before/after (group), index (anchor), viewers/seen/edit (message), last-seen (final fallback); UserController.index (user) and update (exists-then-first race).
+- **After:** Dashboard uses keyed users/units, eager-loaded manager and null-safe existing N/A fallbacks; RoleController uses findOrFail for the parent complex. PollService/PaymentService use findOrFail for options/payables. GroupController resolves its group with firstOrFail; ChatService handles empty/missing anchors explicitly and finds messages with findOrFail; lastSeen returns a nullable scalar. UserController uses the authenticated user and firstOrFail after the unit existence check. Unit.userRoles references UserRole::class; PollOption.votes uses poll_option_id.
+- **Why:** Missing records must not be dereferenced, and relation keys must reference the actual model/table linkage.
+- **Files:** domain controllers; GroupController.php; UserController.php; ChatService.php; PollService.php; PaymentService.php; app/Models/{Unit,PollOption}.php; Backend/RelationsTest.php.
+- **Verified by:** Re-grep finds no chained first()-> or first()[...] dereferences in controllers. Remaining first() calls are explicitly checked or null-safe. Tests invoke both repaired relations and assert exact row IDs; missing chat resources produce explicit model/HTTP failures and empty groups return the specified payload.
+- **Risk & rollback:** Invalid/missing anchors in populated groups now return 404 instead of crashing; empty groups use the item-1c response. The unit-number lookup already had an N/A fallback and retains it. Unrelated audited relations were not changed. Revert these guards/relations with the implementation to roll back.
+
+### [Phase 4] Keep report query counts constant
+- **Before:** Measured the controller-only payments report at 12 queries for 2 units/4 payments and 42 for 8 units/16 payments. It queried roles, payment types and users inside loops. Dashboard scanned role/user/unit collections repeatedly; last-seen loaded receipt collections and queried messages per receipt.
+- **After:** PaymentsReportController eager-loads roles, users and both payment types before iteration: 6 queries at both sizes. The existing first-role-per-unit selection and charge-then-cost ordering are preserved. Dashboard groups roles by user and keys users/units once; poll options and announcement managers are eager-loaded. lastSeen uses one joined ordered query with LIMIT 1. Poll results use one grouped COUNT query, including zero-vote options.
+- **Why:** Query cost should not grow with the report's unit/payment count, and loaded collections should not be rescanned for every resident.
+- **Files:** PaymentsReportController.php; BuildingDashboardController.php; ChatService.php; PollService.php; Backend/QueryShapeTest.php; service tests.
+- **Verified by:** Same external fixture/harness measured before 12/42 and after 6/6; the HTTP endpoint test asserts 8/8 including authorization with lazy loading prohibited. Shared-unit first-role output is tested. Chat/poll service tests each assert one query and the expected ordering/aggregate SQL.
+- **Risk & rollback:** No all-roles report expansion or eligibility change. Eager loading uses more memory per report while removing repeated queries. Revert the query/presentation changes together to roll back.
+
+### [Phase 4] Remove unused controller scaffolding and client setup
+- **Before:** Dead implementations/comments and unused imports obscured the routed code.
+- **After:** Deleted AdminController.create/store/show/edit/update/destroy (six empty methods), GroupController.create/show/update (three empty methods), the commented validation/update block in ProfileController, the commented old rules in ProfileUpdateRequest and RegisteredUserController's commented HOME redirect. Removed the entire commented Echo setup from resources/js/bootstrap.js; direct Pusher remains the active client.
+- **Why:** None of those methods/blocks had a live route or executable behavior; keeping Echo setup suggested a second client that was never initialized.
+- **Files:** AdminController.php; GroupController.php; ProfileController.php; ProfileUpdateRequest.php; Auth/RegisteredUserController.php; resources/js/bootstrap.js; controller/event imports.
+- **Verified by:** Route tuple comparison and full suite. Removed imports were checked against executable code per file: AdminController Request; PaymentsReportController ChargePayment/PaymentAdditionalCost/User/UserRole; ProfileController Rule/User; UserController User; AuthenticatedSessionController RouteServiceProvider; NewPasswordController Rules; PasswordController Rules\Password; PasswordResetLinkController Request; RegisteredUserController RouteServiceProvider/Request/Rules; NewChatMessage/EditChatMessage/DeleteChatMessage Channel (used only in old docblocks, updated to PrivateChannel). Three Auth controller ValidationException imports introduced by formatting were docblock-only; their generic throws annotations/imports were removed too.
+- **Risk & rollback:** No registered resource action was deleted. Axios and the direct Pusher client are retained; no Echo dependency or broadcasting configuration was changed. Revert the listed deletions if restoring that source layout.
+
+### [Phase 4] Add service regression evidence and update test coverage notes
+- **Before:** Phase 3 had 305 passed, 4 skipped, 678 assertions; no tests targeted extracted services or constant query counts.
+- **After:** Added Services/{FileUploadService,MessagePresenter,ChatService,PollService,PaymentService}Test.php and Backend/{Relations,QueryShape,DefectRegression}Test.php: 23 new cases. Four skipped tests are enabled. tests/README.md records zero skips and the service/query coverage.
+- **Why:** Existing endpoint tests protect behavior while service tests check the extracted boundaries and query shapes directly.
+- **Files:** tests/Feature/Services/*.php; tests/Feature/Backend/*.php; tests/Feature/KnownDefectsTest.php; tests/Feature/Building/ChatTest.php; tests/README.md; docs/REFACTOR_LOG.md.
+- **Verified by:** Full suite: 332 passed, 0 failed, 0 skipped, 776 assertions. Existing feature tests edited: KnownDefectsTest.php removes only four skip declarations; Building/ChatTest.php changes only the no-receipts test name/expected null value required by item 1c. All other pre-existing feature files, including the monthly payment and authorization matrix tests, are unchanged. SQLite migrate:fresh + DemoSeeder, Blade compilation, npm run build and node syntax check pass. Every Artisan command used D:/tools/php-8.3/php.exe (PHP 8.3.36, Laravel 12.71.0).
+- **Risk & rollback:** No dependencies or migrations changed. Revert the implementation and matching service/defect tests together. Browser QA remains in its planned phase.

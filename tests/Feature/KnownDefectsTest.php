@@ -53,7 +53,7 @@ test('expired polls reject new votes', function () {
     $this->actingAs($building->resident()->user)->post(route('building.vote'), ['voteRadio' => $option->id]);
 
     $this->assertDatabaseCount('votes', 0);
-})->skip('Baseline: Voting after poll expiry + option-shift bug; Phase 4 enforces expiry.');
+});
 
 test('a blank middle poll option does not discard later options', function () {
     $building = new BuildingContext;
@@ -64,14 +64,14 @@ test('a blank middle poll option does not discard later options', function () {
     ])->assertSessionHasNoErrors();
 
     expect(PollOption::orderBy('option_number')->pluck('option')->all())->toBe(['Thursday', 'Friday']);
-})->skip('Baseline: Voting after poll expiry + option-shift bug; Phase 4 filters options by value.');
+});
 
 test('an empty chat returns no last-seen message without an error', function () {
     $building = new BuildingContext;
 
     $this->actingAs($building->resident()->user)->getJson('/dashboard/building/'.$building->complex->id.'/lastMessageSeenId')
         ->assertOk()->assertJsonPath('last_message_seen_id', null);
-})->skip('Baseline: Null-dereference crashes; Phase 4 handles an empty group.');
+});
 
 test('GET cannot delete a chat message', function () {
     $building = new BuildingContext;
@@ -86,4 +86,4 @@ test('profile updates may omit optional national code and phone fields', functio
 
     $this->actingAs($user)->from('/dashboard')->patch(route('profile.update'), ['name' => 'Resident', 'email' => $user->email])
         ->assertRedirect('/dashboard')->assertSessionHasNoErrors();
-})->skip('Phase 0 audit B07: optional profile fields cause a 500; Phase 4 handles absent nullable fields.');
+});

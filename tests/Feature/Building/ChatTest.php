@@ -103,10 +103,10 @@ test('marking a message seen twice keeps a single receipt and excludes its sende
         ->assertOk()->assertJsonPath('last_message_seen_id', $message->id);
 });
 
-test('last seen falls back to the latest surviving message when no receipt exists', function () {
+test('last seen is null when no receipt exists', function () {
     $message = Message::factory()->create(['group_id' => $this->building->group->id, 'user_id' => $this->building->manager->id]);
     Message::factory()->create(['group_id' => $this->building->group->id, 'user_id' => $this->building->manager->id, 'deleted' => true]);
 
     $this->actingAs($this->resident->user)->getJson('/dashboard/building/'.$this->building->complex->id.'/lastMessageSeenId')
-        ->assertOk()->assertJsonPath('last_message_seen_id', $message->id);
+        ->assertOk()->assertJsonPath('last_message_seen_id', null);
 });

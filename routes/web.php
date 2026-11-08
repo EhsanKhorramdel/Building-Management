@@ -1,9 +1,15 @@
 <?php
 
 use App\Http\Controllers\AdminController;
-use App\Http\Controllers\BuildingController;
+use App\Http\Controllers\AnnouncementController;
+use App\Http\Controllers\BuildingDashboardController;
+use App\Http\Controllers\ChargeController;
 use App\Http\Controllers\GroupController;
+use App\Http\Controllers\IncidentalCostController;
+use App\Http\Controllers\PaymentsReportController;
+use App\Http\Controllers\PollController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\RoleController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -32,19 +38,19 @@ Route::post('/dashboard/building/group/edit', [GroupController::class, 'edit']);
 Route::post('/dashboard/building/group/seen/', [GroupController::class, 'seen']);
 Route::delete('/dashboard/building/group/{Message}', [GroupController::class, 'destroy']);
 
-Route::get('/dashboard/building/{complex}', [BuildingController::class, 'index'])->name('building');
-Route::post('/dashboard/building/upgradeRole/{userRole}', [BuildingController::class, 'upgradeRole'])->name('building.upgradeRole');
-Route::post('/dashboard/building/downgradeRole/{complex}', [BuildingController::class, 'downgradeRole'])->name('building.downgradeRole');
-Route::post('/dashboard/building/{complex}/NotificationRegistration', [BuildingController::class, 'NotificationRegistration'])->name('building.NotificationRegistration');
-Route::post('/dashboard/building/cancelNotification/{announcement}', [BuildingController::class, 'cancelNotification'])->name('building.cancelNotification');
-Route::post('/dashboard/building/poll/{complexId}', [BuildingController::class, 'pollCreate'])->name('building.poll');
-Route::post('/dashboard/building/vote', [BuildingController::class, 'vote'])->name('building.vote');
-Route::post('/dashboard/building/vote/Result', [BuildingController::class, 'voteResult'])->name('building.voteResult');
-Route::post('/dashboard/building/{complex}/incidentalCost', [BuildingController::class, 'incidentalCost'])->name('building.incidentalCost');
-Route::post('/dashboard/building/incidentalCost/payment', [BuildingController::class, 'incidentalCostPayment'])->name('building.incidentalCostPayment');
-Route::post('/dashboard/building/{complex}/buildingCharge', [BuildingController::class, 'buildingCharge'])->name('building.buildingCharge');
-Route::post('/dashboard/building/buildingCharge/payment', [BuildingController::class, 'buildingChargePayment'])->name('building.buildingChargePayment');
-Route::post('/dashboard/building/payments', [BuildingController::class, 'payments'])->name('building.payments');
+Route::get('/dashboard/building/{complex}', [BuildingDashboardController::class, 'index'])->name('building');
+Route::post('/dashboard/building/upgradeRole/{userRole}', [RoleController::class, 'upgradeRole'])->name('building.upgradeRole');
+Route::post('/dashboard/building/downgradeRole/{complex}', [RoleController::class, 'downgradeRole'])->name('building.downgradeRole');
+Route::post('/dashboard/building/{complex}/NotificationRegistration', [AnnouncementController::class, 'NotificationRegistration'])->name('building.NotificationRegistration');
+Route::post('/dashboard/building/cancelNotification/{announcement}', [AnnouncementController::class, 'cancelNotification'])->name('building.cancelNotification');
+Route::post('/dashboard/building/poll/{complexId}', [PollController::class, 'pollCreate'])->name('building.poll');
+Route::post('/dashboard/building/vote', [PollController::class, 'vote'])->name('building.vote');
+Route::post('/dashboard/building/vote/Result', [PollController::class, 'voteResult'])->name('building.voteResult');
+Route::post('/dashboard/building/{complex}/incidentalCost', [IncidentalCostController::class, 'incidentalCost'])->name('building.incidentalCost');
+Route::post('/dashboard/building/incidentalCost/payment', [IncidentalCostController::class, 'incidentalCostPayment'])->name('building.incidentalCostPayment');
+Route::post('/dashboard/building/{complex}/buildingCharge', [ChargeController::class, 'buildingCharge'])->name('building.buildingCharge');
+Route::post('/dashboard/building/buildingCharge/payment', [ChargeController::class, 'buildingChargePayment'])->name('building.buildingChargePayment');
+Route::post('/dashboard/building/payments', [PaymentsReportController::class, 'payments'])->name('building.payments');
 
 Route::get('/dashboard', [UserController::class, 'index'])->name('dashboard');
 Route::post('/dashboard/joinBuilding', [UserController::class, 'store'])->name('dashboard.store');
@@ -62,6 +68,6 @@ Route::middleware('auth')->group(function () {
     // Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-Route::post('/dashboard/building/{complex}/join-link', [BuildingController::class, 'regenerateJoinLink'])->name('building.regenerateJoinLink');
+Route::post('/dashboard/building/{complex}/join-link', [RoleController::class, 'regenerateJoinLink'])->name('building.regenerateJoinLink');
 
 require __DIR__.'/auth.php';

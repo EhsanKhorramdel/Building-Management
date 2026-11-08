@@ -3,7 +3,7 @@
 namespace App\Events;
 
 use App\Models\Message;
-use Illuminate\Broadcasting\Channel;
+use App\Services\MessagePresenter;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
@@ -27,7 +27,7 @@ class DeleteChatMessage implements ShouldBroadcast
     /**
      * Get the channels the event should broadcast on.
      *
-     * @return array<int, Channel>
+     * @return array<int, PrivateChannel>
      */
     public function broadcastOn(): array
     {
@@ -42,5 +42,10 @@ class DeleteChatMessage implements ShouldBroadcast
     public function broadcastAs(): string
     {
         return 'DeleteChatMessage';
+    }
+
+    public function broadcastWith(): array
+    {
+        return ['deletedMessage' => app(MessagePresenter::class)->broadcastModel($this->deletedMessage)];
     }
 }

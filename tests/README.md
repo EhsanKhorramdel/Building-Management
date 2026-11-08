@@ -65,15 +65,8 @@ The security matrix covers 28 endpoints across six actor roles (168 cases), incl
 
 The monthly test uses Carbon::setTestNow for Jalali 1405-01-31 and 1405-02-01, which both fall in April 2026. It rejects a second payment in the first Jalali month and accepts a payment of the same charge in the next. A Gregorian-month or lifetime unique rule would fail this test.
 
-## Known-defect skips
+## Defect regression coverage
 
-`Feature/KnownDefectsTest.php` contains executable expectations for desired behavior, each remaining skip names its log reference and fixing phase. These skips are not passing assertions about the defective behavior.
-
-| Test | Reason / phase |
-| --- | --- |
-| expired polls reject new votes | Voting after poll expiry; Phase 4 |
-| a blank middle poll option does not discard later options | Option-shift bug; Phase 4 |
-| an empty chat returns no last-seen message without an error | Null-dereference crashes; Phase 4 |
-| profile updates may omit optional national code and phone fields | Phase 0 audit B07, missing nullable keys; Phase 4 |
+All nine original known-defect tests are active and passing. Phase 4 closes expired voting, sparse poll options, empty chat and omitted optional profile fields. No tests remain skipped. The service tests cover upload storage/naming, message and broadcast payloads, chat cursor boundaries, poll aggregate results and Jalali payment periods. Backend query-shape tests keep the payments endpoint at eight queries for both two and eight populated units.
 
 Five stock tests against unregistered GET/PATCH/DELETE `/profile` were removed. Five replacements cover the registered PATCH `/dashboard/update` route, including national-code/phone fields. Login and registration assert `/dashboard`, and admin login asserts `/adminPanel`; the application routes and redirects were not changed.

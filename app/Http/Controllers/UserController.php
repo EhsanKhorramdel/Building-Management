@@ -3,12 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Http\Middleware\AccessMiddleware;
+use App\Http\Requests\JoinBuildingRequest;
+use App\Http\Requests\MembershipRequestStoreRequest;
+use App\Http\Requests\UnitStoreRequest;
+use App\Http\Requests\UnitUpdateRequest;
 use App\Models\Complex;
 use App\Models\MembershipRequest;
 use App\Models\Unit;
-use App\Models\User;
 use App\Models\UserRole;
-use Illuminate\Http\Request;
 
 class UserController extends Controller
 {
@@ -24,7 +26,7 @@ class UserController extends Controller
     public function index()
     {
         $userId = auth()->id();
-        $userName = User::where('id', $userId)->first()->name;
+        $userName = auth()->user()->name;
 
         $results = UserRole::where('user_id', $userId)
             ->where('active', 1)
@@ -47,15 +49,13 @@ class UserController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(JoinBuildingRequest $request)
     {
-        if ($request->filled('link')) {
-            $request->validate([
-                'link' => 'string',
-            ]);
+        $data = $request->validated();
+        if (filled($data['link'] ?? null)) {
 
             $userId = auth()->id();
-            $link = $request->link;
+            $link = $data['link'];
 
             $complex = Complex::where('join_link', $link)->first();
 
@@ -93,41 +93,18 @@ class UserController extends Controller
         return redirect()->back()->with(compact('message', 'status', 'page'));
     }
 
-    public function register(Request $request)
+    public function register(MembershipRequestStoreRequest $request)
     {
-        $rules = [
-            'name' => 'required|string',
-            'address' => 'required|string',
-            'floors' => 'required|integer|min:1',
-            'units' => 'required|integer|min:1',
-        ];
-
-        $messages = [
-            'name.required' => 'فیلد نام الزامی است.',
-            'name.string' => 'فیلد نام باید یک رشته باشد.',
-
-            'address.required' => 'فیلد آدرس الزامی است.',
-            'address.string' => 'فیلد آدرس باید یک رشته باشد.',
-
-            'floors.required' => 'فیلد تعداد طبقات الزامی است.',
-            'floors.integer' => 'فیلد تعداد طبقات باید عدد صحیح باشد.',
-            'floors.min' => 'تعداد طبقات باید بزرگتر یا مساوی ۱ باشد.',
-
-            'units.required' => 'فیلد تعداد واحدها الزامی است.',
-            'units.integer' => 'فیلد تعداد واحدها باید عدد صحیح باشد.',
-            'units.min' => 'تعداد واحدها باید بزرگتر یا مساوی ۱ باشد.',
-        ];
-
-        $validated = $request->validateWithBag('registerBuilding', $rules, $messages);
+        $data = $request->validated();
 
         $userId = auth()->id();
 
         $membershipRequest = [
             'user_id' => $userId,
-            'name' => $request->name,
-            'address' => $request->address,
-            'number_of_floors' => $request->floors,
-            'number_of_units' => $request->units,
+            'name' => $data['name'] ?? null,
+            'address' => $data['address'] ?? null,
+            'number_of_floors' => $data['floors'] ?? null,
+            'number_of_units' => $data['units'] ?? null,
         ];
 
         MembershipRequest::create($membershipRequest);
@@ -142,11 +119,12 @@ class UserController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request)
+    public function update(UnitUpdateRequest $request)
     {
-        $complexId = $request->complexId;
+        $data = $request->validated();
+        $complexId = $data['complexId'] ?? null;
         $unitExists = Unit::where('complex_id', $complexId)
-            ->where('unit_number', $request->currentUnitNumber)
+            ->where('unit_number', $data['currentUnitNumber'] ?? null)
             ->exists();
 
         if (! $unitExists) {
@@ -155,7 +133,7 @@ class UserController extends Controller
             $page = 'home';
         } else {
             $newUnitExists = Unit::where('complex_id', $complexId)
-                ->where('unit_number', $request->newUnitNumber)
+                ->where('unit_number', $data['newUnitNumber'] ?? null)
                 ->exists();
 
             if ($newUnitExists) {
@@ -164,12 +142,12 @@ class UserController extends Controller
                 $page = 'home';
             } else {
                 $unitToUpdate = Unit::where('complex_id', $complexId)
-                    ->where('unit_number', $request->currentUnitNumber)
-                    ->first();
+                    ->where('unit_number', $data['currentUnitNumber'] ?? null)
+                    ->firstOrFail();
 
-                $unitToUpdate->unit_number = $request->newUnitNumber;
-                $unitToUpdate->zip_code = $request->zipCode;
-                $unitToUpdate->floor_number = $request->floorNumber;
+                $unitToUpdate->unit_number = $data['newUnitNumber'] ?? null;
+                $unitToUpdate->zip_code = $data['zipCode'] ?? null;
+                $unitToUpdate->floor_number = $data['floorNumber'] ?? null;
                 $unitToUpdate->save();
 
                 $message = ' اطلاعات واحد شما بروزرسانی شد.';
@@ -181,20 +159,21 @@ class UserController extends Controller
         return redirect()->back()->with(compact('message', 'status', 'page'));
     }
 
-    public function addUnit(Request $request)
+    public function addUnit(UnitStoreRequest $request)
     {
+        $data = $request->validated();
         $userId = auth()->id();
-        $complexId = $request->complexId;
+        $complexId = $data['complexId'] ?? null;
 
         $unit = [
             'complex_id' => $complexId,
-            'zip_code' => $request->zipCode,
-            'unit_number' => $request->unitNumber,
-            'floor_number' => $request->floorNumber,
+            'zip_code' => $data['zipCode'] ?? null,
+            'unit_number' => $data['unitNumber'] ?? null,
+            'floor_number' => $data['floorNumber'] ?? null,
         ];
 
         $newUnit = Unit::firstOrNew(
-            ['unit_number' => $request->unitNumber, 'complex_id' => $complexId],
+            ['unit_number' => $data['unitNumber'] ?? null, 'complex_id' => $complexId],
             $unit
         );
 
