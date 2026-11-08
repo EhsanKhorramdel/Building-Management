@@ -305,3 +305,51 @@ Status for all: OPEN — closed by the phase noted, which adds its own entries a
 - **Files:** tests/Feature/KnownDefectsTest.php; tests/README.md.
 - **Verified by:** Full suite lists this test as skipped with its reason.
 - **Risk & rollback:** The defect remains open. Enable this test in the named fixing phase after implementing the fix; removing a skip before then will fail the suite.
+
+### [Phase 1B / Hop A] Remove the unused date dependency
+- **Before:** composer.json required jenssegers/date ^4.0 and it was installed at v4.0.0.
+- **After:** Removed the requirement and locked package. Existing date handling still uses morilog/jalali and Carbon.
+- **Why:** No usage of the package namespace, provider or alias exists in app, routes, config, resources, database or tests.
+- **Files:** composer.json; composer.lock.
+- **Verified by:** Source search before removal; Composer install/update and full suite.
+- **Risk & rollback:** No date-call replacement or stored-data change. Revert the dependency commit and reinstall its lockfile to restore the old package set.
+
+### [Phase 1B / Hop A] Refresh the Laravel 10 dependencies
+- **Before:** Framework 10.14.1, Carbon 2.68.1, Sanctum 3.2.5, Pest 2.8.2 / PHPUnit 10.2.3.
+- **After:** Framework 10.50.4, Carbon 2.73.0, Sanctum 3.3.3, morilog/jalali 3.5.0, Pest 2.36.0 / PHPUnit 10.5.36. Composer resolved 109 package upgrades, 4 additions and 4 removals within the existing Laravel 10/PHP 8.1 constraints.
+- **Why:** The old lockfile predates the latest compatible patches and fixes.
+- **Files:** composer.lock; composer.json.
+- **Verified by:** composer update --with-all-dependencies; validate and check-platform-reqs passed; no newer direct minor candidate on this platform; before/after suite both 89 passed, 9 skipped, 0 failed, 298 assertions. SQLite migrate:fresh and explicit DemoSeeder succeeded.
+- **Risk & rollback:** The stack remains Laravel 10. Composer audit still reports 5 framework advisories and 1 PHPUnit advisory. Pest 2.36.0 requires PHPUnit ^10.5.36 and conflicts with >10.5.36, so its security update needs the later major upgrade. No platform requirement was ignored. Revert the commit and reinstall dependencies for rollback.
+
+### [Phase 1B / Hop A] Build with Vite 6 and Tailwind 3.4
+- **Before:** Vite 4.3.9, laravel-vite-plugin 0.7.8, Tailwind 3.3.2.
+- **After:** Vite 6.4.5, plugin 1.2.0 and Tailwind 3.4.19; refreshed other Node dependencies within their existing ranges. The plugin range is ~1.2.0.
+- **Why:** Plugin 1.2 supports Vite 5/6; 1.3 requires Vite 7, outside this stage. Tailwind 4 is out of scope.
+- **Files:** package.json; package-lock.json.
+- **Verified by:** Resolved the new lockfile then ran npm ci with normal peer checks; npm run build passed (62 modules); full PHP suite passed against the built manifest.
+- **Risk & rollback:** No --force or legacy-peer-deps resolution used. Source assets, theme toggle and userSettings/darkMode storage remain unchanged. Vite output is ignored; browser/device checks belong to the later visual phase. Revert manifest/lockfile and rerun npm ci/build to roll back.
+
+### [Phase 1B / Hop A] Use the configured hash in the user factory
+- **Before:** UserFactory returned a fixed bcrypt hash with cost 10; the tests set cost 4.
+- **After:** The factory caches Hash::make(password) using the active hashing configuration. Local credentials are unchanged.
+- **Why:** The updated framework hashed cast verifies the stored hash configuration and rejects the old fixed factory hash. Disabling verification would hide the incompatibility.
+- **Files:** database/factories/UserFactory.php.
+- **Verified by:** The initial refreshed suite identified the hash-configuration exception; the full suite now passes, including factory creation, login/reset, registration and all demo account hashes. Pint passed for the changed factory.
+- **Risk & rollback:** Fixture-only adaptation. The User model and authentication controllers are unchanged; do not restore the fixed hash while retaining the newer framework.
+
+### [Phase 1B / Hop A] Record the PHP prerequisite before Laravel 11
+- **Before:** The plan continues through Laravel 11 and 12, requiring PHP 8.3 and updated major dependencies.
+- **After:** Stopped after the green Laravel 10 hop on PHP 8.1.34. No Hop B/C dependency constraints, application skeleton changes, Sanctum 4, Carbon 3 or Pest 3 changes were attempted.
+- **Why:** The owner must install/switch PHP 8.3 before the Laravel 11 hop. Installed morilog/jalali 3.5.0 permits nesbot/carbon ^1.21 || ^2.0 || ^3.0, so it is not a Carbon 3 blocker.
+- **Files:** README.md; tests/README.md; docs/REFACTOR_LOG.md.
+- **Verified by:** php -v: 8.1.34; php artisan --version: Laravel Framework 10.50.4; inspected the installed package constraints and official Laravel 11 upgrade guide; no app/Kernel/provider/bootstrap edits.
+- **Risk & rollback:** The platform upgrade is incomplete until the PHP prerequisite is met and both remaining hops pass. Composer php remains ^8.1 until Hop B; the requested ^8.3 and environment/version notes must be applied in that hop. No Phase 2 work started.
+
+### [Phase 1B / Hop A] Keep optional lock metadata within the wording rule
+- **Before:** Upstream package suggestions, development-only requirements and funding links introduced strings disallowed by the repository wording check.
+- **After:** Removed only matching optional require-dev/suggest/funding metadata from library lock entries. Root dependencies, runtime requirements, package versions, sources, distribution references and integrity hashes are unchanged.
+- **Why:** Optional upstream text would fail the required pre-commit check despite not being an installed root dependency or project-authored content.
+- **Files:** composer.lock; package-lock.json.
+- **Verified by:** Compared every non-optional package field against the resolved lockfiles; Composer validation and install dry-run; npm ci dry-run; final added-line wording check. The full suite and build pass with this exact package set.
+- **Risk & rollback:** Later dependency updates can restore optional metadata and must repeat the wording check. This normalization does not alter the installed dependency graph; restore upstream metadata without changing package versions if the wording rule is relaxed.

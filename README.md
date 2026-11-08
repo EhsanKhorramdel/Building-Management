@@ -2,6 +2,8 @@
 
 Run the test suite with `composer test`. [Test setup and local demo data](tests/README.md) documents the isolated SQLite connection, optional demo seeder and local accounts.
 
+The current lockfiles were verified with PHP 8.1.34, Laravel 10.50.4, Node 22.17.0, Vite 6.4.5 and Tailwind 3.4.19. PHP 8.3 must be installed before continuing the Laravel 11/12 upgrade. The existing HTTP Kernel, middleware aliases and service providers remain in use.
+
 <p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
 
 <p align="center">
