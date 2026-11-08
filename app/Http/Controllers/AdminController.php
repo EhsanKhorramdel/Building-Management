@@ -8,6 +8,7 @@ use App\Models\Group;
 use App\Models\MembershipRequest;
 use App\Models\UserRole;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class AdminController extends Controller
@@ -30,32 +31,38 @@ class AdminController extends Controller
 
     public function accept(MembershipRequest $MembershipRequest)
     {
-        $complex = [
-            'name' => $MembershipRequest->name,
-            'address' => $MembershipRequest->address,
-            'location' => $MembershipRequest->location,
-            'number_of_floors' => $MembershipRequest->number_of_floors,
-            'number_of_units' => $MembershipRequest->number_of_units,
-            'join_link' => Str::random(32),
-        ];
-        $newComplex = Complex::Create($complex);
+        $accepted = DB::transaction(function () use ($MembershipRequest) {
+            $request = MembershipRequest::whereKey($MembershipRequest->id)->lockForUpdate()->firstOrFail();
+            if ($request->request_status !== 'pending') {
+                return false;
+            }
 
-        $userRole = [
-            'complex_id' => $newComplex->id,
-            'user_id' => $MembershipRequest->user_id,
-            'role' => 'manager',
+            $complex = Complex::create([
+                'name' => $request->name,
+                'address' => $request->address,
+                'location' => $request->location,
+                'number_of_floors' => $request->number_of_floors,
+                'number_of_units' => $request->number_of_units,
+                'join_link' => Str::random(32),
+            ]);
+            UserRole::create([
+                'complex_id' => $complex->id,
+                'user_id' => $request->user_id,
+                'role' => 'manager',
+            ]);
+            Group::create([
+                'complex_id' => $complex->id,
+                'group_name' => $request->name,
+            ]);
+            $request->request_status = 'accepted';
+            $request->save();
 
-        ];
-        UserRole::Create($userRole);
+            return true;
+        });
 
-        $group = [
-            'complex_id' => $newComplex->id,
-            'group_name' => $MembershipRequest->name,
-        ];
-        Group::Create($group);
-
-        $MembershipRequest->request_status = 'accepted';
-        $MembershipRequest->save();
+        if (! $accepted) {
+            return redirect()->back()->with(['status' => 'error', 'message' => 'این درخواست قبلاً بررسی شده است.']);
+        }
 
         return redirect()->back();
     }

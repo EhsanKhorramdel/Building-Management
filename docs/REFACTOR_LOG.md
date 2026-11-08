@@ -547,3 +547,10 @@ Findings remain open unless a closing commit is recorded below. The named phases
 - **Files:** tests/Feature/Database/ConstraintsTest.php; MigrationTest.php; ScaffoldingTest.php; docs/REFACTOR_LOG.md.
 - **Verified by:** All commands use D:/tools/php-8.3/php.exe (8.3.36), Laravel 12.71.0. The phase report includes an offline Connection::pretend SQL appendix for new MySQL up/down statements; no server version or live MySQL execution is claimed. The preview assumes MySQL 8 grammar; data-dependent updates/deletes execute in the SQLite upgrade test, not in the preview.
 - **Risk & rollback:** Live MySQL migration/rollback remains unverified until a server is available. Existing migrations were not edited; rollback removes schema additions but cannot restore duplicate rows.
+### [Phase 3] Make building approval atomic and guard decided requests
+- **Before:** AdminController.accept created Complex, UserRole and Group independently and accepted already-decided requests repeatedly.
+- **After:** A DB::transaction locks and reloads the request, permits only pending status, creates all three records and marks accepted together. Accepted/rejected requests return the existing page with a Persian error message and no writes.
+- **Why:** Repeated requests created duplicate complexes; a late insert failure left partial buildings or manager roles.
+- **Files:** app/Http/Controllers/AdminController.php; tests/Feature/Admin/MembershipDecisionTest.php.
+- **Verified by:** Sequential double acceptance leaves exactly one complex, manager role and group; a rejected request remains rejected; an injected NULL group name raises QueryException and rolls back the complex, role and request decision. Full suite: 305 passed, 0 failed, 4 skipped, 678 assertions (arrival: 287/0/4, 599 assertions). All four skips remain Phase 4.
+- **Risk & rollback:** Re-accepting any decided request now returns an error rather than creating another building. No reject-action or route changes. Revert this controller/test commit to restore the former approval behavior; previously created duplicate buildings are not removed by this change.
