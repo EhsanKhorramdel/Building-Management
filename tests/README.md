@@ -36,7 +36,7 @@ The demo contains one complex, two charges (the first paid this Jalali month by 
 
 ## Coverage
 
-Tests use the registered URLs and methods. Existing GET mutations are exercised only to cover their business effects; the desired method restriction is skipped until Phase 2. Empty scaffold methods without routes and the unregistered profile edit/delete actions have no public endpoint to exercise.
+Tests use the registered URLs and methods. Mutations now use POST or DELETE with CSRF. Existing business assertions were updated to those verbs without changing their expected outcomes. Empty scaffold methods without routes and the unregistered profile edit/delete actions have no public endpoint to exercise.
 
 | Area | Test file |
 | --- | --- |
@@ -61,22 +61,19 @@ Tests use the registered URLs and methods. Existing GET mutations are exercised 
 | Factory FK graphs and memory connection | Feature/FactoriesTest.php |
 | Demo contents, default seed safety, environment guard | Feature/DemoSeederTest.php |
 
+The security matrix covers 28 endpoints across six actor roles (168 cases), including foreign managers/residents and global admins. Mutation-method tests enable the CSRF middleware and assert 419 without a token.
+
 The monthly test uses Carbon::setTestNow for Jalali 1405-01-31 and 1405-02-01, which both fall in April 2026. It rejects a second payment in the first Jalali month and accepts a payment of the same charge in the next. A Gregorian-month or lifetime unique rule would fail this test.
 
 ## Known-defect skips
 
-`Feature/KnownDefectsTest.php` contains executable expectations for desired behavior, each skipped with its log reference and fixing phase. These skips are not passing assertions about the defective behavior.
+`Feature/KnownDefectsTest.php` contains executable expectations for desired behavior, each remaining skip names its log reference and fixing phase. These skips are not passing assertions about the defective behavior.
 
 | Test | Reason / phase |
 | --- | --- |
-| chat history rejects a member of another complex | Cross-complex authorization missing; Phase 2 |
-| a manager cannot publish an announcement in another complex | Cross-complex authorization missing; Phase 2 |
-| chat rejects a non-image upload | Chat image upload unvalidated; Phase 2 |
-| incidental cost payments use the recorded share instead of a submitted amount | Client-set payment amounts; Phase 2 |
 | expired polls reject new votes | Voting after poll expiry; Phase 4 |
 | a blank middle poll option does not discard later options | Option-shift bug; Phase 4 |
 | an empty chat returns no last-seen message without an error | Null-dereference crashes; Phase 4 |
-| GET cannot delete a chat message | State changes via GET; Phase 2 |
 | profile updates may omit optional national code and phone fields | Phase 0 audit B07, missing nullable keys; Phase 4 |
 
 Five stock tests against unregistered GET/PATCH/DELETE `/profile` were removed. Five replacements cover the registered PATCH `/dashboard/update` route, including national-code/phone fields. Login and registration assert `/dashboard`, and admin login asserts `/adminPanel`; the application routes and redirects were not changed.

@@ -2,9 +2,9 @@
 
 namespace App\Events;
 
+use App\Models\Message;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
-use Illuminate\Broadcasting\PresenceChannel;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
@@ -13,6 +13,7 @@ use Illuminate\Queue\SerializesModels;
 class NewChatMessage implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
+
     public $message;
 
     /**
@@ -26,19 +27,17 @@ class NewChatMessage implements ShouldBroadcast
     /**
      * Get the channels the event should broadcast on.
      *
-     * @return array<int, \Illuminate\Broadcasting\Channel>
+     * @return array<int, Channel>
      */
     public function broadcastOn(): array
     {
         return [
-            new Channel('group')
+            new PrivateChannel('group.'.Message::findOrFail($this->message['message_id'])->group->complex_id),
         ];
     }
 
     /**
      * Get the broadcast event name.
-     *
-     * @return string
      */
     public function broadcastAs(): string
     {

@@ -22,9 +22,11 @@
 
                         <div class="building-box-footer flex justify-center gap-2.5">
                             @if ($isManager)
-                                <a class="text-center"
-                                    href="{{ URL::route('building.cancelNotification', $announcement->id) }}">لغو
-                                    اعلان</a>
+                                <form method="POST" action="{{ URL::route('building.cancelNotification', $announcement->id) }}">
+                    @csrf
+                    <button type="submit" class="text-center"
+                                    >لغو
+                                    اعلان</button></form>
                             @endif
                             <a class="text-center open-Btn">مشاهده تصویر</a>
                             <p class="hidden">

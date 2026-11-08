@@ -2,20 +2,22 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use App\Models\MembershipRequest;
-use App\Models\UserRole;
+use App\Http\Middleware\AccessMiddleware;
 use App\Models\Complex;
-use App\Models\User;
+use App\Models\MembershipRequest;
 use App\Models\Unit;
-use Illuminate\Auth\Notifications\ResetPassword;
+use App\Models\User;
+use App\Models\UserRole;
+use Illuminate\Http\Request;
 
 class UserController extends Controller
 {
     public function __construct()
     {
         $this->middleware('auth');
+        $this->middleware(AccessMiddleware::class.':member')->only(['update', 'addUnit']);
     }
+
     /**
      * Display a listing of the resource.
      */
@@ -134,7 +136,6 @@ class UserController extends Controller
         $message = 'درخواست عضویت با موفقیت ارسال شد.';
         $page = 'register';
 
-
         return redirect()->back()->with(compact('message', 'status', 'page'));
     }
 
@@ -148,7 +149,7 @@ class UserController extends Controller
             ->where('unit_number', $request->currentUnitNumber)
             ->exists();
 
-        if (!$unitExists) {
+        if (! $unitExists) {
             $message = 'واحد فعلی ثبت نشده است.';
             $status = 'error';
             $page = 'home';
@@ -177,7 +178,6 @@ class UserController extends Controller
             }
         }
 
-
         return redirect()->back()->with(compact('message', 'status', 'page'));
     }
 
@@ -198,12 +198,11 @@ class UserController extends Controller
             $unit
         );
 
-        if (!$newUnit->exists) {
+        if (! $newUnit->exists) {
             $newUnit->save();
         }
 
         $unitId = $newUnit->id;
-
 
         $userRoles = UserRole::where('complex_id', $complexId)->get();
         $unitExistsInUserRoles = $userRoles->contains('unit_id', $unitId);
@@ -221,7 +220,7 @@ class UserController extends Controller
                 $userRoleToUpdate->unit_id = $unitId;
                 $userRoleToUpdate->save();
             } else {
-                $newUserRole = new UserRole();
+                $newUserRole = new UserRole;
                 $newUserRole->complex_id = $complexId;
                 $newUserRole->unit_id = $unitId;
                 $newUserRole->user_id = $userId;

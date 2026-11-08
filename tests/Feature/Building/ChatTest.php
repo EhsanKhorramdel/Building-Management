@@ -58,7 +58,7 @@ test('another member cannot edit a senders message', function () {
 test('a sender can mark their own message deleted', function () {
     $message = Message::factory()->create(['group_id' => $this->building->group->id, 'user_id' => $this->resident->user_id]);
 
-    $this->actingAs($this->resident->user)->get('/dashboard/building/group/'.$message->id);
+    $this->actingAs($this->resident->user)->delete('/dashboard/building/group/'.$message->id);
 
     expect($message->refresh()->deleted)->toBeTrue();
     Event::assertDispatched(DeleteChatMessage::class);
@@ -67,7 +67,7 @@ test('a sender can mark their own message deleted', function () {
 test('another member cannot delete a senders message', function () {
     $message = Message::factory()->create(['group_id' => $this->building->group->id, 'user_id' => $this->resident->user_id]);
 
-    $this->actingAs($this->building->manager)->get('/dashboard/building/group/'.$message->id);
+    $this->actingAs($this->building->manager)->delete('/dashboard/building/group/'.$message->id);
 
     expect($message->refresh()->deleted)->toBeFalse();
     Event::assertNotDispatched(DeleteChatMessage::class);

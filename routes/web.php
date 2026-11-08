@@ -1,15 +1,11 @@
 <?php
 
-use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\AdminController;
-use App\Http\Controllers\UserController;
-use App\Http\Controllers\GroupController;
 use App\Http\Controllers\BuildingController;
-use App\Http\Controllers\Auth\AuthenticatedSessionController;
+use App\Http\Controllers\GroupController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Http\Request;
-
-
 
 /*
 |--------------------------------------------------------------------------
@@ -34,15 +30,13 @@ Route::post('/dashboard/building/getMessageViewers', [GroupController::class, 'g
 Route::post('/dashboard/building/group/send', [GroupController::class, 'store']);
 Route::post('/dashboard/building/group/edit', [GroupController::class, 'edit']);
 Route::post('/dashboard/building/group/seen/', [GroupController::class, 'seen']);
-Route::get('/dashboard/building/group/{Message}', [GroupController::class, 'destroy']);
-
-
+Route::delete('/dashboard/building/group/{Message}', [GroupController::class, 'destroy']);
 
 Route::get('/dashboard/building/{complex}', [BuildingController::class, 'index'])->name('building');
-Route::get('/dashboard/building/upgradeRole/{userRole}', [BuildingController::class, 'upgradeRole'])->name('building.upgradeRole');
-Route::get('/dashboard/building/downgradeRole/{complex}', [BuildingController::class, 'downgradeRole'])->name('building.downgradeRole');
+Route::post('/dashboard/building/upgradeRole/{userRole}', [BuildingController::class, 'upgradeRole'])->name('building.upgradeRole');
+Route::post('/dashboard/building/downgradeRole/{complex}', [BuildingController::class, 'downgradeRole'])->name('building.downgradeRole');
 Route::post('/dashboard/building/{complex}/NotificationRegistration', [BuildingController::class, 'NotificationRegistration'])->name('building.NotificationRegistration');
-Route::get('/dashboard/building/cancelNotification/{announcement}', [BuildingController::class, 'cancelNotification'])->name('building.cancelNotification');
+Route::post('/dashboard/building/cancelNotification/{announcement}', [BuildingController::class, 'cancelNotification'])->name('building.cancelNotification');
 Route::post('/dashboard/building/poll/{complexId}', [BuildingController::class, 'pollCreate'])->name('building.poll');
 Route::post('/dashboard/building/vote', [BuildingController::class, 'vote'])->name('building.vote');
 Route::post('/dashboard/building/vote/Result', [BuildingController::class, 'voteResult'])->name('building.voteResult');
@@ -52,17 +46,15 @@ Route::post('/dashboard/building/{complex}/buildingCharge', [BuildingController:
 Route::post('/dashboard/building/buildingCharge/payment', [BuildingController::class, 'buildingChargePayment'])->name('building.buildingChargePayment');
 Route::post('/dashboard/building/payments', [BuildingController::class, 'payments'])->name('building.payments');
 
-
 Route::get('/dashboard', [UserController::class, 'index'])->name('dashboard');
 Route::post('/dashboard/joinBuilding', [UserController::class, 'store'])->name('dashboard.store');
 Route::post('/dashboard/registerBuilding', [UserController::class, 'register'])->name('dashboard.register');
 Route::post('/dashboard/unit', [UserController::class, 'update'])->name('dashboard.unit');
 Route::post('/dashboard/addUnit', [UserController::class, 'addUnit'])->name('dashboard.addUnit');
 
-
 Route::get('/adminPanel', [AdminController::class, 'index'])->name('adminPanel.index');
-Route::get('/adminPanel/accept/{MembershipRequest}', [AdminController::class, 'accept'])->name('adminPanel.accept');
-Route::get('/adminPanel/reject/{MembershipRequest}', [AdminController::class, 'reject'])->name('adminPanel.reject');
+Route::post('/adminPanel/accept/{MembershipRequest}', [AdminController::class, 'accept'])->name('adminPanel.accept');
+Route::post('/adminPanel/reject/{MembershipRequest}', [AdminController::class, 'reject'])->name('adminPanel.reject');
 
 Route::middleware('auth')->group(function () {
     // Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -70,7 +62,6 @@ Route::middleware('auth')->group(function () {
     // Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-Route::get('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
+Route::post('/dashboard/building/{complex}/join-link', [BuildingController::class, 'regenerateJoinLink'])->name('building.regenerateJoinLink');
 
-
-require __DIR__ . '/auth.php';
+require __DIR__.'/auth.php';

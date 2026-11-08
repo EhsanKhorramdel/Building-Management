@@ -492,6 +492,7 @@ const incidentalCostId = document.querySelector("#incidentalCostId");
 openCostPayBtns.forEach((openCostPayBtn) => {
     openCostPayBtn.addEventListener("click", (event) => {
         costPayModal.classList.remove("hidden");
+        costPayModal.querySelector(".cost-pay-amount").textContent = event.currentTarget.dataset.amount;
         incidentalCostId.value = event.target.nextElementSibling.textContent;
     });
 });
@@ -509,6 +510,7 @@ const monthlyChargeId = document.querySelector("#monthlyChargeId");
 openChargePayBtns.forEach((openChargePayBtn) => {
     openChargePayBtn.addEventListener("click", (event) => {
         chargePayModal.classList.remove("hidden");
+        chargePayModal.querySelector(".charge-pay-amount").textContent = event.currentTarget.dataset.amount;
         monthlyChargeId.value = event.target.nextElementSibling.textContent;
     });
 });
@@ -1217,15 +1219,11 @@ const createDropDownMenu = () => {
                         "gap-20",
                         "hover:bg-blue-300"
                     );
-                    divElement.innerHTML = `
-                    <div class="flex items-center justify-center">
-                        <p class="text-center">${viewer.user_name}</p>
-                    </div>
-                    <div class="flex gap-4">
-                        <p class="text-center">${getDate(viewer.viewed_at)}</p>
-                        <p class="text-center">${getTime(viewer.viewed_at)}</p>
-                    </div>
-                    `;
+                    [viewer.user_name, getDate(viewer.viewed_at), getTime(viewer.viewed_at)].forEach((value) => {
+                        const text = document.createElement("p");
+                        text.textContent = value;
+                        divElement.appendChild(text);
+                    });
 
                     viewerWrapper.appendChild(divElement);
                 });
@@ -1341,7 +1339,7 @@ const deleteMessage = async (messageId) => {
     const CSRF_TOKEN = document.getElementById("csrf-token").value;
 
     const response = await fetch(`/dashboard/building/group/${messageId}`, {
-        method: "GET",
+        method: "DELETE",
         headers: {
             "X-CSRF-TOKEN": CSRF_TOKEN,
         },
@@ -1463,11 +1461,17 @@ closeBtnMessageViewer.addEventListener("click", () => {
     messageViewerModal.classList.add("hidden");
 });
 
-const pusher = new Pusher("65cb2ae469a98ef3a8c2", {
-    cluster: "ap2",
+const broadcastConfig = JSON.parse(document.getElementById("broadcast-config").textContent);
+if (broadcastConfig.connection === "pusher" && broadcastConfig.key) {
+const pusher = new Pusher(broadcastConfig.key, {
+    cluster: broadcastConfig.cluster,
+    channelAuthorization: {
+        endpoint: "/broadcasting/auth",
+        transport: "ajax",
+        headers: { "X-CSRF-TOKEN": document.getElementById("csrf-token").value },
+    },
 });
-
-const channel = pusher.subscribe("group");
+const channel = pusher.subscribe(`private-group.${broadcastConfig.complexId}`);
 
 channel.bind("NewChatMessage", function (data) {
     const message = data.message;
@@ -1493,3 +1497,5 @@ channel.bind("EditChatMessage", function (data) {
     const editedMessage = data.editedMessage;
     editMessageFromGroup(editedMessage);
 });
+
+}

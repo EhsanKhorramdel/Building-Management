@@ -2,22 +2,22 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use App\Models\MembershipRequest;
-use App\Models\UserRole;
+use App\Http\Middleware\AccessMiddleware;
 use App\Models\Complex;
 use App\Models\Group;
-use App\Http\Middleware\AccessMiddleware;
-
-
+use App\Models\MembershipRequest;
+use App\Models\UserRole;
+use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class AdminController extends Controller
 {
     public function __construct()
     {
         $this->middleware('auth');
-        $this->middleware(AccessMiddleware::class . ':admin');
+        $this->middleware(AccessMiddleware::class.':admin');
     }
+
     /**
      * Display a listing of the resource.
      */
@@ -25,7 +25,7 @@ class AdminController extends Controller
     {
         $allMembershipRequests = MembershipRequest::all();
 
-        return  view('adminPanel', ['allMembershipRequests' => $allMembershipRequests]);
+        return view('adminPanel', ['allMembershipRequests' => $allMembershipRequests]);
     }
 
     public function accept(MembershipRequest $MembershipRequest)
@@ -36,10 +36,9 @@ class AdminController extends Controller
             'location' => $MembershipRequest->location,
             'number_of_floors' => $MembershipRequest->number_of_floors,
             'number_of_units' => $MembershipRequest->number_of_units,
-            'join_link' => uniqid(),
+            'join_link' => Str::random(32),
         ];
         $newComplex = Complex::Create($complex);
-
 
         $userRole = [
             'complex_id' => $newComplex->id,
@@ -69,6 +68,7 @@ class AdminController extends Controller
 
         return redirect()->back();
     }
+
     /**
      * Show the form for creating a new resource.
      */

@@ -17,7 +17,7 @@
                     </div>
 
                     <div class="building-box-footer flex justify-center gap-2.5">
-                        <a class="text-center cost-pay-open-Btn">پرداخت</a>
+                        <a data-amount="{{ $incidentalCost->share_amount }}" class="text-center cost-pay-open-Btn">پرداخت</a>
                         <p class="hidden">{{ $incidentalCost->id }}</p>
                         <a class="text-center cost-open-Btn">مشاهده فاکتور</a>
                         <p class="hidden">
@@ -77,9 +77,7 @@
                     autocomplete="off" name="unitNumber" required min="1" />
             </div>
             <div class="mb-6">
-                <input class="border border-gray-300 px-4 py-2 rounded w-full" step="0.01" type="hidden"
-                    placeholder="مبلغ پرداختی" autocomplete="off" name="Amount" min="1" required
-                    value="{{ $incidentalCost->share_amount ?? 0 }}" />
+                <p class="cost-pay-amount" aria-live="polite"></p>
             </div>
             <div class="flex">
                 <button

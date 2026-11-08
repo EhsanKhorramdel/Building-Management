@@ -15,14 +15,14 @@ test('chat history rejects a member of another complex', function () {
     $message = Message::factory()->create(['group_id' => $building->group->id]);
 
     $this->actingAs($other->resident()->user)->getJson('/dashboard/building/'.$building->complex->id.'/group/'.$message->id)->assertForbidden();
-})->skip('Baseline: Cross-complex authorization missing; Phase 2 adds membership checks.');
+});
 
 test('a manager cannot publish an announcement in another complex', function () {
     $first = new BuildingContext;
     $other = new BuildingContext;
 
     $this->actingAs($first->manager)->post(route('building.NotificationRegistration', $other->complex), ['notifText' => 'Unrelated building'])->assertForbidden();
-})->skip('Baseline: Cross-complex authorization missing; Phase 2 scopes manager access.');
+});
 
 test('chat rejects a non-image upload', function () {
     Storage::fake('local');
@@ -31,7 +31,7 @@ test('chat rejects a non-image upload', function () {
     $this->actingAs($building->resident()->user)->postJson('/dashboard/building/group/send', [
         'complexId' => $building->complex->id, 'messageImage' => UploadedFile::fake()->create('upload.php', 1, 'application/x-httpd-php'),
     ])->assertUnprocessable();
-})->skip('Baseline: Chat image upload unvalidated; Phase 2 validates MIME and size.');
+});
 
 test('incidental cost payments use the recorded share instead of a submitted amount', function () {
     $building = new BuildingContext;
@@ -43,7 +43,7 @@ test('incidental cost payments use the recorded share instead of a submitted amo
     ]);
 
     $this->assertDatabaseHas('payment_additional_costs', ['role_id' => $resident->id, 'incidental_costs_id' => $cost->id, 'amount' => $cost->share_amount]);
-})->skip('Baseline: Client-set payment amounts; Phase 2 reads the payable amount on the server.');
+});
 
 test('expired polls reject new votes', function () {
     $building = new BuildingContext;
@@ -79,7 +79,7 @@ test('GET cannot delete a chat message', function () {
     $message = Message::factory()->create(['group_id' => $building->group->id, 'user_id' => $resident->user_id]);
 
     $this->actingAs($resident->user)->get('/dashboard/building/group/'.$message->id)->assertStatus(405);
-})->skip('Baseline: State changes via GET; Phase 2 changes mutation methods and CSRF protection.');
+});
 
 test('profile updates may omit optional national code and phone fields', function () {
     $user = User::factory()->create();

@@ -36,6 +36,7 @@
     </div>
     <p class="hidden isManager">{{ $isManager }}</p>
     <p class="hidden userLogInId">{{ $userLogInId }}</p>
+    <script id="broadcast-config" type="application/json">{!! json_encode(['connection' => config('broadcasting.default'), 'key' => config('broadcasting.connections.pusher.key'), 'cluster' => config('broadcasting.connections.pusher.options.cluster'), 'complexId' => $complex->id], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) !!}</script>
     <script src="{{ asset('js/building.js') }}"></script>
     <script>
         @switch(session('page'))

@@ -25,7 +25,7 @@
                             {{ implode('-', array_reverse(explode('-', $monthlyCharge->end_date))) }}</p>
                     </div>
                     <div class="building-box-footer flex justify-center gap-2.5">
-                        <a class="text-center charge-pay-open-Btn">پرداخت</a>
+                        <a data-amount="{{ $monthlyCharge->amount }}" class="text-center charge-pay-open-Btn">پرداخت</a>
                         <p class="hidden">{{ $monthlyCharge->id }}</p>
                     </div>
                 </div>
@@ -56,9 +56,7 @@
                     autocomplete="off" name="unitNumber" required min="1" />
             </div>
             <div class="mb-6">
-                <input class="border border-gray-300 px-4 py-2 rounded w-full" step="0.01" type="hidden"
-                    placeholder="مبلغ پرداختی" autocomplete="off" name="Amount" min="1" required
-                    value="{{ $monthlyCharge->amount ?? 0}}" />
+                <p class="charge-pay-amount" aria-live="polite"></p>
             </div>
             <div class="flex">
                 <button

@@ -32,7 +32,7 @@ test('a manager can archive an announcement', function () {
     $building = new BuildingContext;
     $announcement = Announcement::factory()->create(['complex_id' => $building->complex->id, 'manager_id' => $building->manager->id]);
 
-    $this->actingAs($building->manager)->get(route('building.cancelNotification', $announcement))->assertSessionHas('status', 'success');
+    $this->actingAs($building->manager)->post(route('building.cancelNotification', $announcement))->assertSessionHas('status', 'success');
 
     expect((bool) $announcement->refresh()->archive)->toBeTrue();
 });

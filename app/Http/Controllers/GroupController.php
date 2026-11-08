@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Events\DeleteChatMessage;
 use App\Events\EditChatMessage;
 use App\Events\NewChatMessage;
-use Pusher\Pusher;
+use App\Http\Middleware\AccessMiddleware;
 use App\Models\Complex;
 use App\Models\Group;
 use App\Models\Message;
@@ -18,7 +18,9 @@ class GroupController extends Controller
     public function __construct()
     {
         $this->middleware('auth');
+        $this->middleware(AccessMiddleware::class.':member');
     }
+
     /**
      * Display a listing of the resource.
      */
@@ -112,7 +114,6 @@ class GroupController extends Controller
         ]);
     }
 
-
     public function getMessageViewers(Request $request)
     {
         $messageId = $request->input('message_id');
@@ -134,6 +135,7 @@ class GroupController extends Controller
 
         return response()->json($filteredViewers);
     }
+
     /**
      * Show the form for creating a new resource.
      */
@@ -147,6 +149,10 @@ class GroupController extends Controller
      */
     public function store(Request $request)
     {
+        $request->validate([
+            'messageImage' => 'nullable|file|mimes:gif,jpg,webp,png|max:5120',
+            'messageText' => 'nullable|string|required_without:messageImage',
+        ]);
         $userId = auth()->id();
         $messageText = $request->input('messageText');
         $messageImage = $request->file('messageImage');
@@ -163,8 +169,8 @@ class GroupController extends Controller
             $randomNumber1 = rand(1000000000, 1999999999);
             $randomNumber2 = rand(1000000000, 1999999999);
 
-            $newImageName = sha1($timestamp . '_' . $randomNumber1 . '_' . $randomNumber2 . '_' . $imageName);
-            $newImageName = $newImageName . '.' . $extension;
+            $newImageName = sha1($timestamp.'_'.$randomNumber1.'_'.$randomNumber2.'_'.$imageName);
+            $newImageName = $newImageName.'.'.$extension;
 
             Storage::disk('local')->putFileAs(
                 'public/chats',
@@ -209,7 +215,7 @@ class GroupController extends Controller
             'message_id' => $request->messageId,
         ]);
 
-        if (!$seenMessage->exists) {
+        if (! $seenMessage->exists) {
             $seenMessage->save();
         }
     }
@@ -286,11 +292,12 @@ class GroupController extends Controller
         $lastMessage = '';
 
         foreach ($lastSeenMessages as $lastSeenMessage) {
-            $lastMessage =  Message::where('id', $lastSeenMessage->message_id)
+            $lastMessage = Message::where('id', $lastSeenMessage->message_id)
                 ->where('deleted', false)
                 ->first();
-            if ($lastMessage)
+            if ($lastMessage) {
                 break;
+            }
         }
 
         if ($lastMessage) {
@@ -319,7 +326,6 @@ class GroupController extends Controller
             ->take($perPage)
             ->get()
             ->reverse();
-
 
         $loggedInUserId = auth()->id();
 
@@ -365,7 +371,6 @@ class GroupController extends Controller
             ->get();
 
         $loggedInUserId = auth()->id();
-
 
         $finalMessages = [];
         foreach ($nextMessages as $message) {

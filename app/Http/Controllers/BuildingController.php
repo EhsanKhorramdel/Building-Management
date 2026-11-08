@@ -3,24 +3,24 @@
 namespace App\Http\Controllers;
 
 use App\Http\Middleware\AccessMiddleware;
-use Illuminate\Http\Request;
-use App\Models\UserRole;
-use App\Models\User;
-use App\Models\Unit;
-use App\Models\Complex;
 use App\Models\Announcement;
+use App\Models\ChargePayment;
+use App\Models\Complex;
+use App\Models\Group;
 use App\Models\IncidentalCost;
+use App\Models\MonthlyCharge;
 use App\Models\PaymentAdditionalCost;
 use App\Models\Poll;
 use App\Models\PollOption;
+use App\Models\Unit;
+use App\Models\User;
+use App\Models\UserRole;
 use App\Models\Vote;
-use App\Models\MonthlyCharge;
-use App\Models\ChargePayment;
-use App\Models\Group;
-use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\File;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Morilog\Jalali\Jalalian;
 
 class BuildingController extends Controller
@@ -28,8 +28,10 @@ class BuildingController extends Controller
     public function __construct()
     {
         $this->middleware('auth');
-        $this->middleware(AccessMiddleware::class . ':manager')->only(['upgradeRole', 'downgradeRole', 'NotificationRegistration', 'cancelNotification', 'incidentalCost', 'buildingCharge']);
+        $this->middleware(AccessMiddleware::class.':member');
+        $this->middleware(AccessMiddleware::class.':manager')->only(['upgradeRole', 'downgradeRole', 'NotificationRegistration', 'cancelNotification', 'incidentalCost', 'buildingCharge', 'regenerateJoinLink']);
     }
+
     /**
      * Display a listing of the resource.
      */
@@ -64,7 +66,7 @@ class BuildingController extends Controller
         $residentCount = $userRole->where('role', 'resident')->pluck('user_id')->unique()->count();
 
         $userLogInId = auth()->id();
-        $isManager =  UserRole::where('complex_id', $complex->id)
+        $isManager = UserRole::where('complex_id', $complex->id)
             ->where('user_id', $userLogInId)
             ->where('active', '1')
             ->where('role', 'manager')
@@ -123,7 +125,6 @@ class BuildingController extends Controller
             $residents = array_merge($residents, $userUnits->all());
         }
 
-
         return view('building.building', [
             'complex' => $complex,
             'managerCount' => $managerCount,
@@ -151,7 +152,7 @@ class BuildingController extends Controller
             $message = 'خطا! کاربر انتخابی مدیر ساختمان است.';
             $status = 'error';
             $page = 'home';
-        } else if ($userRole->role == 'resident') {
+        } elseif ($userRole->role == 'resident') {
 
             $complex->userRoles()
                 ->where('role', 'resident')
@@ -159,11 +160,11 @@ class BuildingController extends Controller
                 ->where('complex_id', $complexId)
                 ->update(['role' => 'manager']);
 
-
             $message = 'نقش کاربر به مدیر تغییر یافت.';
             $status = 'success';
             $page = 'home';
         }
+
         return redirect()->back()->with(compact('message', 'status', 'page'));
     }
 
@@ -182,15 +183,14 @@ class BuildingController extends Controller
                 ->where('complex_id', $complexId)
                 ->update(['role' => 'resident']);
 
-
             Auth::guard('web')->logout();
+
             return redirect()->route('login');
         }
 
         $message = 'خطا! کاربر محترم شما تنها مدیر ساختمان می باشید .';
         $status = 'error';
         $page = 'setting';
-
 
         return redirect()->back()->with(compact('message', 'status', 'page'));
     }
@@ -233,8 +233,8 @@ class BuildingController extends Controller
             $randomNumber1 = rand(1000000000, 1999999999);
             $randomNumber2 = rand(1000000000, 1999999999);
 
-            $newNotifPictureName = sha1($timestamp . '_' . $randomNumber1 . '_' . $randomNumber2 . '_' . $notifPictureName);
-            $newNotifPictureName = $newNotifPictureName . '.' . $extension;
+            $newNotifPictureName = sha1($timestamp.'_'.$randomNumber1.'_'.$randomNumber2.'_'.$notifPictureName);
+            $newNotifPictureName = $newNotifPictureName.'.'.$extension;
 
             Storage::disk('local')->putFileAs(
                 'public/notificationFiles',
@@ -263,7 +263,6 @@ class BuildingController extends Controller
         $message = 'اعلان با موفقیت لغو شد';
         $page = 'notification';
 
-
         return redirect()->back()->with(compact('message', 'status', 'page'));
     }
 
@@ -278,7 +277,6 @@ class BuildingController extends Controller
             'required_at_least_one' => 'required_without_all:endMinutes,endHours,endDays',
         ];
 
-
         $messages = [
             'title.string' => 'فیلد عنوان باید یک رشته باشد.',
             'question.required' => 'فیلد سوال اجباری است.',
@@ -292,18 +290,17 @@ class BuildingController extends Controller
             'required_at_least_one' => 'حداقل یکی از فیلدهای زمان پایان باید پر شود.',
         ];
 
-
         $validated = $request->validateWithBag('pollCreate', $rules, $messages);
 
         $optionsCount = 0;
         $nullOptionsCount = 0;
 
-        while ($request->has("option" . ($optionsCount + 1))) {
+        while ($request->has('option'.($optionsCount + 1))) {
             $optionsCount++;
         }
 
         for ($i = 1; $i <= $optionsCount; $i++) {
-            if ($request->input("option" . $i) === null) {
+            if ($request->input('option'.$i) === null) {
                 $nullOptionsCount++;
             }
         }
@@ -313,8 +310,6 @@ class BuildingController extends Controller
         $endDate = $currentDateTime->copy()->addMinutes($request->endMinutes)
             ->addHours($request->endHours)
             ->addDays($request->endDays);
-
-
 
         if ($optionsCount - $nullOptionsCount >= 2) {
             $poll = [
@@ -332,7 +327,7 @@ class BuildingController extends Controller
                 $pollOption = [
                     'poll_id' => $pollId,
                     'option_number' => $i,
-                    'option' => $request->input("option" . $i)
+                    'option' => $request->input('option'.$i),
                 ];
                 PollOption::create($pollOption);
             }
@@ -361,7 +356,7 @@ class BuildingController extends Controller
             $complexId = $poll->complex_id;
             $userId = auth()->id();
 
-            $userRoles = UserRole::where('complex_id', $complexId)->where("user_id", $userId)->get();
+            $userRoles = UserRole::where('complex_id', $complexId)->where('user_id', $userId)->get();
 
             foreach ($userRoles as $userRole) {
                 $vote = [
@@ -414,7 +409,7 @@ class BuildingController extends Controller
 
             $results[] = [
                 'option' => $optionText,
-                'voteCount' => $voteCount
+                'voteCount' => $voteCount,
             ];
         }
 
@@ -448,7 +443,7 @@ class BuildingController extends Controller
 
         $incidentalCost = [
             'complex_id' => $complex->id,
-            'cost_invoice' =>  null,
+            'cost_invoice' => null,
             'cost_explanation' => $request->cost_explanation,
             'title' => $request->title,
             'total_amount' => $request->total_amount,
@@ -464,8 +459,8 @@ class BuildingController extends Controller
             $randomNumber1 = rand(1000000000, 1999999999);
             $randomNumber2 = rand(1000000000, 1999999999);
 
-            $newCostInvoiceName = sha1($timestamp . '_' . $randomNumber1 . '_' . $randomNumber2 . '_' . $costInvoiceName);
-            $newCostInvoiceName = $newCostInvoiceName . '.' . $extension;
+            $newCostInvoiceName = sha1($timestamp.'_'.$randomNumber1.'_'.$randomNumber2.'_'.$costInvoiceName);
+            $newCostInvoiceName = $newCostInvoiceName.'.'.$extension;
 
             Storage::disk('local')->putFileAs(
                 'public/incidentalCostFiles',
@@ -489,20 +484,17 @@ class BuildingController extends Controller
     {
         $rules = [
             'unitNumber' => 'required|integer|min:1',
-            'Amount' => 'required|numeric|min:1',
         ];
 
         $messages = [
             'unitNumber.required' => 'فیلد شماره واحد اجباری است.',
             'unitNumber.integer' => 'فیلد شماره واحد باید عدد صحیح باشد.',
             'unitNumber.min' => 'فیلد شماره واحد باید حداقل :min باشد.',
-            'Amount.required' => 'فیلد مبلغ اجباری است.',
-            'Amount.numeric' => 'فیلد مبلغ باید عددی باشد.',
-            'Amount.min' => 'فیلد مبلغ باید حداقل :min باشد.',
         ];
 
         $validated = $request->validateWithBag('incidentalPayCost', $rules, $messages);
 
+        $payable = IncidentalCost::findOrFail($request->incidentalCostId);
         $userId = auth()->id();
         $complexId = $request->complexId;
 
@@ -530,11 +522,11 @@ class BuildingController extends Controller
                 ->where('incidental_costs_id', $request->incidentalCostId)
                 ->exists();
 
-            if (!$paymentExists) {
+            if (! $paymentExists) {
                 $PaymentAdditionalCost = [
                     'role_id' => $role->id,
                     'incidental_costs_id' => $request->incidentalCostId,
-                    'amount' => $request->Amount,
+                    'amount' => $payable->share_amount,
                 ];
 
                 PaymentAdditionalCost::create($PaymentAdditionalCost);
@@ -598,20 +590,21 @@ class BuildingController extends Controller
 
         $validated = $request->validateWithBag('buildingCharge', $rules, $messages);
 
-        $startDate = $request->yearStart . '-' . $request->monthStart . '-' . $request->dayStart;
-        $endDate = $request->yearEnd . '-' . $request->monthEnd . '-' . $request->dayEnd;
+        $startDate = $request->yearStart.'-'.$request->monthStart.'-'.$request->dayStart;
+        $endDate = $request->yearEnd.'-'.$request->monthEnd.'-'.$request->dayEnd;
 
         if ($endDate < $startDate) {
             $status = 'error';
             $message = 'تاریخ شروع نمی تواند از تاریخ پایان بزرگتر باشد.';
             $page = 'charge';
+
             return redirect()->back()->with(compact('message', 'status', 'page'));
         }
 
         $monthlyCharges = [
             'complex_id' => $complex->id,
             'user_id' => auth()->id(),
-            'amount' =>  $request->chargeAmount,
+            'amount' => $request->chargeAmount,
             'start_date' => $startDate,
             'end_date' => $endDate,
         ];
@@ -629,16 +622,12 @@ class BuildingController extends Controller
     {
         $rules = [
             'unitNumber' => 'required|integer|min:1',
-            'Amount' => 'required|numeric|min:1',
         ];
 
         $messages = [
             'unitNumber.required' => 'فیلد شماره واحد اجباری است.',
             'unitNumber.integer' => 'فیلد شماره واحد باید عدد صحیح باشد.',
             'unitNumber.min' => 'فیلد شماره واحد باید حداقل :min باشد.',
-            'Amount.required' => 'فیلد مبلغ اجباری است.',
-            'Amount.numeric' => 'فیلد مبلغ باید عددی باشد.',
-            'Amount.min' => 'فیلد مبلغ باید حداقل :min باشد.',
         ];
 
         $validated = $request->validateWithBag('buildingPayCharge', $rules, $messages);
@@ -652,9 +641,11 @@ class BuildingController extends Controller
             $status = 'error';
             $message = 'امکان پرداخت شارژ قبل از فرا رسیدن تاریخ شروع وجود ندارد.';
             $page = 'charge';
+
             return redirect()->back()->with(compact('message', 'status', 'page'));
         }
 
+        $payable = MonthlyCharge::findOrFail($request->monthlyChargeId);
         $userId = auth()->id();
         $complexId = $request->complexId;
         $unit = Unit::where('complex_id', $complexId)
@@ -684,15 +675,16 @@ class BuildingController extends Controller
 
             $paymentExists = $payments->contains(function ($payment) use ($currentJalaliDate) {
                 $paymentDate = Jalalian::fromCarbon($payment->created_at);
+
                 return $paymentDate->getYear() === $currentJalaliDate->getYear()
                     && $paymentDate->getMonth() === $currentJalaliDate->getMonth();
             });
 
-            if (!$paymentExists) {
+            if (! $paymentExists) {
                 $ChargePayment = [
                     'role_id' => $role->id,
                     'monthly_charge_id' => $request->monthlyChargeId,
-                    'amount' => $request->Amount,
+                    'amount' => $payable->amount,
                 ];
 
                 ChargePayment::create($ChargePayment);
@@ -743,7 +735,7 @@ class BuildingController extends Controller
                         'user_name' => $user->name,
                     ];
 
-                    $data[] = (object)$paymentData;
+                    $data[] = (object) $paymentData;
                 }
 
                 $additionalCosts = PaymentAdditionalCost::where('role_id', $userRole->id)->get();
@@ -761,11 +753,18 @@ class BuildingController extends Controller
                         'user_name' => $user->name,
                     ];
 
-                    $data[] = (object)$additionalCostData;
+                    $data[] = (object) $additionalCostData;
                 }
             }
         }
 
         return response()->json($data);
+    }
+
+    public function regenerateJoinLink(Complex $complex)
+    {
+        $complex->update(['join_link' => Str::random(32)]);
+
+        return redirect()->back()->with(['status' => 'success', 'message' => 'لینک عضویت بروزرسانی شد.', 'page' => 'setting']);
     }
 }

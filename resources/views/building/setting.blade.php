@@ -107,12 +107,17 @@
                 </p>
                 <div class="border-2 border-gray-200 flex justify-center items-center mt-4 ml-3 py-2">
 
-                    <a href="{{ URL::route('building.downgradeRole', $complex->id) }}" id="copyButton"
+                    <form method="POST" action="{{ URL::route('building.downgradeRole', $complex->id) }}">
+                    @csrf
+                    <button type="submit"  id="copyButton"
                         class="bg-red-500 text-white text-center rounded text-sm py-2 px-8 ml-2 hover:bg-red-600 w-full">
                         انصراف از مدیریت
-                    </a>
+                    </button></form>
                 </div>
             </div>
         </div>
     </div>
+<form method="POST" action="{{ route('building.regenerateJoinLink', $complex) }}">
+                    @csrf
+                    <button type="submit">تولید لینک عضویت جدید</button></form>
 </div>

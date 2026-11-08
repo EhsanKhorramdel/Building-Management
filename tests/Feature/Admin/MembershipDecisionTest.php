@@ -19,10 +19,10 @@ test('an admin can review pending building requests', function () {
 test('accepting a request creates its building manager role and group', function () {
     $request = MembershipRequest::factory()->create();
 
-    $this->actingAs($this->admin)->from('/adminPanel')->get(route('adminPanel.accept', $request))->assertRedirect('/adminPanel');
+    $this->actingAs($this->admin)->from('/adminPanel')->post(route('adminPanel.accept', $request))->assertRedirect('/adminPanel');
 
     $complex = Complex::firstOrFail();
-    expect($request->refresh()->request_status)->toBe('accepted')->and($complex->name)->toBe($request->name)->and($complex->join_link)->not->toBeEmpty();
+    expect($request->refresh()->request_status)->toBe('accepted')->and($complex->name)->toBe($request->name)->and(strlen($complex->join_link))->toBe(32);
     $this->assertDatabaseHas('user_roles', ['user_id' => $request->user_id, 'complex_id' => $complex->id, 'role' => 'manager']);
     $this->assertDatabaseHas('groups', ['complex_id' => $complex->id, 'group_name' => $request->name]);
 });
@@ -30,7 +30,7 @@ test('accepting a request creates its building manager role and group', function
 test('rejecting a request changes its status without creating a building', function () {
     $request = MembershipRequest::factory()->create();
 
-    $this->actingAs($this->admin)->from('/adminPanel')->get(route('adminPanel.reject', $request))->assertRedirect('/adminPanel');
+    $this->actingAs($this->admin)->from('/adminPanel')->post(route('adminPanel.reject', $request))->assertRedirect('/adminPanel');
 
     expect($request->refresh()->request_status)->toBe('rejected');
     $this->assertDatabaseCount('complexes', 0);

@@ -61,10 +61,12 @@
                         </button>
                     </li>
                 </ul>
-                <a href="{{ route('logout') }}"
+                <form method="POST" action="{{ route('logout') }}">
+                    @csrf
+                    <button type="submit"
                     class="py-2 px-4 bg-red-500 text-white rounded focus:outline-none shadow-md hover:shadow-lg transition-colors">
                     خروج
-                </a>
+                </button></form>
             </div>
         </div>
         <div id="accepted" class="tab">
@@ -122,15 +124,19 @@
                                     <span>{{ $request->number_of_units }}</span>
                                 </div>
                                 <div class="mt-2 flex flex-col gap-2 justify-end">
-                                    <a href="{{ URL::route('adminPanel.accept', $request->id) }}"
+                                    <form method="POST" action="{{ URL::route('adminPanel.accept', $request->id) }}">
+                    @csrf
+                    <button type="submit"
                                         class="py-2 px-4 bg-green-500 text-white rounded focus:outline-none shadow-md hover:shadow-lg transition-colors text-center">
                                         پذیرش
-                                    </a>
+                                    </button></form>
 
-                                    <a href="{{ URL::route('adminPanel.reject', $request->id) }}"
+                                    <form method="POST" action="{{ URL::route('adminPanel.reject', $request->id) }}">
+                    @csrf
+                    <button type="submit"
                                         class="py-2 px-4 bg-red-500 text-white rounded focus:outline-none shadow-md hover:shadow-lg transition-colors text-center">
                                         رد کردن
-                                    </a>
+                                    </button></form>
 
                                 </div>
                             </div>

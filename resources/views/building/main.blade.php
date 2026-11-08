@@ -70,7 +70,9 @@
                 </div>
                 <div class="building-box-footer h-full">
                     @if ($isManager && $resident['role'] === 'resident')
-                        <a href="{{ URL::route('building.upgradeRole', $resident['roleId']) }}">ارتقاء به مدیر</a>
+                        <form method="POST" action="{{ URL::route('building.upgradeRole', $resident['roleId']) }}">
+                    @csrf
+                    <button type="submit" >ارتقاء به مدیر</button></form>
                     @endif
                 </div>
             </div>

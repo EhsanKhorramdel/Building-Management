@@ -413,3 +413,67 @@ Status for all: OPEN — closed by the phase noted, which adds its own entries a
 | morilog/jalali | v3.5.0 |
 | Vite | 6.4.5 |
 | Tailwind | 3.4.19 |
+
+### [Phase 2] Scope access to each target complex
+- **Before:** Global role checks admitted unrelated managers and nonmembers.
+- **After:** ComplexPolicy view/manage and AccessMiddleware resolve the complex from route bindings or the target message/poll/payable. Unit edits require the owning active role or that complex manager; admin access requires an active global admin role.
+- **Why:** Authorization must follow the resource rather than a submitted complex identifier.
+- **Files:** app/Policies/ComplexPolicy.php; app/Http/Middleware/AccessMiddleware.php; app/Providers/AuthServiceProvider.php; BuildingController.php; GroupController.php; UserController.php; tests/Feature/Security/*.php.
+- **Verified by:** 28 endpoints x 6 actors; foreign-ID spoofing, inactive membership and unit-owner tests; full suite: 287 passed, 4 skipped, 0 failed, 599 assertions (before: 89 passed, 9 skipped, 298 assertions). All four remaining skips belong to Phase 4. SQLite migrate:fresh + DemoSeeder, Blade compilation and npm run build pass.
+- **Risk & rollback:** Unrelated users now receive 403; guest redirects remain. No global admin bypass grants complex membership. Revert the Phase 2 implementation commit and its dependent log closure together to roll back.
+
+### [Phase 2] Require mutating HTTP verbs and CSRF
+- **Before:** Six domain mutations were available through GET, and logout had duplicate GET/POST registrations.
+- **After:** Message delete uses DELETE; promotion, step-down, announcement archive, admin accept/reject and logout use POST. Forms/buttons include CSRF; chat DELETE sends its existing token header.
+- **Why:** Cross-site navigation must not mutate application data.
+- **Files:** routes/web.php; mutation Blade callers; public/js/building.js; Admin/MembershipDecisionTest.php; Building/AnnouncementTest.php; Building/RolesTest.php; Building/ChatTest.php; tests/Feature/Security/MutationMethodsTest.php.
+- **Verified by:** GET returns 405 and missing CSRF returns 419 for all seven changed endpoints plus regeneration; business outcomes remain the same.
+- **Risk & rollback:** No route name or existing URL changed. Old GET clients break intentionally; update them to the listed verbs. Duplicate logout name removed by deleting GET registration. Revert the Phase 2 implementation commit and its dependent log closure together to roll back.
+
+### [Phase 2] Validate chat attachments and empty sends
+- **Before:** Chat accepted arbitrary files and quietly ignored blank sends.
+- **After:** Chat images use nullable|file|mimes:gif,jpg,webp,png|max:5120; text is nullable|string|required_without:messageImage.
+- **Why:** Only the permitted image types/sizes may enter public chat storage; an empty send needs validation feedback.
+- **Files:** app/Http/Controllers/GroupController.php; KnownDefectsTest.php; Security/HardeningTest.php.
+- **Verified by:** Oversized PNG, PHP/EXE payloads and empty requests rejected with 422; existing valid-image fixture accepted; other upload rules unchanged.
+- **Risk & rollback:** Previously accepted unsupported/oversized uploads and empty requests now fail validation. Existing stored files are not changed. Revert the Phase 2 implementation commit and its dependent log closure together to roll back.
+
+### [Phase 2] Rotate join links on explicit manager request
+- **Before:** New complex tokens used uniqid; managers had no rotation action.
+- **After:** New complexes and regeneration use Str::random(32). POST /dashboard/building/{complex}/join-link is named building.regenerateJoinLink; the manager settings page contains its button.
+- **Why:** Predictable invitations must be replaced, and managers need to revoke a leaked link.
+- **Files:** AdminController.php; BuildingController.php; routes/web.php; resources/views/building/setting.blade.php; security and admin tests.
+- **Verified by:** New acceptance creates 32-character links; regeneration invalidates the old token, accepts the new one and leaves other complexes unchanged; matrix and CSRF tests.
+- **Risk & rollback:** Existing complexes retain their current links until their manager regenerates. No mass rotation or new schema. Revert the Phase 2 implementation commit and its dependent log closure together to roll back.
+
+### [Phase 2] Authorize private per-complex broadcasts
+- **Before:** All chat events and clients shared the public group channel and a hardcoded browser key.
+- **After:** Events resolve the complex from the persisted message group and use PrivateChannel(group.{complex_id}); a policy-backed channel callback restricts active members. The browser subscribes to private-group.{complexId} using /broadcasting/auth and CSRF. Public key/cluster come from server configuration and VITE_PUSHER_*; BROADCAST_CONNECTION defaults to log with legacy driver fallback.
+- **Why:** Live messages must remain inside the same membership boundary as HTTP history.
+- **Files:** app/Events/*ChatMessage.php; routes/channels.php; config/broadcasting.php; .env.example; building/building.blade.php; public/js/building.js; Security/HardeningTest.php.
+- **Verified by:** All three event channel assertions; member/manager accepted, inactive/nonmember/foreign manager denied; frontend syntax/build checks.
+- **Risk & rollback:** Public-channel clients must reconnect to the new private channel; existing channel event names remain. No live account was contacted or credential committed. Revert the Phase 2 implementation commit and its dependent log closure together to roll back.
+
+### [Phase 2] Render message viewers as text
+- **Before:** Viewer names were interpolated into innerHTML.
+- **After:** Names and formatted dates are inserted using createElement/textContent.
+- **Why:** User-controlled names must not be parsed as markup.
+- **Files:** public/js/building.js.
+- **Verified by:** Reviewed the viewer rendering diff; node --check and frontend build pass.
+- **Risk & rollback:** DOM/text regression note only; browser tooling remains Phase 9. Existing Persian strings retained. Revert the Phase 2 implementation commit and its dependent log closure together to roll back.
+
+### [Phase 2] Read payment amounts from the payable
+- **Before:** Both payment handlers validated and saved request Amount; shared modals retained the final card amount.
+- **After:** Charges store MonthlyCharge.amount; incidental payments store IncidentalCost.share_amount. Forms contain no amount input; card data displays the selected server-rendered amount as text.
+- **Why:** Clients cannot choose the amount that marks a payable paid.
+- **Files:** BuildingController.php; building/charge.blade.php; building/cost.blade.php; public/js/building.js; KnownDefectsTest.php; Security/HardeningTest.php.
+- **Verified by:** Tampered amounts for both types store the authoritative amount; unchanged ChargePaymentTest monthly test and one-off cost duplicate test pass.
+- **Risk & rollback:** No gateway introduced. Monthly duplicate logic is untouched; database uniqueness stays in Phase 3. Revert the Phase 2 implementation commit and its dependent log closure together to roll back.
+
+### [Phase 2] Remove mass-assignment of persistent login tokens
+- **Before:** remember_token was in User.fillable.
+- **After:** Removed only remember_token from fillable; it remains hidden from serialization.
+- **Why:** Model mass assignment must not replace persistent-login credentials.
+- **Files:** app/Models/User.php; Security/HardeningTest.php.
+- **Verified by:** isFillable assertion and full authentication suite; reviewed every model fillable list.
+- **Risk & rollback:** Other credential/token fields found: User.password (hashed cast) and Complex.join_link (invitation token). Both remain unchanged as requested. No other service credential fields found. Revert the Phase 2 implementation commit and its dependent log closure together to roll back.
