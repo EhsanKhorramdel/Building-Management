@@ -1,8 +1,6 @@
 # Tests and local demo data
 
-The current lockfiles use Laravel 10.50.4, Carbon 2.73.0, Sanctum 3.3.3, Pest 2.36.0 / PHPUnit 10.5.36, Vite 6.4.5 and Tailwind 3.4.19, verified with PHP 8.1.34 and Node 22.17.0. Install dependencies with `composer install` and `npm ci`. Copy `.env.example` to `.env`, generate an application key, and run `npm run build` before the feature tests that render shared layouts.
-
-Install PHP 8.3 before the Laravel 11 hop. Its planned Carbon 3, Sanctum 4 and Pest 3 / PHPUnit 11 changes have not been applied. Installed morilog/jalali 3.5.0 permits Carbon 3. Current Pest 2.36.0 explicitly conflicts with PHPUnit above 10.5.36; that pin cannot be removed by a PHPUnit patch update alone.
+The current lockfiles use PHP 8.3.36, laravel/framework v11.57.1, nesbot/carbon 3.15.1, laravel/sanctum v4.3.3, pestphp/pest v3.8.7, phpunit/phpunit 11.5.56, morilog/jalali v3.5.0, Vite 6.4.5 and Tailwind 3.4.19. Install dependencies with Composer and npm ci, configure a local .env and build the assets before tests. Use D:/tools/php-8.3/php.exe explicitly on this Windows checkout.
 
 Run the full suite:
 

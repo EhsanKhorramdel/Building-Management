@@ -353,3 +353,35 @@ Status for all: OPEN — closed by the phase noted, which adds its own entries a
 - **Files:** composer.lock; package-lock.json.
 - **Verified by:** Compared every non-optional package field against the resolved lockfiles; Composer validation and install dry-run; npm ci dry-run; final added-line wording check. The full suite and build pass with this exact package set.
 - **Risk & rollback:** Later dependency updates can restore optional metadata and must repeat the wording check. This normalization does not alter the installed dependency graph; restore upstream metadata without changing package versions if the wording rule is relaxed.
+
+### [Phase 1B / Hop B] Install the portable PHP 8.3 runtime
+- **Before:** The active project runtime was PHP 8.1.34.
+- **After:** Official PHP 8.3.36 thread-safe x64 archive extracted to D:/tools/php-8.3; php.ini copied from php.ini-development. Enabled mbstring, openssl, curl, fileinfo, pdo_mysql, pdo_sqlite, sqlite3, gd, intl and zip; configured the external CA file. System PATH and existing PHP installations are unchanged.
+- **Why:** The platform upgrade requires PHP 8.3.
+- **Files:** docs/REFACTOR_LOG.md; external D:/tools/php-8.3 only.
+- **Verified by:** Official ZIP SHA-256 126dd3cc8c19df5085b9420b2bc74ed591de3d98528858c52fc42739b7bba92e matched; explicit binary -v/-m/-i; baseline 89 passed, 9 skipped, 298 assertions.
+- **Risk & rollback:** To remove, stop processes using this binary and remove only D:/tools/php-8.3. No PATH rollback is needed. Keep the external CA file available while the runtime is in use.
+
+### [Phase 1B / Hop B] Update Sanctum middleware configuration
+- **Before:** Sanctum 3 configuration used verify_csrf_token and omitted authenticate_session.
+- **After:** Renamed the CSRF key to validate_csrf_token and registered Sanctum AuthenticateSession; retained project cookie and CSRF classes.
+- **Why:** Sanctum 4 reads the new middleware keys. The existing published personal_access_tokens migration already provides the required schema.
+- **Files:** config/sanctum.php; composer.json; composer.lock.
+- **Verified by:** Full existing suite, fresh SQLite migrations and demo seeding; no duplicate token migration created.
+- **Risk & rollback:** No existing migration edited; HTTP Kernel and middleware aliases unchanged. Revert this hop and reinstall its lockfile for rollback.
+
+### [Phase 1B / Hop B] Preserve password storage on login
+- **Before:** Laravel 10 did not automatically rewrite older bcrypt hashes on login.
+- **After:** Set hashing.rehash_on_login=false; password changes still hash using the configured driver.
+- **Why:** Laravel 11 enables automatic rehashing by default; explicitly disabling that new behavior preserves the existing authentication contract.
+- **Files:** config/hashing.php.
+- **Verified by:** Unchanged login, registration, reset and update tests pass; framework upgrade guide and guard implementation checked.
+- **Risk & rollback:** This retains existing behavior; hash verification remains enabled. Remove the compatibility setting only with an intentional authentication change.
+
+### [Phase 1B / Hop B] Upgrade dependencies and record verified versions
+- **Before:** Hop A used Laravel 10, Carbon 2, Sanctum 3 and Pest 2.
+- **After:** laravel/framework v11.57.1, nesbot/carbon 3.15.1, laravel/sanctum v4.3.3, pestphp/pest v3.8.7, phpunit/phpunit 11.5.56, morilog/jalali v3.5.0. PHP 8.3.36; Vite 6.4.5; Tailwind 3.4.19.
+- **Why:** Follow the official 10-to-11 upgrade path without adopting a new application skeleton.
+- **Files:** composer.json; composer.lock; README.md; tests/README.md; .env.example; docs/REFACTOR_LOG.md.
+- **Verified by:** Full suite, SQLite migrate:fresh and explicit DemoSeeder, npm run build, Composer validation/platform checks; existing test source and nine skips retained.
+- **Risk & rollback:** Dependency upgrades only except the separately logged compatibility settings. All commands use D:/tools/php-8.3/php.exe. Optional upstream lock metadata is normalized under the existing wording rule; runtime requirements and package integrity fields are retained. Revert this hop and reinstall its lockfile for rollback.
