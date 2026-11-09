@@ -99,13 +99,14 @@ Findings remain open unless a closing commit is recorded below. The named phases
 - **Closed by:** Phase 4.
 
 ### [Baseline] Missing responsive foundation
+- **Status:** CLOSED in fdcbe5e3f66157178233dc4f93bbf0606d30eb5c. See the Phase 5 entries and docs/VISUAL_QA.md.
 - **Before:** building + dashboard pages have no viewport meta; dashboard CSS (1028 lines) has 5 media queries and fixed widths up to 1800px; the BUILDING page loads three conflicting Tailwind versions at once (2.2.15 CDN, 0.3 unpkg, Play CDN) on top of hand-written CSS, while the dashboard page loads one (2.2.15 CDN) — corrected in Phase 0 review; app pages bypass Vite so assets are unminified/unhashed.
 - **Why it matters:** mobile layout is broken/unpredictable — the main user device for residents is a phone.
 - **Cause:** pages grew as static files outside the build pipeline; Tailwind was added three times at three moments.
 - **Closed by:** Phase 5.
 
 ### [Baseline] Frontend monolith + duplication
-- **Status:** Backend duplication CLOSED in e81d1ba8aeca5be8cbfe61abf1ece5ef8bd2c6af (upload naming, message presentation and controller split). Frontend JS/CSRF duplication remains OPEN for Phase 5.
+- **Status:** Backend duplication CLOSED in e81d1ba8aeca5be8cbfe61abf1ece5ef8bd2c6af (upload naming, message presentation and controller split). Frontend JS/CSRF duplication CLOSED in fdcbe5e3f66157178233dc4f93bbf0606d30eb5c (Vite modules and shared fetch/CSRF setup).
 - **Before:** `public/js/building.js` is 1495 lines covering chat/polls/payments/uploads; the CSRF-token block repeats 7× (14 total references including usages — corrected in Phase 0 review); PHP builds the same message array 7×; the random upload-filename block repeats 3× (chat, announcement, incidental cost — corrected in Phase 0 review); `BuildingController` is 771 lines / 13 responsibilities.
 - **Why it matters:** every fix must be made in several places; regressions hide easily.
 - **Cause:** features were appended to the same files without extraction points.
@@ -127,12 +128,14 @@ Findings remain open unless a closing commit is recorded below. The named phases
 - **Closed by:** Phase 3 (as corrected above).
 
 ### [Baseline] Dark mode exists only as a skeleton (CORRECTED in Phase 0 review)
+- **Status:** CLOSED in fdcbe5e3f66157178233dc4f93bbf0606d30eb5c. See the Phase 5 entries and docs/VISUAL_QA.md.
 - **Before:** a working toggle + persisted setting exists (`darkMode` in the settings object of `public/js/building.js` and `public/js/dashboard/script.js`, toggling `.dark` on `<html>`), but styling coverage is ~9 `.dark` rules in `public/css/dashboard/style.css` (root vars, search/add wrappers, a few buttons) plus scattered Breeze `dark:` utilities in a few fragments. Most screens — chat, tables, modals, most forms — have NO dark styling and stay light.
 - **Why it matters:** enabling the toggle produces a half-light, half-dark UI — worse than no toggle.
 - **Cause:** the theme was started (mechanism first) and never rolled out across components.
 - **Correction note:** the original audit entry claimed "dark mode does not exist" — the Phase 0 audit corrected it against the repository code. Phase 5 COMPLETES dark mode instead of building it from scratch: keep the existing toggle/persistence mechanism, extend coverage to every component, both themes in screenshot QA.
 
 ### [Baseline] Mixed/absent UX states
+- **Status:** CLOSED in fdcbe5e3f66157178233dc4f93bbf0606d30eb5c. See the Phase 5 entries and docs/VISUAL_QA.md.
 - **Before:** fetch calls largely without error handling (1 try/catch for 11 calls), no loading/empty states system, destructive actions without confirm, alerts inconsistent.
 - **Why it matters:** failures are silent for users; misclicks are unrecoverable.
 - **Cause:** happy-path-first UI.
@@ -764,3 +767,11 @@ Findings remain open unless a closing commit is recorded below. The named phases
 - **Files:** resources/views/components/, dashboard/building/auth/admin views, ui.js, theme.css.
 - **Verified by:** All 130 captures pass the form-label/image checks. Unit and chart dialogs restore focus on Escape. The suite passes 332 tests, 0 failed, 0 skipped, 776 assertions. All 54 route entries match Phase 4, including controller targets. No existing feature test was edited.
 - **Risk & rollback:** UI components and dependent Blade callers must be reverted together. The backend and route files are unchanged.
+
+### [Phase 5] Record frontend baseline closures
+- **Before:** Responsive foundation, frontend duplication, dark coverage and UX findings still pointed to planned Phase 5 work.
+- **After:** All four reference fdcbe5e3f66157178233dc4f93bbf0606d30eb5c and the visual review evidence.
+- **Why:** The closure record must identify the implementation and its checks.
+- **Files:** docs/REFACTOR_LOG.md.
+- **Verified by:** 332 backend tests passed with 776 assertions, 54 route entries matched, all 130 after captures passed, and both diff style scans are clean.
+- **Risk & rollback:** Documentation only. Reopen the findings if the frontend implementation is reverted.
