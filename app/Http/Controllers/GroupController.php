@@ -23,26 +23,41 @@ class GroupController extends Controller
         $this->middleware(['auth', AccessMiddleware::class.':member']);
     }
 
+    /**
+     * @return \Illuminate\Http\JsonResponse Body is array{messages: list of MessagePresenter::present() payloads, first_message_id: int|null, last_message_id: int|null}.
+     */
     public function index(Complex $complex, int $lastReceivedMessageId)
     {
         return response()->json($this->chat->fetch($this->group($complex), 'around', $lastReceivedMessageId, 10, auth()->id()));
     }
 
+    /**
+     * @return \Illuminate\Http\JsonResponse Body is array{messages: list of MessagePresenter::present() payloads, first_message_id: int}.
+     */
     public function getMessagesBeforeFrom(Complex $complex, int $fromFirstMessageId)
     {
         return response()->json($this->chat->fetch($this->group($complex), 'before', $fromFirstMessageId, 10, auth()->id()));
     }
 
+    /**
+     * @return \Illuminate\Http\JsonResponse Body is array{messages: list of MessagePresenter::present() payloads, last_message_id: int}.
+     */
     public function getMessagesAfterFrom(Complex $complex, int $fromLastMessageId)
     {
         return response()->json($this->chat->fetch($this->group($complex), 'after', $fromLastMessageId, 10, auth()->id()));
     }
 
+    /**
+     * @return \Illuminate\Http\JsonResponse Body is array{last_message_seen_id: int|null}.
+     */
     public function lastMessageSeenId(Complex $complex)
     {
         return response()->json(['last_message_seen_id' => $this->chat->lastSeen($this->group($complex), auth()->id())]);
     }
 
+    /**
+     * @return \Illuminate\Http\JsonResponse Body is list<array{user_name: string, viewed_at: string|null}>.
+     */
     public function getMessageViewers(MessageViewersRequest $request)
     {
         return response()->json($this->chat->viewers($request->validated()['message_id']));
@@ -74,6 +89,9 @@ class GroupController extends Controller
         }
     }
 
+    /**
+     * @return \Illuminate\Http\JsonResponse Body is array{message: string, status: '200'|'403'}.
+     */
     public function destroy(Message $Message)
     {
         if ($Message->user_id == auth()->id()) {

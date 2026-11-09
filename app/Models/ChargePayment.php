@@ -6,6 +6,9 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Records a monthly charge against a unit role. The Jalali year and month let the same role pay the same charge again in a later period.
+ */
 class ChargePayment extends Model
 {
     use HasFactory;
@@ -16,7 +19,6 @@ class ChargePayment extends Model
 
     protected $casts = ['period_year' => 'integer', 'period_month' => 'integer'];
 
-    // Relationships
     public function role(): BelongsTo
     {
         return $this->belongsTo(UserRole::class);

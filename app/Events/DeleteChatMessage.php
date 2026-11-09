@@ -16,18 +16,13 @@ class DeleteChatMessage implements ShouldBroadcast
 
     public $deletedMessage;
 
-    /**
-     * Create a new event instance.
-     */
     public function __construct($deletedMessage)
     {
         $this->deletedMessage = $deletedMessage;
     }
 
     /**
-     * Get the channels the event should broadcast on.
-     *
-     * @return array<int, PrivateChannel>
+     * @return list<PrivateChannel>
      */
     public function broadcastOn(): array
     {
@@ -36,9 +31,6 @@ class DeleteChatMessage implements ShouldBroadcast
         ];
     }
 
-    /**
-     * Get the broadcast event name.
-     */
     public function broadcastAs(): string
     {
         return 'DeleteChatMessage';

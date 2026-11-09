@@ -7,6 +7,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Connects a user to a complex and an optional unit. Votes and both kinds of payment belong to this role.
+ */
 class UserRole extends Model
 {
     use HasFactory;
@@ -21,7 +24,6 @@ class UserRole extends Model
         'end_date' => 'date',
     ];
 
-    // Relationships
     public function complex(): BelongsTo
     {
         return $this->belongsTo(Complex::class);

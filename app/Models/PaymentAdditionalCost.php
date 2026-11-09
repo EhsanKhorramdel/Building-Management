@@ -14,7 +14,6 @@ class PaymentAdditionalCost extends Model
         'role_id', 'incidental_costs_id', 'amount'
     ];
 
-    // Relationships
     public function role(): BelongsTo
     {
         return $this->belongsTo(UserRole::class);

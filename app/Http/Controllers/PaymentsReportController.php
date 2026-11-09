@@ -15,6 +15,9 @@ class PaymentsReportController extends Controller
         $this->middleware(['auth', AccessMiddleware::class.':member']);
     }
 
+    /**
+     * @return \Illuminate\Http\JsonResponse Body is list<array{unit_number: int|null, type: string, amount: int|float|string, date: string, user_name: string}>.
+     */
     public function payments(PaymentsReportRequest $request)
     {
         $complex = Complex::findOrFail($request->validated()['complex_id']);

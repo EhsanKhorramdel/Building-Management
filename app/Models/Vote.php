@@ -14,7 +14,6 @@ class Vote extends Model
         'poll_id', 'role_id', 'poll_option_id'
     ];
 
-    // Relationships
     public function poll(): BelongsTo
     {
         return $this->belongsTo(Poll::class);

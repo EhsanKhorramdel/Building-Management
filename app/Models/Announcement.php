@@ -14,7 +14,6 @@ class Announcement extends Model
         'complex_id', 'manager_id', 'text', 'image_url', 'archive'
     ];
 
-    // Relationships
     public function complex(): BelongsTo
     {
         return $this->belongsTo(Complex::class);

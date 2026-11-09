@@ -2,7 +2,6 @@
 
 namespace App\Providers;
 
-// use Illuminate\Support\Facades\Gate;
 use App\Models\Complex;
 use App\Policies\ComplexPolicy;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;

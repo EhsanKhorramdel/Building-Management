@@ -3,6 +3,7 @@ import { toast } from '../ui';
 export const config = JSON.parse(document.querySelector('#building-config')?.textContent || '{}');
 export const csrf = () => document.querySelector('meta[name="csrf-token"]')?.content;
 
+/** @returns {Promise<unknown>} Parsed JSON, true for a successful bodyless request, or null after displaying an error. */
 export async function request(url, { method = 'GET', data, json = true } = {}) {
     try {
         const headers = { Accept: 'application/json' };

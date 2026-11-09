@@ -15,7 +15,6 @@ class PollOption extends Model
         'poll_id', 'option_number', 'option',
     ];
 
-    // Relationships
     public function poll(): BelongsTo
     {
         return $this->belongsTo(Poll::class);

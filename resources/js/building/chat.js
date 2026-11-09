@@ -191,6 +191,7 @@ export function chat() {
                 else last = result.last_message_id;
                 (before ? older : newer).hidden = !result.messages.length;
                 render();
+                // Keep the same message in view after inserting an older page above it.
                 if (before) scroll.scrollTop = oldTop + scroll.scrollHeight - oldHeight;
             }
             void markVisible();

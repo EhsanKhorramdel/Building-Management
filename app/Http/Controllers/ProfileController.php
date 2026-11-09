@@ -31,6 +31,7 @@ class ProfileController extends Controller
 
         $user->name = $validatedData['name'];
         $user->email = $validatedData['email'];
+        // Omitted optional fields retain their value. Explicit empty values clear them.
         if (array_key_exists('ncode', $validatedData)) {
             $user->national_code = $validatedData['ncode'];
         }

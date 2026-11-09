@@ -1,72 +1,101 @@
 # Building Management
 
-Run the test suite with `composer test`. [Test setup and local demo data](tests/README.md) documents the isolated SQLite connection, optional demo seeder and local accounts.
+Building Management is a Persian-language web app for apartment complexes. Residents join a complex with an invite, register their units and use a shared dashboard for building activity.
 
-The current lockfiles use PHP 8.3.36, Laravel 12.71.0, Carbon 3.15.1, Sanctum 4.3.3, Pest 3.8.7 / PHPUnit 11.5.56, Vite 6.4.5 and Tailwind 3.4.19. The existing HTTP Kernel, middleware aliases and service providers remain in use. On this Windows checkout, run PHP commands with D:/tools/php-8.3/php.exe.
+Managers administer their own complexes, publish notices and set charges and incidental costs. A site administrator reviews requests to register new complexes.
 
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+## Features
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+- Complexes and units with global administrator and per-complex manager and resident roles.
+- Building registration approvals and manager-controlled join links.
+- Monthly charges, incidental costs and a printable payment report.
+- Announcements, timed polls and vote results.
+- Per-complex group chat with image attachments and read receipts.
+- Responsive pages with a light and dark theme.
 
-## About Laravel
+## Requirements
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- PHP 8.3 or later and Composer 2.
+- Node.js 20 or later with npm. The project was built with Node.js 22.
+- SQLite with the PHP PDO SQLite extension for development and tests. Use MySQL 8 with PDO MySQL in production.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Local setup
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+Clone the repository and install its dependencies.
 
-## Learning Laravel
+```sh
+git clone https://github.com/EhsanKhorramdel/Building-Management.git
+cd Building-Management
+composer install
+npm install
+```
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+Copy the environment template.
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+```sh
+cp .env.example .env
+```
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains over 2000 video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+In PowerShell, use `Copy-Item .env.example .env`.
 
-## Laravel Sponsors
+In `.env`, set the following values. Remove the `DB_DATABASE` line so Laravel uses `database/database.sqlite`.
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the Laravel [Patreon page](https://patreon.com/taylorotwell).
+```dotenv
+APP_URL=http://127.0.0.1:8000
+DB_CONNECTION=sqlite
+MAIL_MAILER=log
+```
 
-### Premium Partners
+Create the SQLite file, generate the app key, migrate and seed the local data, then build and serve the app.
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Cubet Techno Labs](https://cubettech.com)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[Many](https://www.many.co.uk)**
-- **[Webdock, Fast VPS Hosting](https://www.webdock.io/en)**
-- **[DevSquad](https://devsquad.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[OP.GG](https://op.gg)**
-- **[WebReinvent](https://webreinvent.com/?utm_source=laravel&utm_medium=github&utm_campaign=patreon-sponsors)**
-- **[Lendio](https://lendio.com)**
+```sh
+php -r "touch('database/database.sqlite');"
+php artisan key:generate
+php artisan migrate
+php artisan db:seed --class=DemoSeeder
+php artisan storage:link
+npm run build
+php artisan serve
+```
 
-## Contributing
+Open `http://127.0.0.1:8000/login` and sign in with a demo account. For live asset updates while editing, run `npm run dev` in a second terminal in place of `npm run build`.
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+### Demo accounts
 
-## Code of Conduct
+These shared credentials are for local demos only. Never seed them into a deployed database. Every account below uses the password `password`.
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+| Account | Email |
+| --- | --- |
+| Administrator | `admin@example.test` |
+| Manager | `manager@example.test` |
+| Resident 1 | `resident1@example.test` |
+| Resident 2 | `resident2@example.test` |
+| Resident 3 | `resident3@example.test` |
 
-## Security Vulnerabilities
+## Configuration
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+- **Broadcasting.** The template uses `BROADCAST_CONNECTION=log`, which records chat events locally. Set it to `pusher` for live chat and configure `PUSHER_APP_ID`, `PUSHER_APP_KEY`, `PUSHER_APP_SECRET` and `PUSHER_APP_CLUSTER`. The template maps the public key and cluster to `VITE_PUSHER_APP_KEY` and `VITE_PUSHER_APP_CLUSTER`. The browser gets those public values from the rendered page. It authorizes each private complex channel through the signed-in session.
+- **Uploads.** Announcements, invoices and chat images live under `storage/app/public`, the root of the public disk. `php artisan storage:link` exposes them at `/storage`.
+- **Mail.** The template points SMTP to Mailpit on port 1025. The local setup above writes mail to the log. Configure a real mail transport for a deployment that sends password reset links.
 
-## License
+## Tests
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Run the PHP suite from the repository root. It uses an in-memory SQLite database.
+
+```sh
+php artisan test
+```
+
+See [visual QA](docs/VISUAL_QA.md#repeat-the-after-capture) for Playwright setup and the browser capture command.
+
+## Screenshots
+
+- Desktop dashboard at 1440px ([light](docs/screenshots/dashboard-1440-light.png), [dark](docs/screenshots/dashboard-1440-dark.png))
+- Phone chat at 390px ([light](docs/screenshots/building-chat-390-light.png), [dark](docs/screenshots/building-chat-390-dark.png))
+- [Building home on a 768px tablet](docs/screenshots/building-home-768-light.png)
+
+See [Architecture](docs/ARCHITECTURE.md) for domain and deployment details, and the [changelog](CHANGELOG.md) for a summary of recent work.
+
+## Roadmap
+
+Building maps, online payment processing and SMS notifications are planned.

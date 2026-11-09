@@ -6,6 +6,9 @@ use App\Models\Message;
 
 class MessagePresenter
 {
+    /**
+     * @return array{message_id: int, user_name: string, user_id: int, text: string|null, image_url: string|null, created_at: string, is_deleted: bool|null, is_edited: bool|null, is_owned_by_logged_in_user: bool}
+     */
     public function present(Message $message, ?int $viewerId = null): array
     {
         return [

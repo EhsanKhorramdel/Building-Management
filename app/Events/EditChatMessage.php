@@ -16,18 +16,13 @@ class EditChatMessage implements ShouldBroadcast
 
     public $editedMessage;
 
-    /**
-     * Create a new event instance.
-     */
     public function __construct($editedMessage)
     {
         $this->editedMessage = $editedMessage;
     }
 
     /**
-     * Get the channels the event should broadcast on.
-     *
-     * @return array<int, PrivateChannel>
+     * @return list<PrivateChannel>
      */
     public function broadcastOn(): array
     {
@@ -36,9 +31,6 @@ class EditChatMessage implements ShouldBroadcast
         ];
     }
 
-    /**
-     * Get the broadcast event name.
-     */
     public function broadcastAs(): string
     {
         return 'EditChatMessage';

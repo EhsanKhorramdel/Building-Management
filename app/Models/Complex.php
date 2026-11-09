@@ -6,6 +6,9 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * A building with units, scoped roles, announcements, charges, incidental costs, polls and chat groups.
+ */
 class Complex extends Model
 {
     use HasFactory;

@@ -10,6 +10,12 @@ class ChatService
 {
     public function __construct(private MessagePresenter $presenter, private FileUploadService $uploads) {}
 
+    /**
+     * A zero anchor starts at the latest visible message. One-sided pages exclude the
+     * anchor and keep it as the cursor when no further messages exist.
+     *
+     * @return array{messages: list<array{message_id: int, user_name: string, user_id: int, text: string|null, image_url: string|null, created_at: string, is_deleted: bool|null, is_edited: bool|null, is_owned_by_logged_in_user: bool}>, first_message_id?: int|null, last_message_id?: int|null}
+     */
     public function fetch(Group $group, string $direction, int $cursorId, int $limit, int $viewerId): array
     {
         if ($direction === 'around') {
@@ -63,6 +69,9 @@ class ChatService
         ]);
     }
 
+    /**
+     * @return \Illuminate\Support\Collection<int, array{user_name: string, viewed_at: \Illuminate\Support\Carbon|null}>
+     */
     public function viewers(int $messageId)
     {
         $message = Message::findOrFail($messageId);

@@ -7,6 +7,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * A chat entry in a complex group, with an author and per-user seen receipts.
+ */
 class Message extends Model
 {
     use HasFactory;
@@ -20,7 +23,6 @@ class Message extends Model
         'edited' => 'boolean',
     ];
 
-    // Relationships
     public function group(): BelongsTo
     {
         return $this->belongsTo(Group::class);

@@ -775,3 +775,35 @@ Findings remain open unless a closing commit is recorded below. The named phases
 - **Files:** docs/REFACTOR_LOG.md.
 - **Verified by:** 332 backend tests passed with 776 assertions, 54 route entries matched, all 130 after captures passed, and both diff style scans are clean.
 - **Risk & rollback:** Documentation only. Reopen the findings if the frontend implementation is reverted.
+
+### [Phase 6] Document domain rules and response contracts
+- **Before:** The recurring payment rule, chat cursor contract and channel authorization conventions were scattered across code. Disabled scaffold statements and old stock descriptions obscured the active paths.
+- **After:** Comments explain Jalali payment periods, server-owned prices, chat cursor and payload shapes, poll counts, channel authorization and the retained kernel layout. Central models identify their key relations. Removed 13 disabled statements and values across the app and web routes, two misleading descriptions and the boilerplate notes on reset handling and model relations. No unowned task markers were present.
+- **Why:** The same charge is payable again next month, chat clients depend on cursor and payload details, and role checks must follow the resource's complex.
+- **Files:** app/ models, services, controllers, events, middleware and providers, routes/channels.php, routes/web.php and resources/js/ comments.
+- **Verified by:** 111 files reviewed. The commented PHP grep under app/ returned zero matches. The task-marker grep under app/, routes/ and resources/js/ also returned zero. PHP token and JavaScript syntax-tree comparisons preserved the executable source. The suite passed 332 tests with 776 assertions.
+- **Risk & rollback:** Comments and annotations only. Reverting them leaves runtime behavior unchanged.
+
+### [Phase 6] Replace the stock readme with project setup
+- **Before:** The readme described Laravel and the framework upgrade rather than the app or a fresh local install.
+- **After:** The readme covers local SQLite, demo accounts, configuration, tests, and five representative Phase 5 images.
+- **Why:** A new checkout needs the database settings and setup sequence in one place.
+- **Files:** README.md and docs/screenshots/.
+- **Verified by:** All five images match their Phase 5 after captures. The clean-room entry records setup verification.
+- **Risk & rollback:** Demo credentials are shared and limited to local seeding. The new text and screenshots can be reverted together.
+
+### [Phase 6] Record the architecture and deployment boundaries
+- **Before:** Domain relationships, scoped permissions, stored dates and broadcast behavior were documented across phase entries.
+- **After:** One document summarizes the entity map, permission matrix, date conventions, private chat flow, tests and deployment requirements. It identifies live MySQL and Pusher verification as pending.
+- **Why:** Deployment and feature changes need an explicit account of what the current application runs and what remains unverified.
+- **Files:** docs/ARCHITECTURE.md.
+- **Verified by:** Cross-checked against the models, scoped authorization tests, migrations, broadcaster config and visual QA record.
+- **Risk & rollback:** Documentation only. Update the matrix and date inventory with any change to those contracts.
+
+### [Phase 6] Summarize the refactor in the changelog
+- **Before:** Phases 0 through 5 were recorded in the engineering log.
+- **After:** One Unreleased section summarizes the user-visible changes and links to the engineering record.
+- **Why:** Readers need a short account of the security, responsiveness and workflow fixes without tracing individual commits.
+- **Files:** CHANGELOG.md.
+- **Verified by:** Compared the entries with the Phase 0 through 5 log and checked the engineering log link.
+- **Risk & rollback:** Documentation only. The engineering log remains the detailed record.

@@ -13,9 +13,13 @@ use Morilog\Jalali\Jalalian;
 
 class PaymentService
 {
+    /**
+     * @return array{message: string, status: 'success'|'error', page: 'cost'}
+     */
     public function incidentalCostPayment(array $data, int $userId)
     {
 
+        // The stored share determines the payment amount so clients cannot submit a different price.
         $payable = IncidentalCost::findOrFail($data['incidentalCostId'] ?? null);
         $complexId = $data['complexId'] ?? null;
 
@@ -69,6 +73,9 @@ class PaymentService
         return compact('message', 'status', 'page');
     }
 
+    /**
+     * @return array{message: string, status: 'success'|'error', page: 'charge'}
+     */
     public function buildingChargePayment(array $data, int $userId)
     {
 
@@ -85,6 +92,7 @@ class PaymentService
             return compact('message', 'status', 'page');
         }
 
+        // The charge record supplies the price independently of the payment request.
         $payable = MonthlyCharge::findOrFail($data['monthlyChargeId'] ?? null);
         $complexId = $data['complexId'] ?? null;
         $unit = Unit::where('complex_id', $complexId)
@@ -108,6 +116,7 @@ class PaymentService
 
         if ($role) {
 
+            // The same charge may be paid once per Jalali month. The unique index uses that same period.
             $payments = ChargePayment::where('role_id', $role->id)
                 ->where('monthly_charge_id', $data['monthlyChargeId'] ?? null)
                 ->get();

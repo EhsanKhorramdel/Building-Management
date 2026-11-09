@@ -15,7 +15,6 @@ class MonthlyCharge extends Model
         'complex_id', 'user_id', 'amount', 'start_date', 'end_date'
     ];
 
-    // Relationships
     public function complex(): BelongsTo
     {
         return $this->belongsTo(Complex::class);

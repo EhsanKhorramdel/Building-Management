@@ -15,18 +15,13 @@ class NewChatMessage implements ShouldBroadcast
 
     public $message;
 
-    /**
-     * Create a new event instance.
-     */
     public function __construct($message)
     {
         $this->message = $message;
     }
 
     /**
-     * Get the channels the event should broadcast on.
-     *
-     * @return array<int, PrivateChannel>
+     * @return list<PrivateChannel>
      */
     public function broadcastOn(): array
     {
@@ -35,9 +30,6 @@ class NewChatMessage implements ShouldBroadcast
         ];
     }
 
-    /**
-     * Get the broadcast event name.
-     */
     public function broadcastAs(): string
     {
         return 'NewChatMessage';

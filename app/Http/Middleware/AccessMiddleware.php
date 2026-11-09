@@ -70,6 +70,7 @@ class AccessMiddleware
         };
         if ($resource) {
             if (in_array($action, ['incidentalCostPayment', 'buildingChargePayment'], true)) {
+                // Unit lookup must use the same complex as the payable record.
                 abort_unless((int) $request->complexId === $resource->complex_id, 403);
             }
 

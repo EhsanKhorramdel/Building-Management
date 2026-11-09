@@ -25,6 +25,9 @@ class PollController extends Controller
         return redirect()->back()->with($polls->vote($request->validated()['voteRadio'] ?? null, auth()->id()));
     }
 
+    /**
+     * @return \Illuminate\Http\JsonResponse Body is list<array{option: string, voteCount: int}>.
+     */
     public function voteResult(PollResultsRequest $request, PollService $polls)
     {
         return response()->json($polls->results($request->validated()['poll_id']));

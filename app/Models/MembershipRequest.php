@@ -13,7 +13,6 @@ class MembershipRequest extends Model
         'user_id', 'name', 'address', 'location', 'number_of_floors', 'number_of_units', 'request_status'
     ];
 
-    // Relationships
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);

@@ -15,7 +15,6 @@ class Unit extends Model
         'complex_id', 'zip_code', 'unit_number', 'floor_number',
     ];
 
-    // Relationships
     public function complex(): BelongsTo
     {
         return $this->belongsTo(Complex::class);

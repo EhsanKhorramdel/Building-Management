@@ -10,6 +10,9 @@ use Carbon\Carbon;
 
 class PollService
 {
+    /**
+     * @return array{status: 'success'|'error', message: string, page: 'poll'}
+     */
     public function create(int $complexId, array $data): array
     {
         $options = [];
@@ -35,6 +38,9 @@ class PollService
         return ['status' => 'success', 'message' => 'رای گیری با موفقیت ایجاد شد', 'page' => 'poll'];
     }
 
+    /**
+     * @return array{status: 'success'|'error', message: string, page: 'poll'}
+     */
     public function vote($optionId, int $userId): array
     {
         if (! $optionId) {
@@ -54,6 +60,11 @@ class PollService
         return ['status' => 'success', 'message' => $message, 'page' => 'poll'];
     }
 
+    /**
+     * The left join keeps options with zero votes in the same ordered result.
+     *
+     * @return list<array{option: string, voteCount: int}>
+     */
     public function results(int $pollId): array
     {
         return PollOption::leftJoin('votes', function ($join) {
