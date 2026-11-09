@@ -8,6 +8,7 @@ use App\Http\Requests\ChargeRequest;
 use App\Models\Complex;
 use App\Models\MonthlyCharge;
 use App\Services\PaymentService;
+use App\Services\SmsService;
 
 class ChargeController extends Controller
 {
@@ -17,7 +18,7 @@ class ChargeController extends Controller
         $this->middleware(AccessMiddleware::class.':manager')->only('buildingCharge');
     }
 
-    public function buildingCharge(ChargeRequest $request, Complex $complex)
+    public function buildingCharge(ChargeRequest $request, Complex $complex, SmsService $sms)
     {
         $data = $request->validated();
 
@@ -40,7 +41,8 @@ class ChargeController extends Controller
             'end_date' => $endDate,
         ];
 
-        MonthlyCharge::create($monthlyCharges);
+        $charge = MonthlyCharge::create($monthlyCharges);
+        $sms->queue('monthly_charge', $charge->id);
 
         $status = 'success';
         $message = 'شارژ جدید با موفقیت ثبت شد.';

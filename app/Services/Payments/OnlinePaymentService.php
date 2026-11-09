@@ -8,6 +8,7 @@ use App\Models\Transaction;
 use App\Models\User;
 use App\Models\UserRole;
 use App\Services\PaymentService;
+use App\Services\SmsService;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -88,7 +89,9 @@ class OnlinePaymentService
     {
         $authority = data_get($payload, $this->gateways->callbackAuthority($driver));
         abort_unless(is_string($authority) && $authority !== '' && strlen($authority) <= 255, 404);
-        return DB::transaction(function () use ($driver, $authority, $payload, $viewerId) {
+        $completed = false;
+
+        $transaction = DB::transaction(function () use ($driver, $authority, $payload, $viewerId, &$completed) {
             $attempt = Transaction::query()->where('gateway', $driver)->where('authority', $authority);
             // A no-op write serializes verification on SQLite, which ignores SELECT FOR UPDATE.
             (clone $attempt)->toBase()->update(['status' => DB::raw('status')]);
@@ -124,9 +127,16 @@ class OnlinePaymentService
             } catch (UniqueConstraintViolationException) {
                 return $this->finish($transaction, Transaction::FAILED, 'payment_conflict', $verification->referenceId);
             }
+            $completed = true;
 
             return $this->finish($transaction, Transaction::PAID, reference: $verification->referenceId);
         });
+
+        if ($completed) {
+            app(SmsService::class)->queue('payment_receipt', $transaction->id);
+        }
+
+        return $transaction;
     }
 
     private function expiryCutoff(): Carbon

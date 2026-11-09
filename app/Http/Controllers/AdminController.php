@@ -7,6 +7,7 @@ use App\Models\Complex;
 use App\Models\Group;
 use App\Models\MembershipRequest;
 use App\Models\UserRole;
+use App\Services\SmsService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -28,7 +29,7 @@ class AdminController extends Controller
         return view('adminPanel', ['allMembershipRequests' => $allMembershipRequests]);
     }
 
-    public function accept(MembershipRequest $MembershipRequest)
+    public function accept(MembershipRequest $MembershipRequest, SmsService $sms)
     {
         $accepted = DB::transaction(function () use ($MembershipRequest) {
             $request = MembershipRequest::whereKey($MembershipRequest->id)->lockForUpdate()->firstOrFail();
@@ -64,6 +65,8 @@ class AdminController extends Controller
         if (! $accepted) {
             return redirect()->back()->with(['status' => 'error', 'message' => 'این درخواست قبلاً بررسی شده است.']);
         }
+
+        $sms->queue('membership_approved', $MembershipRequest->user_id);
 
         return redirect()->back();
     }

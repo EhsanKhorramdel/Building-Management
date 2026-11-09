@@ -7,6 +7,7 @@ use App\Http\Requests\AnnouncementRequest;
 use App\Models\Announcement;
 use App\Models\Complex;
 use App\Services\FileUploadService;
+use App\Services\SmsService;
 
 class AnnouncementController extends Controller
 {
@@ -15,7 +16,7 @@ class AnnouncementController extends Controller
         $this->middleware(['auth', AccessMiddleware::class.':manager']);
     }
 
-    public function NotificationRegistration(AnnouncementRequest $request, Complex $complex, FileUploadService $uploads)
+    public function NotificationRegistration(AnnouncementRequest $request, Complex $complex, FileUploadService $uploads, SmsService $sms)
     {
         $data = $request->validated();
 
@@ -33,7 +34,8 @@ class AnnouncementController extends Controller
             $announcement['image_url'] = $uploads->store($data['notifPicture'], 'public/notificationFiles');
         }
 
-        Announcement::create($announcement);
+        $created = Announcement::create($announcement);
+        $sms->queue('announcement', $created->id);
 
         $status = 'success';
         $message = 'اعلان جدید با موفقیت ثبت شد.';

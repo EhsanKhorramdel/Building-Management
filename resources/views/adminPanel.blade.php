@@ -48,6 +48,17 @@
                 </button></form>
             </div>
         </div>
+        @if (config('payments.enabled') || config('sms.enabled'))
+            <section class="mb-4 space-y-1">
+                <h2 class="font-bold">وضعیت پرداخت و پیامک</h2>
+                <p>پرداخت آنلاین: {{ config('payments.enabled') ? 'فعال' : 'غیرفعال' }}
+                    @if (config('payments.enabled'))
+                        ({{ config('payments.driver') === 'mock' || config('payments.drivers.gateway.sandbox') ? 'آزمایشی' : 'واقعی' }})
+                    @endif
+                </p>
+                <p>پیامک: {{ config('sms.enabled') ? 'فعال' : 'غیرفعال' }}</p>
+            </section>
+        @endif
         <div id="accepted" class="tab" hidden>
             <h2 class="text-xl font-bold mt-6 text-green-600">پذیرفته شده ها</h2>
             <ul class="mt-4 space-y-4">
