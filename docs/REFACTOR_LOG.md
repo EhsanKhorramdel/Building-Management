@@ -935,3 +935,11 @@ Findings remain open unless a closing commit is recorded below. The named phases
 - **Files:** OnlinePaymentTest, SmsIntegrationTest, integrations.spec.js, README.md, ARCHITECTURE.md, CHANGELOG.md and VISUAL_QA.md.
 - **Verified by:** All 354 existing tests passed with 895 assertions, both flags off and no edits. The full run passed 387 tests with 1,102 assertions. It starts with both flags off and the 21 payment and 12 SMS cases opt in as needed. The build, fresh SQLite setup and four browser cases passed. Final captures have no overflow or browser errors.
 - **Risk & rollback:** The browser spec writes demo payments. Use a fresh isolated demo database. HTTP integrations were verified against fakes.
+
+### [Phase 8B] Compare the original application and audit the accepted build
+- **Before:** Individual phase reports covered their own changes. The project had no current side-by-side comparison or combined record of browser and performance findings.
+- **After:** The comparison records both revisions, measured query counts and the original page controls. Findings records the browser, accessibility and security evidence. Proposals groups work outside the current plan for owner review.
+- **Why:** The owner needs to distinguish regressions and usability gaps from optional improvements before the next phase.
+- **Files:** docs/COMPARISON.md, docs/FINDINGS.md, docs/PROPOSALS.md and this entry.
+- **Verified by:** The current PHP suite passed 387 tests with 1,102 assertions. Both frontend builds completed. The authorization matrix passed 168 cases. The sweep produced 250 screenshots with 49 raw guard flags, including six measurements of the hidden file input whose visible proxy passed. Poll creation returned HTTP 500 from browser forms and voting passed on an existing poll. The audit recorded 13 findings.
+- **Risk & rollback:** Documentation only. The findings need separate approval before changes are made. Browser writes used isolated demo data and the audit captures are ignored by Git.
