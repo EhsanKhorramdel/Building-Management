@@ -17,4 +17,7 @@
             <tbody></tbody>
         </table>
     </div>
+    @if (config('payments.enabled'))
+        @include('building.online-payments')
+    @endif
 </section>

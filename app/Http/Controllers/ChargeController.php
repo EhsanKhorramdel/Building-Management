@@ -51,6 +51,8 @@ class ChargeController extends Controller
 
     public function buildingChargePayment(ChargePaymentRequest $request, PaymentService $payments)
     {
+        abort_if(config('payments.enabled'), 403);
+
         return redirect()->back()->with($payments->buildingChargePayment($request->validated(), auth()->id()));
     }
 }

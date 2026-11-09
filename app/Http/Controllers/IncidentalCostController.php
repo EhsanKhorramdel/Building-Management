@@ -46,6 +46,8 @@ class IncidentalCostController extends Controller
 
     public function incidentalCostPayment(IncidentalPaymentRequest $request, PaymentService $payments)
     {
+        abort_if(config('payments.enabled'), 403);
+
         return redirect()->back()->with($payments->incidentalCostPayment($request->validated(), auth()->id()));
     }
 }

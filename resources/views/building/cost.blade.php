@@ -17,7 +17,7 @@
                     </div>
 
                     <div class="building-box-footer flex justify-center gap-2.5">
-                        <button type="button" data-amount="{{ $incidentalCost->share_amount }}" data-payment-id="{{ $incidentalCost->id }}" class="text-center cost-pay-open-Btn">پرداخت</button>
+                        <button type="button" data-amount="{{ $incidentalCost->share_amount }}" data-payment-id="{{ $incidentalCost->id }}" class="text-center cost-pay-open-Btn">{{ config('payments.enabled') ? 'پرداخت آنلاین' : 'پرداخت' }}</button>
 
                         <button type="button" data-invoice="{{ asset($incidentalCost->cost_invoice ? '/storage/incidentalCostFiles/' . $incidentalCost->cost_invoice : '/storage/default.png') }}">مشاهده فاکتور</button>
                     </div>
@@ -47,8 +47,11 @@
     </div>
 </div>
 
-<form class="register-form" method="POST" action="{{ URL::route('building.incidentalCostPayment') }}">
+<form class="register-form" method="POST" action="{{ config('payments.enabled') ? route('payments.initiate') : URL::route('building.incidentalCostPayment') }}">
     @csrf
+    @if (config('payments.enabled'))
+        <input type="hidden" name="type" value="cost">
+    @endif
     <div class="dialog-shell cost-pay-modal hidden" role="dialog" aria-modal="true" @if ($errors->getBag('incidentalPayCost')->any()) data-reopen @endif>
         <div class="bg-white p-6 rounded shadow-md max-w-sm mx-auto">
             <h3 class="text-xl font-semibold mb-4 text-center">
@@ -60,20 +63,20 @@
             </div>
             <div class="mb-4">
                 <input id="incidentalCostId" class="border border-gray-300 px-4 py-2 rounded w-full " type="hidden"
-                    name="incidentalCostId" value="{{ is_scalar(old('incidentalCostId')) ? old('incidentalCostId') : '' }}" />
+                    name="{{ config('payments.enabled') ? 'payable_id' : 'incidentalCostId' }}" value="{{ is_scalar(old(config('payments.enabled') ? 'payable_id' : 'incidentalCostId')) ? old(config('payments.enabled') ? 'payable_id' : 'incidentalCostId') : '' }}" />
             </div>
             <div class="mb-6">
                 <label class="sr-only" for="cost-unitNumber-1">شماره واحد</label><input id="cost-unitNumber-1" class="border border-gray-300 px-4 py-2 rounded w-full" type="number" placeholder="شماره واحد"
                     autocomplete="off" name="unitNumber" required min="1" value="{{ is_scalar(old('unitNumber')) ? old('unitNumber') : '' }}" @error('unitNumber', 'incidentalPayCost') aria-invalid="true" aria-describedby="cost-unitNumber-1-error" @enderror />@error('unitNumber', 'incidentalPayCost')<span class="field-error" id="cost-unitNumber-1-error">{{ $message }}</span>@enderror
             </div>
             <div class="mb-6">
-                <p class="cost-pay-amount" aria-live="polite">{{ $incidentalCosts->firstWhere('id', old('incidentalCostId'))?->share_amount }}</p>
+                <p class="cost-pay-amount" aria-live="polite">{{ $incidentalCosts->firstWhere('id', old(config('payments.enabled') ? 'payable_id' : 'incidentalCostId'))?->share_amount }}</p>
             </div>
             <div class="flex">
                 <button
                     class="bg-green-700 hover:bg-green-800 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
                     type="submit">
-                    پرداخت
+                    {{ config('payments.enabled') ? 'پرداخت آنلاین' : 'پرداخت' }}
                 </button>
                 <button
                     class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline mr-2 cost-pay-close-Btn"

@@ -7,11 +7,14 @@ use App\Http\Controllers\ChargeController;
 use App\Http\Controllers\ComplexLocationController;
 use App\Http\Controllers\GroupController;
 use App\Http\Controllers\IncidentalCostController;
+use App\Http\Controllers\OnlinePaymentController;
 use App\Http\Controllers\PaymentsReportController;
 use App\Http\Controllers\PollController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\UserController;
+use App\Http\Middleware\VerifyCsrfToken;
+use App\Services\Payments\GatewayManager;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -70,5 +73,13 @@ Route::middleware('auth')->group(function () {
 Route::patch('/dashboard/building/{complex}/location', [ComplexLocationController::class, 'update'])->name('building.location.update');
 
 Route::post('/dashboard/building/{complex}/join-link', [RoleController::class, 'regenerateJoinLink'])->name('building.regenerateJoinLink');
+
+Route::post('/payments/initiate', [OnlinePaymentController::class, 'initiate'])->middleware('auth')->name('payments.initiate');
+Route::match(['get', 'post'], '/payments/callback/{driver}', [OnlinePaymentController::class, 'callback'])
+    ->whereIn('driver', ['mock', 'gateway'])->withoutMiddleware(VerifyCsrfToken::class)->name('payments.callback');
+
+if (app(GatewayManager::class)->mockSelected()) {
+    Route::get('/payments/mock/{transaction}', [OnlinePaymentController::class, 'mock'])->middleware('auth')->name('payments.mock');
+}
 
 require __DIR__.'/auth.php';

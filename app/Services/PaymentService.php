@@ -13,6 +13,52 @@ use Morilog\Jalali\Jalalian;
 
 class PaymentService
 {
+    public function chargeHasStarted(MonthlyCharge $charge, Jalalian $period): bool
+    {
+        return ! ($charge->start_date > $period);
+    }
+
+    public function payableAmount(MonthlyCharge|IncidentalCost $payable): float|int|string
+    {
+        return $payable instanceof MonthlyCharge ? $payable->amount : $payable->share_amount;
+    }
+
+    public function alreadyPaid(MonthlyCharge|IncidentalCost $payable, UserRole $role, ?Jalalian $period = null): bool
+    {
+        if ($payable instanceof IncidentalCost) {
+            return PaymentAdditionalCost::where('role_id', $role->id)->where('incidental_costs_id', $payable->id)->exists();
+        }
+
+        $period ??= Jalalian::fromCarbon(now());
+
+        // Manual and online payments use the same Jalali period check.
+        return ChargePayment::where('role_id', $role->id)->where('monthly_charge_id', $payable->id)
+            ->get()->contains(function (ChargePayment $payment) use ($period) {
+                $date = Jalalian::fromCarbon($payment->created_at);
+
+                return $date->getYear() === $period->getYear() && $date->getMonth() === $period->getMonth();
+            });
+    }
+
+    public function recordPayment(MonthlyCharge|IncidentalCost $payable, UserRole $role, ?Jalalian $period = null): void
+    {
+        $amount = $this->payableAmount($payable);
+        if ($payable instanceof IncidentalCost) {
+            PaymentAdditionalCost::create(['role_id' => $role->id, 'incidental_costs_id' => $payable->id, 'amount' => $amount]);
+
+            return;
+        }
+
+        $period ??= Jalalian::fromCarbon(now());
+        ChargePayment::create([
+            'role_id' => $role->id,
+            'monthly_charge_id' => $payable->id,
+            'amount' => $amount,
+            'period_year' => $period->getYear(),
+            'period_month' => $period->getMonth(),
+        ]);
+    }
+
     /**
      * @return array{message: string, status: 'success'|'error', page: 'cost'}
      */
@@ -43,18 +89,8 @@ class PaymentService
         }
 
         if ($role) {
-            $paymentExists = PaymentAdditionalCost::where('role_id', $role->id)
-                ->where('incidental_costs_id', $data['incidentalCostId'] ?? null)
-                ->exists();
-
-            if (! $paymentExists) {
-                $PaymentAdditionalCost = [
-                    'role_id' => $role->id,
-                    'incidental_costs_id' => $data['incidentalCostId'] ?? null,
-                    'amount' => $payable->share_amount,
-                ];
-
-                PaymentAdditionalCost::create($PaymentAdditionalCost);
+            if (! $this->alreadyPaid($payable, $role)) {
+                $this->recordPayment($payable, $role);
 
                 $status = 'success';
                 $message = 'پرداخت با موفقیت انجام شد.';
@@ -82,9 +118,9 @@ class PaymentService
         $currentDate = Carbon::now();
         $currentJalaliDate = Jalalian::fromCarbon($currentDate);
 
-        $monthlyChargeStartDate = MonthlyCharge::findOrFail($data['monthlyChargeId'])->start_date;
+        $payable = MonthlyCharge::findOrFail($data['monthlyChargeId']);
 
-        if ($monthlyChargeStartDate > $currentJalaliDate) {
+        if (! $this->chargeHasStarted($payable, $currentJalaliDate)) {
             $status = 'error';
             $message = 'امکان پرداخت شارژ قبل از فرا رسیدن تاریخ شروع وجود ندارد.';
             $page = 'charge';
@@ -92,8 +128,6 @@ class PaymentService
             return compact('message', 'status', 'page');
         }
 
-        // The charge record supplies the price independently of the payment request.
-        $payable = MonthlyCharge::findOrFail($data['monthlyChargeId'] ?? null);
         $complexId = $data['complexId'] ?? null;
         $unit = Unit::where('complex_id', $complexId)
             ->where('unit_number', $data['unitNumber'] ?? null)
@@ -116,28 +150,8 @@ class PaymentService
 
         if ($role) {
 
-            // The same charge may be paid once per Jalali month. The unique index uses that same period.
-            $payments = ChargePayment::where('role_id', $role->id)
-                ->where('monthly_charge_id', $data['monthlyChargeId'] ?? null)
-                ->get();
-
-            $paymentExists = $payments->contains(function ($payment) use ($currentJalaliDate) {
-                $paymentDate = Jalalian::fromCarbon($payment->created_at);
-
-                return $paymentDate->getYear() === $currentJalaliDate->getYear()
-                    && $paymentDate->getMonth() === $currentJalaliDate->getMonth();
-            });
-
-            if (! $paymentExists) {
-                $ChargePayment = [
-                    'role_id' => $role->id,
-                    'monthly_charge_id' => $data['monthlyChargeId'] ?? null,
-                    'amount' => $payable->amount,
-                    'period_year' => $currentJalaliDate->getYear(),
-                    'period_month' => $currentJalaliDate->getMonth(),
-                ];
-
-                ChargePayment::create($ChargePayment);
+            if (! $this->alreadyPaid($payable, $role, $currentJalaliDate)) {
+                $this->recordPayment($payable, $role, $currentJalaliDate);
 
                 $status = 'success';
                 $message = 'پرداخت با موفقیت انجام شد.';
