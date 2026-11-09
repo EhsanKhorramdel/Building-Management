@@ -11,6 +11,8 @@ The application uses Laravel 12, Blade, and Vite. The Laravel 11 and 12 upgrades
 | Membership request | Belongs to the applicant. Approval of a pending request creates the complex, its initial manager role and its chat group in one transaction. Any submitted coordinates are copied to the complex at approval. |
 | Announcement | Belongs to a complex and its authoring manager. Cancellation archives it. |
 | Monthly charge and charge payment | A charge belongs to a complex and its author. A payment links the charge to the paying role and a Jalali month. |
+| Transaction | An online attempt belongs to a payer and role and links to a charge or incidental cost. |
+| SMS log | Records the recipient, template, driver and delivery outcome of an SMS attempt. |
 | Incidental cost and additional cost payment | A cost belongs to a complex. Its payment links the cost to the paying role. |
 | Poll, option and vote | A poll belongs to a complex and owns numbered options. A vote links a role to one option in that poll. |
 | Group, message and seen receipt | A chat group belongs to a complex. Messages belong to the group and their authors. A seen receipt links a message to a user in that group. |
@@ -47,7 +49,7 @@ A charge payment is unique by role, charge, Jalali year and Jalali month. The sa
 | `user_roles.start_date` and `end_date` | Gregorian dates. |
 | Eloquent timestamps, including payment and seen-receipt `created_at` | Datetimes. The report converts payment dates to Jalali for display. |
 
-`transactions` and `sms_logs` are schema scaffolding for planned capabilities. Online payment processing and SMS sending are currently disabled. The existing payment screens record amounts inside the app.
+`transactions` and `sms_logs` store the two optional integrations. Both integrations are disabled by default.
 
 ## Real-time chat
 
@@ -56,6 +58,27 @@ A charge payment is unique by role, charge, Jalali year and Jalali month. The sa
 3. The client authorizes the subscription through `/broadcasting/auth` with its session and CSRF token. The callback in `routes/channels.php` permits active residents and managers of that complex.
 4. `NewChatMessage`, `EditChatMessage` and `DeleteChatMessage` deliver changes on that channel. The client applies them by message ID.
 5. The HTTP endpoints load message history around the last seen message or page forward and backward by ID.
+
+## Online payment lifecycle
+
+Initiation checks the active role and unit in the payable's complex, reads the amount from the charge or cost, and creates a pending transaction. A second active attempt for that role and payable is refused. The `gateway` column identifies the configured driver. Its combination with the authority token is unique.
+
+The callback looks up the driver and authority, refuses expired attempts and serializes verification on the matching row. The generic HTTP driver checks status, amount and reference on the server. Only the callback route is exempt from CSRF because an external service cannot provide a session token. Mock callbacks require the payer's session and its CSRF token.
+
+A verified callback rechecks the current Jalali period for charges and lifetime uniqueness for incidental costs. The existing payment writer inserts the payment, and the same database transaction marks the attempt paid and saves the reference. Failed, cancelled and expired attempts are terminal. Replay returns the stored result. If the payable amount changed or a payment already exists, the attempt records a conflict and keeps the returned reference for reconciliation.
+
+Online forms and payer-scoped history appear only when payments are enabled. In that mode the old manual write endpoints refuse requests. Turning the flag off restores the manual forms and payment endpoints.
+
+## SMS triggers
+
+| Trigger | Recipients |
+| --- | --- |
+| Announcement published | Active residents and managers in the complex |
+| Monthly charge created | Active members assigned to units in that complex. The message includes the amount and Jalali start month. |
+| Online payment verified | The payer. Replaying a callback does not enqueue a second receipt. |
+| Membership request approved | The new manager |
+
+The action queues work after saving. A dedicated database worker processes the `sms` queue even when the rest of the app uses the synchronous queue connection. Users without phone numbers are skipped and logged without creating an SMS row. The log driver records the message locally. The HTTP driver records the response status in `sms_logs.meta` and marks non-2xx responses as failed. The worker checks the flag before processing.
 
 ## Testing
 

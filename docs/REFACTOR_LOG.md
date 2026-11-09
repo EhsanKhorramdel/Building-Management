@@ -879,3 +879,59 @@ Findings remain open unless a closing commit is recorded below. The named phases
 - **Files:** tests/Browser/map.spec.js, ComplexLocationTest, MembershipLocationTest, docs/VISUAL_QA.md, README.md, docs/ARCHITECTURE.md and CHANGELOG.md.
 - **Verified by:** The PHP suite passed 354 tests with 895 assertions, up from 332 tests and 776 assertions. SQLite migrate:fresh and DemoSeeder passed. The asset build passed. Four browser cases captured eight screens with no horizontal overflow or console errors. Mobile zoom buttons meet the 40px target.
 - **Risk & rollback:** Browser captures use an isolated seeded database because the flow writes a location. The screenshots remain outside Git.
+
+### [Phase 8] Index gateway authority and add the SMS queue table
+- **Before:** Transactions already had payable, amount, gateway, authority, reference and meta fields. SMS logs already had driver and meta fields. The database queue was configured, but its jobs table was absent.
+- **After:** One new migration adds uniqueness on transactions.gateway and authority. A second migration creates the standard jobs table for the dedicated SMS worker. Both models define their lifecycle statuses.
+- **Why:** Repeated callbacks must resolve to a single attempt. SMS work must remain durable without switching the app's existing synchronous queue.
+- **Files:** Transaction, SmsLog and migrations 2026_11_09_000005 and 2026_11_09_000006.
+- **Verified by:** Duplicate authority insertion is rejected. Fresh SQLite migrations, the existing reversal check and DemoSeeder pass.
+- **Risk & rollback:** Existing migrations and columns remain. Removing the jobs table discards queued work, so drain it before rollback.
+
+### [Phase 8] Add payment driver configuration and the local checkout
+- **Before:** Charge and cost payments could only write records inside the app.
+- **After:** The payment flag defaults off and the manager resolves either the mock or the generic HTTPS driver. The mock page is registered for the selected mock driver only. Production requires an explicit mock selection. The reference driver takes credentials, endpoints, status values and a JSON field map from config.
+- **Why:** Local checkout needs a complete simulation. A deployment using the reference HTTP contract can set its field names and credentials without changing application code.
+- **Files:** config/payments.php, .env.example, PaymentGateway, GatewayManager, MockGateway, GatewayDriver and mock checkout view.
+- **Verified by:** Tests cover production mock opt-in, missing credentials with no HTTP call, mapped request and nested response fields, and mock Pay and Cancel in a browser.
+- **Risk & rollback:** Keep the flag off until a matching provider contract has been verified in a sandbox. A cached route list must be refreshed when the selected driver changes.
+
+### [Phase 8] Verify callbacks and write payments through the existing service
+- **Before:** The payment writer had no online entry point or verification step.
+- **After:** Initiation checks the complex and unit role, reads the amount from the payable and blocks paid or already pending items. The callback locks the attempt before verification, checks expiry, rechecks uniqueness and records the payment and reference atomically. Both online and manual payments use PaymentService's amount, duplicate and write methods. The verified payment uses the Jalali month at settlement.
+- **Why:** A client cannot choose a price or create duplicate payments by replaying a callback. SQLite needs a write to serialize attempts because it does not implement row locks.
+- **Files:** OnlinePaymentRequest, OnlinePaymentController, OnlinePaymentService, PaymentService and routes/web.php.
+- **Verified by:** Mock and HTTP-fake tests cover paid, cancelled, failed and expired attempts, server amount checks, replay, database uniqueness, duplicate-at-settlement checks and role authorization.
+- **Risk & rollback:** The callback route alone is exempt from CSRF because an external gateway cannot supply a session token. Mock POSTs still check the payer and session token. Reconciliation may be needed when a verified provider result conflicts with the payable or an existing payment. Its reference is retained.
+
+### [Phase 8] Switch the payment UI only while enabled
+- **Before:** Building payment forms always wrote manual records and there was no online history.
+- **After:** With payments enabled the forms start online checkout, the old manual POSTs refuse writes, and the Payments tab shows only the signed-in user's attempts in that complex. With the flag off the original actions, form fields and manual flow are used.
+- **Why:** An enabled checkout must verify funds before writing a payment. Another resident's attempts must stay private.
+- **Files:** ChargeController, IncidentalCostController, BuildingDashboardController, building payment views and browser module.
+- **Verified by:** The flags-off baseline passes unchanged. Added tests cover the disabled UI and manual path and isolate history by payer and complex. The browser captures show both online actions.
+- **Risk & rollback:** Turning the flag off hides online history and restores the manual forms and endpoints. Existing attempts remain stored.
+
+### [Phase 8] Add the log and HTTPS SMS drivers
+- **Before:** The SMS log table had no application writer.
+- **After:** The SMS flag defaults off. SmsService writes one delivery row per recipient and selects a local log driver or a generic HTTPS sender. The HTTP sender uses bearer authentication, records the response status and fails closed on missing configuration.
+- **Why:** Deliveries and failures need a local record without assuming a provider.
+- **Files:** config/sms.php, .env.example, SmsSender, SmsService, LogSmsSender and GatewaySmsSender.
+- **Verified by:** HTTP fakes assert the URL, headers and JSON payload. Responses 202 and 500 become sent and failed rows. Missing config sends no request.
+- **Risk & rollback:** Keep the flag off until the endpoint and worker are configured. Logs contain the recipient and message body.
+
+### [Phase 8] Queue SMS after the four successful actions
+- **Before:** Announcements, new charges, paid attempts and approvals sent no notifications.
+- **After:** A dedicated database queue processes the four triggers after their writes. A user without a phone is skipped and logged. The charge text uses its Jalali start month. Persian messages are grouped in lang/fa/sms.php. The integration translation namespace leaves the existing resource translations in place.
+- **Why:** Provider failures and network time must stay outside the action. A receipt should be queued only when an attempt first becomes paid.
+- **Files:** SendSmsJob, SmsService, announcement, charge and approval controllers, OnlinePaymentService, AppServiceProvider and lang/fa/sms.php.
+- **Verified by:** Each trigger produces zero jobs and logs with SMS off. With it on, the worker receives the expected recipient set. A 500 and an enqueue exception leave the announcement successful. Callback replay queues only one receipt.
+- **Risk & rollback:** SMS requires a worker on the sms queue. Disabling the flag prevents new jobs and makes any queued job skip delivery.
+
+### [Phase 8] Verify default-off behavior and document local integration QA
+- **Before:** The suite and visual captures covered manual payments only.
+- **After:** New cases cover online payment and SMS paths. Browser captures show mock checkout and the enabled Payments tab. The README documents env settings and the worker command. The architecture notes cover lifecycle and recipients.
+- **Why:** The local flow needs repeatable proof without a real provider account.
+- **Files:** OnlinePaymentTest, SmsIntegrationTest, integrations.spec.js, README.md, ARCHITECTURE.md, CHANGELOG.md and VISUAL_QA.md.
+- **Verified by:** All 354 existing tests passed with 895 assertions, both flags off and no edits. The full run passed 387 tests with 1,102 assertions. It starts with both flags off and the 21 payment and 12 SMS cases opt in as needed. The build, fresh SQLite setup and four browser cases passed. Final captures have no overflow or browser errors.
+- **Risk & rollback:** The browser spec writes demo payments. Use a fresh isolated demo database. HTTP integrations were verified against fakes.

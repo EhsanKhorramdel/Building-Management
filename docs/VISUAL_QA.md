@@ -86,3 +86,18 @@ npm run test:visual -- map.spec.js
 ```
 
 If the default tile host is unavailable, set `MAP_VISUAL_OFFLINE=1` for the map spec. It substitutes transparent tiles from that host and still checks the container, marker, controls, attribution, overflow and console output. Leave this flag off to verify live tiles.
+
+## Phase 8 checkout review
+
+The mock checkout and the Payments tab with online actions were captured at 390px and 1440px, in light and dark. All four browser cases passed. The eight captures have no horizontal page overflow, console errors or page errors. Three attempts were cancelled and the desktop dark case paid successfully. The Payments tab showed the result and the successful reference. Both actions used the real callback route and made no provider calls.
+
+The first capture caught a missing favicon on the mock checkout and a mobile history table whose reference column was beyond the visible edge. The checkout now loads the shared favicon, and the online history wraps into four columns on mobile. Compare `before/mock-checkout-390-light.png` and its guard with `mock-checkout-390-light.png` and the final guard. Compare `before/online-payments-390-dark.png` with `online-payments-390-dark.png`. The original building report still scrolls inside its own container on phones.
+
+Use a fresh isolated SQLite demo database and the local credentials from the setup above. Start the dev server with `PAYMENTS_ENABLED=true`, `PAYMENTS_DRIVER=mock` and `SMS_ENABLED=false`. Point Playwright to that server through `VISUAL_BASE_URL` and enable the checkout spec.
+
+```powershell
+$env:VISUAL_PAYMENTS = '1'
+npm run test:visual -- integrations.spec.js
+```
+
+The spec writes payment attempts. Seed a fresh demo database before repeating it. Captures and guard JSON files are in `storage/app/test-screenshots/phase-8`.
