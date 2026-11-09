@@ -807,3 +807,11 @@ Findings remain open unless a closing commit is recorded below. The named phases
 - **Files:** CHANGELOG.md.
 - **Verified by:** Compared the entries with the Phase 0 through 5 log and checked the engineering log link.
 - **Risk & rollback:** Documentation only. The engineering log remains the detailed record.
+
+### [Phase 6] Verify the readme from a clean checkout
+- **Before:** The local setup had no end-to-end check from a fresh checkout.
+- **After:** Cloned the phase branch to a separate directory on D:. Installed Composer and npm dependencies, copied the environment template, configured SQLite, generated the key, ran all 22 migrations, seeded demo data, linked storage and built assets. A server from the main checkout occupied port 8000. Added a documented port 8001 fallback, fast-forwarded the scratch checkout and retried serving. The demo manager signed in and the seeded chat image loaded. Stopped the scratch server and moved the scratch copy to the Recycle Bin.
+- **Why:** The setup needs to work without a prepared database, installed dependencies or built assets.
+- **Files:** README.md, docs/REFACTOR_LOG.md. The scratch checkout was outside the repository.
+- **Verified by:** Setup started at e25d0f25a31db69daee8902e0e5c4eeb0dfd3987 and the retry and tests ran at 017d39a869094a481b9a93ee9e52b7d8dbe65a38. The sign-in redirected to the dashboard with the seeded complex visible. The storage image returned HTTP 200. Both checkouts passed 332 tests with 776 assertions. The test files are unchanged.
+- **Risk & rollback:** The check used only a local SQLite database and the log broadcaster. Live MySQL migrations and Pusher delivery still require their deployment environments.
