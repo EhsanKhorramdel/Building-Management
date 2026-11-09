@@ -60,6 +60,8 @@ php artisan serve
 
 Open `http://127.0.0.1:8000/login` and sign in with a demo account. For live asset updates while editing, run `npm run dev` in a second terminal in place of `npm run build`.
 
+If port 8000 is occupied, set `APP_URL=http://127.0.0.1:8001`, run `php artisan serve --port=8001` and open `http://127.0.0.1:8001/login`.
+
 ### Demo accounts
 
 These shared credentials are for local demos only. Never seed them into a deployed database. Every account below uses the password `password`.

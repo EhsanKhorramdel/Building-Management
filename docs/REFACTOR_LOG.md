@@ -786,7 +786,7 @@ Findings remain open unless a closing commit is recorded below. The named phases
 
 ### [Phase 6] Replace the stock readme with project setup
 - **Before:** The readme described Laravel and the framework upgrade rather than the app or a fresh local install.
-- **After:** The readme covers local SQLite, demo accounts, configuration, tests, and five representative Phase 5 images.
+- **After:** The readme covers local SQLite, demo accounts, configuration, tests, a fallback when the default server port is occupied, and five representative Phase 5 images.
 - **Why:** A new checkout needs the database settings and setup sequence in one place.
 - **Files:** README.md and docs/screenshots/.
 - **Verified by:** All five images match their Phase 5 after captures. The clean-room entry records setup verification.
