@@ -1,0 +1,31 @@
+@layer components {
+    .auth-page {
+        min-height: 100dvh;
+        background: radial-gradient(ellipse at 15% 15%, var(--accent-soft), transparent 52%), var(--page);
+    }
+    .auth-page .auth-shell { @apply mx-auto flex min-h-screen max-w-xl items-center justify-center p-4 sm:p-8; }
+    .auth-card { @apply w-full max-w-md rounded-2xl border p-5 sm:p-8; background: var(--surface); border-color: var(--line); box-shadow: var(--shadow); }
+    .auth-card input[type=password], .auth-card input[data-password-input] { padding-inline-end: 3rem; }
+    .password-toggle { @apply absolute end-1 top-0 inline-flex min-h-10 min-w-10 items-center justify-center rounded-lg; color: var(--muted); }
+    .page-theme { @apply absolute end-3 top-3; }
+    .admin-page { @apply mx-auto w-full max-w-5xl p-4 sm:p-6; }
+    .admin-tabs { @apply flex flex-wrap items-center gap-2; }
+    .admin-tabs [aria-pressed=true] { outline: 2px solid var(--accent); }
+    .admin-page .tab { @apply rounded-xl border p-4 sm:p-6; background: var(--surface); border-color: var(--line); }
+    .admin-page .tab li { @apply flex-wrap gap-4; background: var(--muted-surface); }
+    .tab-content { @apply grid min-w-0 gap-2; overflow-wrap: anywhere; }
+    .tab-title { @apply font-bold; }
+    .landing { @apply mx-auto max-w-screen-xl px-4 py-6 sm:px-8; }
+    .landing-nav { @apply flex flex-wrap items-center justify-between gap-3; }
+    .landing-hero {
+        @apply my-6 rounded-2xl border px-5 py-8 sm:px-10 sm:py-12;
+        background: radial-gradient(ellipse at 15% 25%, var(--accent-soft), transparent 60%), var(--surface);
+        border-color: var(--line);
+    }
+    .landing-hero h1 { @apply mb-3 max-w-3xl text-3xl font-bold leading-relaxed md:text-5xl; }
+    .landing-hero p { @apply max-w-xl leading-8; color: var(--muted); }
+    .c-services { @apply grid gap-3 sm:grid-cols-2 lg:grid-cols-3; }
+    .c-services__item { @apply rounded-xl border p-4; background: var(--surface); border-color: var(--line); }
+    .c-services__item h3 { @apply mb-2 font-bold; color: var(--accent-ink); }
+    .c-services__item p { @apply text-sm leading-7; color: var(--muted); }
+}

@@ -661,3 +661,106 @@ Findings remain open unless a closing commit is recorded below. The named phases
 - **Files:** docs/REFACTOR_LOG.md.
 - **Verified by:** Reviewed the implementation against the baseline entries; 332 passed, 0 failed/skipped, 776 assertions; 54 route tuples unchanged; query-count evidence recorded above.
 - **Risk & rollback:** Documentation only. Reopen these findings if the implementation is reverted. Phase 5 has not started.
+### [Phase 5] Capture the responsive baseline and verify the final matrix
+- **Before:** No repeatable browser capture or overflow/console guard existed.
+- **After:** Playwright runs Chromium at 360, 390, 768, 1024 and 1440px. It captures 13 screen types. The before set contains 65 light screens and 5 dark dashboard screens. The after set contains 65 light and 65 dark screens. Captures and browser results stay under the ignored storage/app/test-screenshots directory.
+- **Why:** A successful build could not show clipped phone controls or incomplete dark surfaces.
+- **Files:** playwright.config.js, tests/Browser/visual.spec.js, .gitignore, package files, docs/VISUAL_QA.md.
+- **Verified by:** 70 before and 130 final after captures. All five after width tests pass. All 130 have zero document overflow, console/page errors, broken visible images and unlabelled form controls. Reviewed the final contact sheets and full-size phone/dialog samples.
+- **Risk & rollback:** Local demo credentials are supplied through environment variables. The managed Chromium download returned regional HTTP 403, so both sets use installed Chrome via Playwright's Chromium channel. Revert the test setup and ignore entry together if removing the capture harness.
+
+### [Phase 5] Route all page assets through Vite
+- **Before:** Dashboard and building loaded four Tailwind CDN styles/scripts. Auth and admin added CDN styles. Chart.js 2.9.4, randomcolor and Pusher were loaded as browser globals.
+- **After:** A shared Blade assets component loads the Tailwind 3.4 CSS and Vite entries on every page. Tailwind scans Blade and source modules. Chart.js 4.6.1 registers the doughnut controller, arcs, legend and tooltip, with legend options under plugins.legend. A deterministic HSL palette replaces randomcolor. The existing npm Pusher package supplies the client. Building and dashboard render viewport and CSRF meta tags.
+- **Why:** Multiple CSS versions and browser globals produced order-dependent rendering and extra network dependencies.
+- **Files:** vite.config.js, tailwind.config.js, package files, resources/views/components/page-assets.blade.php, page heads, resources/js/building/poll.js and chat.js.
+- **Verified by:** Vite build passes, the requested CDN grep returns no matches, all screen captures have viewport metadata, and the vote/results smoke check passes in both themes.
+- **Risk & rollback:** A Vite build is required before serving the views. Revert entry imports and Blade asset tags together when rolling back.
+
+### [Phase 5] Replace static CSS with themed Vite styles
+- **Before:** The dashboard stylesheet was 1,028 lines. The four static stylesheets totaled 1,780 lines and 35,553 bytes, in addition to the 3-line Tailwind entry and 31 nonblank lines in four inline style blocks.
+- **After:** 342 CSS source lines across app.css, theme.css, panels.css, chat.css and pages.css. Tailwind preflight replaces normalize.css. Component classes use Tailwind for layout and CSS tokens for custom surfaces, bubbles, scrollbars and print. Two IranSans WOFF2 files are bundled and fingerprinted. All four old public CSS files and the inline style blocks are retired.
+- **Why:** The original standalone styles repeated layout and normalization while inline backgrounds prevented consistent theming.
+- **Files:** resources/css/, resources/fonts/, public/css/ deletions, auth/admin and panel views.
+- **Verified by:** Built CSS is 60,553 bytes, compared with 56,413 bytes of prior Vite CSS plus 35,553 bytes of static CSS. Measured decoded bytes from the four retired CDN stylesheet URLs add 6,145,431 bytes to the old inventory. Full asset figures and measurement boundaries are in the phase report.
+- **Risk & rollback:** Browser layout depends on the shared CSS bundle. Revert the view/CSS changes together. No stored data depends on the styles.
+
+### [Phase 5] Split browser code by panel
+- **Before:** public/js/building.js was 1,501 lines at arrival. It repeated the CSRF lookup, used hidden text nodes for IDs and contained fetch calls with silent failures. The dashboard had its own settings code and a listener for a missing button.
+- **After:** Building imports API, navigation, chat, poll, payments, announcements, uploader and settings modules. Dashboard and admin have separate entries. One fetch helper reads the CSRF meta tag and sends Persian error toasts. Building reads one escaped JSON config for complex/user IDs, Pusher settings and authorization URL. Cards, poll options, invoice URLs and payables use data attributes. Private subscriptions use private-group.{complexId} and /broadcasting/auth. The three obsolete public JS files are removed.
+- **Why:** Hidden layout text was an unstable data source, repeated fetch setup obscured failures, and unrelated UI actions shared a single script.
+- **Files:** resources/js/, building/dashboard Blade data attributes, deleted public/js files.
+- **Verified by:** Real local chat send/edit/delete, vote, payments list and settings toggle. One fetch call site remains in the source. A controlled failed report request shows a toast. The existing chat routes, payloads and Phase 2 private channel names are preserved.
+- **Risk & rollback:** Chat exposes previous/next page controls in its header. The seeded server uses the log broadcaster, so live Pusher credentials were not exercised. Revert the JS entries and dependent views together if rolling back.
+
+### [Phase 5] Fit navigation and content to the viewport
+- **Before:** Phone pages kept the sidebar beside the content. The chat composer was below the visible pane, settings clipped the join field, and admin actions crowded the header.
+- **After:** Under 768px the sidebar is a drawer with overlay and close control. Cards and headers wrap, modals have an internal scroll limit, report tables scroll in their container, and the chat composer stays at the bottom of its scrolling shell. Phone actions use 40px targets.
+- **Why:** Fixed columns and viewport-height content made phone actions hard to reach.
+- **Files:** resources/css/panels.css, chat.css, pages.css, navigation module, dashboard/building/admin views.
+- **Verified by:** The five-width matrix passes. Visual review caught a CSS order conflict that let the drawer intercept clicks. The selector fix keeps the closed drawer off the page. Phone chat, settings, modal and report captures were inspected.
+- **Risk & rollback:** Mobile navigation now opens explicitly. Reverting layout requires reverting the drawer markup and navigation binding together.
+
+### [Phase 5] Complete the existing dark theme
+- **Before:** The userSettings cookie and html.dark toggle existed, but cards, auth, modals, chat, admin and charts retained light styling.
+- **After:** The same cookie key and JSON darkMode/viewMode fields drive html.dark and Tailwind's class strategy. Theme tokens cover surfaces, fields, nav, cards, tables, chat sides/menus/timestamps and chart colors. The cookie uses the root path across pages. Changing a preference clears the obsolete building-path copy after reading the old value.
+- **Why:** The theme skeleton colored only part of each page and the default cookie path could isolate the preference to one building page.
+- **Files:** resources/js/building/settings.js, resources/css/theme.css and component styles, tailwind.config.js, theme button and page assets components.
+- **Verified by:** 65 dark captures, both chart themes, persisted choice across building reload and dashboard navigation, and the original cookie shape in both capture modes.
+- **Risk & rollback:** Rollback keeps the persisted JSON readable by the old toggle. Dark overrides and shared asset loading must be reverted together.
+
+### [Phase 5] Unify flash messages and request errors
+- **Before:** Server alerts, duplicate status blocks and chat-generated alerts used separate markup and lifetimes.
+- **After:** One Blade toast host displays server flash and validation summaries. The same JS function handles request success/errors, dismissal and six-second timeout. Field errors remain next to their controls.
+- **Why:** Users need visible feedback for server redirects and failed asynchronous requests.
+- **Files:** resources/views/components/toasts.blade.php, resources/js/ui.js, building/api.js, auth/panel views, deleted building/alert.blade.php.
+- **Verified by:** Vote success flash, poll validation failure, controlled 503 error and automatic dismissal in the local browser.
+- **Risk & rollback:** Toasts are transient. Inline validation still conveys the field error after a toast closes. Revert the host, callers and former flash markup together.
+
+### [Phase 5] Confirm destructive actions
+- **Before:** Delete message, step down, reject request and cancel announcement ran immediately.
+- **After:** A shared native dialog confirms all four actions. The existing POST/DELETE routes, CSRF tokens and business outcomes are preserved.
+- **Why:** A tap or click should not commit a destructive action before the user can cancel.
+- **Files:** toast/confirmation component, ui.js, chat.js, settings, announcement and admin views.
+- **Verified by:** Cancel and confirm chat delete, Escape to cancel announcement/downgrade/rejection, and unchanged backend authorization/mutation tests.
+- **Risk & rollback:** A confirmed action still uses the original endpoint. Remove the confirmation bindings and dialog together to roll back.
+
+### [Phase 5] Preserve form feedback and prevent repeat submits
+- **Before:** Buttons stayed enabled during requests and most named-bag validation was summarized above the form.
+- **After:** Submit controls become disabled and busy during navigation or chat requests. Fields restore safe old values and display existing error text with aria-invalid and aria-describedby. The building form reopens on named validation errors and focuses the invalid input. Passwords and files follow browser/server rules for re-entry.
+- **Why:** Repeat clicks could resubmit a request and detached errors made corrections difficult.
+- **Files:** resources/js/ui.js, building/chat.js, navigation.js, dashboard/building/auth forms.
+- **Verified by:** Invalid poll submission preserved its title, reopened with the question error and focused that input. Chat controls re-enable after requests. Backend tests remain identical.
+- **Risk & rollback:** Form methods, names and actions remain the existing ones. Remove client disabling and view feedback together if rolling back.
+
+### [Phase 5] Add list loading and empty states
+- **Before:** Some empty lists showed no guidance, while chat and reports lacked a clear loading/error state.
+- **After:** Dashboard, building lists and admin tabs show an icon and one-line guidance when empty. Chat, report and poll results show request status and empty/error text.
+- **Why:** An empty list and a failed request need different user feedback.
+- **Files:** dashboard/building/admin views, theme CSS, chat, payments and poll modules.
+- **Verified by:** Seeded chat, payment and chart captures. The capture waits for report rows. A forced report failure shows both its error state and toast.
+- **Risk & rollback:** UI-only state. Remove presentation branches with their handlers if rolling back.
+
+### [Phase 5] Add install metadata
+- **Before:** Pages had no shared web manifest or theme color.
+- **After:** Shared page assets advertise a standalone manifest, theme color and 192px/512px icons. The theme color follows the selected appearance.
+- **Why:** The browser needs app name, launch URL, display mode and icons to install the site.
+- **Files:** public/app.webmanifest, public/assets/images/app-icon files, shared page assets, settings.js.
+- **Verified by:** Chrome installability check reports no errors in a temporary normal profile and both icon URLs load.
+- **Risk & rollback:** Installation uses the existing online site. Remove the manifest link and icons to roll back the metadata.
+
+### [Phase 5] Print the payment report
+- **Before:** Payment cards shared the same screen layout when printed.
+- **After:** A print action uses the report table on white with black text and hides the sidebar and controls.
+- **Why:** Printed reports need all columns and the transaction data without navigation.
+- **Files:** resources/views/building/payments.blade.php, building/payments.js, resources/css/panels.css.
+- **Verified by:** The table loads from the existing endpoint and stays visible in print media while the header/sidebar are hidden.
+- **Risk & rollback:** Print is local and read-only. Revert the button and print CSS together.
+
+### [Phase 5] Label controls and share Blade components
+- **Before:** Several controls relied on placeholders or icon clicks. Dialogs did not consistently restore focus. Cards, close/view icons and alerts repeated markup.
+- **After:** Controls have labels, images have Persian alt text, buttons replace click-only controls, focus is visible and Escape closes dialogs with focus restoration. Blade components cover cards, icons, theme/drawer controls and toast markup.
+- **Why:** Keyboard and assistive-technology users need named controls and predictable focus.
+- **Files:** resources/views/components/, dashboard/building/auth/admin views, ui.js, theme.css.
+- **Verified by:** All 130 captures pass the form-label/image checks. Unit and chart dialogs restore focus on Escape. The suite passes 332 tests, 0 failed, 0 skipped, 776 assertions. All 54 route entries match Phase 4, including controller targets. No existing feature test was edited.
+- **Risk & rollback:** UI components and dependent Blade callers must be reverted together. The backend and route files are unchanged.

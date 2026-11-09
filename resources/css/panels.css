@@ -1,0 +1,132 @@
+@layer components {
+    .app-container { @apply mx-auto w-full max-w-screen-2xl px-3 sm:px-6; }
+    .app-header {
+        @apply flex min-h-20 flex-wrap items-center justify-between gap-3 py-3;
+    }
+    .app-header-left, .app-header-right { @apply flex min-w-0 items-center gap-2 sm:gap-3; }
+    .app-name { @apply font-bold sm:text-xl; }
+    .app-icon {
+        @apply h-3 w-3 shrink-0 rounded-sm;
+        background: var(--accent);
+        box-shadow: 0 0 0 5px var(--accent-soft);
+        margin-inline: .4rem;
+    }
+    .profile-btn { @apply flex min-w-0 items-center gap-2 text-sm; }
+    .profile-btn svg { @apply h-5 w-5 shrink-0; fill: currentColor; }
+    .mode-switch, .view-actions .view-btn, .register-btn, .building-btn-more {
+        @apply inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg;
+        background: var(--muted-surface);
+        color: var(--ink);
+    }
+    .view-actions .active, .register-btn { background: var(--accent-soft); color: var(--accent-ink); }
+    .app-content { @apply grid min-w-0 grid-cols-1 items-start gap-4 pb-5 md:grid-cols-[10rem_minmax(0,1fr)] lg:grid-cols-[13rem_minmax(0,1fr)]; }
+    .app-content > form { display: contents; }
+    .app-sidebar {
+        @apply flex min-w-0 flex-col gap-1 rounded-xl border p-2;
+        background: var(--surface);
+        border-color: var(--line);
+    }
+    .app-sidebar-link {
+        @apply flex min-h-10 w-full items-center gap-2 rounded-lg px-2 py-2 text-start text-sm;
+        color: var(--muted);
+    }
+    .app-sidebar-link svg { @apply h-5 w-5 shrink-0; }
+    .app-sidebar-link:hover, .app-sidebar-link.active { color: var(--accent-ink); background: var(--accent-soft); }
+    .buildings-section {
+        @apply min-w-0 rounded-xl border p-3 sm:p-5;
+        grid-column: -2 / -1;
+        grid-row: 1;
+        background: var(--surface);
+        border-color: var(--line);
+        box-shadow: var(--shadow);
+    }
+    .buildings-section-header, .buildings-section-line { @apply mb-4 flex flex-wrap items-center justify-between gap-3; }
+    .buildings-section-header > p { @apply text-lg font-bold sm:text-xl; }
+    .buildings-status, .view-actions { @apply flex flex-wrap items-center gap-2; }
+    .item-status { @apply flex items-center gap-2 rounded-lg px-3 py-2 text-sm; background: var(--muted-surface); color: var(--muted); }
+    .status-number { @apply font-bold; color: var(--ink); }
+    .form-wrapper { @apply w-full max-w-md; }
+    .search-wrapper, .add-wrapper { @apply flex min-w-0 items-center gap-2; }
+    .register-form .search-wrapper { @apply block; }
+    .search-input, .add-input { @apply min-w-0 w-full; }
+    .add-btn { @apply inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg; background: var(--accent-soft); color: var(--accent-ink); }
+    .building-boxes { @apply grid min-w-0 gap-3; }
+    .building-boxes.jsGridView { @apply sm:grid-cols-2 xl:grid-cols-3; }
+    .building-boxes > :not(.building-box-wrapper) { grid-column: 1 / -1; }
+    .building-box-wrapper { @apply min-w-0; }
+    .building-box {
+        @apply flex h-full min-w-0 flex-col gap-3 rounded-xl border p-4;
+        background: var(--muted-surface);
+        border-color: var(--line);
+        overflow-wrap: anywhere;
+    }
+    .building-box[data-state=open] { border-inline-start: 4px solid var(--accent); }
+    .building-box[data-state=expired] { border-inline-start: 4px solid var(--danger); }
+    .building-box-header, .building-box-footer { @apply flex flex-wrap items-center gap-2; }
+    .building-box-footer { @apply mt-auto; }
+    .box-content-header { @apply font-bold; }
+    .box-content-subheader, .box-address-header { color: var(--muted); }
+    .box-address-header { @apply p-0; }
+    .more-wrapper, .chat-menu { @apply relative; }
+    .dropdownDots { @apply absolute end-0 top-full z-10 mt-1 w-40 rounded-lg border p-1 shadow-lg; background: var(--surface); border-color: var(--line); }
+    .dropdownDots button { @apply block min-h-10 w-full rounded-lg px-2 text-start text-sm; }
+    .dropdownDots button:hover { background: var(--accent-soft); }
+    .register-section:not(.settings-panel) {
+        @apply fixed inset-0 z-50 overflow-auto p-4 sm:p-8;
+        background: rgb(5 15 20 / 65%);
+    }
+    .register-section > .dialog-panel, .dialog-shell > div {
+        @apply relative mx-auto w-full max-w-lg overflow-auto rounded-xl p-4 sm:p-6;
+        max-block-size: calc(100dvh - 2rem);
+        background: var(--surface);
+        color: var(--ink);
+        box-shadow: var(--shadow);
+    }
+    .dialog-shell {
+        @apply fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6;
+        background: rgb(5 15 20 / 65%);
+    }
+    .register-section:not(.settings-panel) > .dialog-panel { margin-block: max(0px, calc((100dvh - 48rem) / 2)); }
+    .register-close { @apply inline-flex min-h-10 min-w-10 items-center justify-center rounded-lg; color: var(--muted); }
+    .register-form { @apply grid min-w-0 gap-3; }
+    .register-form :is(input, textarea):not([type=hidden], [type=radio], [type=checkbox]) { @apply w-full; }
+    .register-form .button-container { @apply flex-wrap; }
+    .settings-panel { @apply mb-4 rounded-xl border p-4; border-color: var(--line); background: var(--muted-surface); }
+    .setting-window .settings-card { @apply w-full max-w-xl rounded-xl border p-4; border-color: var(--line); background: var(--muted-surface); }
+    .complex-group-link { @apply min-w-0; }
+    .table-scroll { @apply max-w-full overflow-x-auto rounded-xl border; border-color: var(--line); }
+    .payments-table { @apply w-full min-w-[32rem] text-start text-sm; }
+    .payments-table :is(th, td) { @apply border-b px-3 py-2 text-start; border-color: var(--line); }
+    .payments-table th { background: var(--muted-surface); }
+    .vote-choice { @apply flex min-h-10 items-center gap-3 rounded-lg p-2; }
+    .vote-choice:hover { background: var(--accent-soft); }
+    .chart-frame { @apply relative mx-auto h-60 w-full max-w-md; }
+}
+
+[data-drawer-overlay], button[data-open-drawer], button[data-close-drawer] { display: none; }
+@media (max-width: 767px) {
+    button[data-open-drawer], button[data-close-drawer] { display: inline-flex; }
+    [data-drawer-overlay]:not([hidden]) { display: block; position: fixed; inset: 0; z-index: 39; background: rgb(5 15 20 / 60%); }
+    .app-sidebar[data-drawer] {
+        display: none;
+        position: fixed;
+        z-index: 40;
+        inset-block: 0;
+        inset-inline-start: 0;
+        inline-size: min(18rem, 86vw);
+        overflow-y: auto;
+        padding: 1rem;
+        border-radius: 0;
+    }
+    .app-sidebar[data-drawer].drawer-open { display: flex; }
+    .profile-btn span { max-inline-size: 8rem; overflow-wrap: anywhere; }
+}
+
+@media print {
+    :root, .dark { color-scheme: light; }
+    body, .app-container, .app-content, .paymentInfo-window, .table-scroll { background: white !important; color: black !important; display: block; border: 0; box-shadow: none; padding: 0; margin: 0; }
+    .app-header, .app-sidebar, .toast-stack, [data-print], [data-drawer-overlay], .buildings-section:not(.paymentInfo-window) { display: none !important; }
+    .table-scroll { overflow: visible; }
+    .payments-table { min-width: 0; }
+    .payments-table :is(th, td) { background: white !important; color: black; border-color: #666; }
+}
