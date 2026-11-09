@@ -228,6 +228,10 @@
                             <label class="sr-only" for="dashboard-units-12">تعداد واحدهای ساختمان</label><input id="dashboard-units-12" class="search-input add-input" type="number" name="units" min="0"
                                 placeholder="تعداد واحدهای ساختمان" value="{{ is_scalar(old('units')) ? old('units') : '' }}" @error('units', 'registerBuilding') aria-invalid="true" aria-describedby="dashboard-units-12-error" @enderror />@error('units', 'registerBuilding')<span class="field-error" id="dashboard-units-12-error">{{ $message }}</span>@enderror
                         </div>
+                        <fieldset class="min-w-0">
+                            <legend class="field-label">موقعیت ساختمان روی نقشه (اختیاری)</legend>
+                            <x-complex-map-picker field-id="registration-location" error-bag="registerBuilding" />
+                        </fieldset>
                         <button type="submit"
                             class="view-btn grid-view active w-1/3 sm:w-72 register-building-btn">ثبت</button>
                     </form>

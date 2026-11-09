@@ -40,6 +40,8 @@ class AdminController extends Controller
                 'name' => $request->name,
                 'address' => $request->address,
                 'location' => $request->location,
+                'latitude' => $request->latitude,
+                'longitude' => $request->longitude,
                 'number_of_floors' => $request->number_of_floors,
                 'number_of_units' => $request->number_of_units,
                 'join_link' => Str::random(32),

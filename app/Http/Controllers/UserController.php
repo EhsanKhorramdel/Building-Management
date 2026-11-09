@@ -107,7 +107,7 @@ class UserController extends Controller
             'number_of_units' => $data['units'] ?? null,
         ];
 
-        MembershipRequest::create($membershipRequest);
+        MembershipRequest::create($membershipRequest + $request->coordinates());
 
         $status = 'success';
         $message = 'درخواست عضویت با موفقیت ارسال شد.';

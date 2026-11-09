@@ -1,4 +1,7 @@
 import './ui';
+import { maps } from './building/map';
+
+maps();
 
 const buttons = [...document.querySelectorAll('[data-admin-tab]')];
 for (const button of buttons) {

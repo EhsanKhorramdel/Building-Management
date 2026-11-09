@@ -62,6 +62,7 @@
                                     <span class="tab-title">آدرس:</span>
                                     <span>{{ $request->address }}</span>
                                 </div>
+                                <x-membership-request-map :membership-request="$request" />
                                 <div>
                                     <span class="tab-title">تعداد طبقات:</span>
                                     <span>{{ $request->number_of_floors }}</span>
@@ -93,6 +94,7 @@
                                     <span class="tab-title">آدرس:</span>
                                     <span>{{ $request->address }}</span>
                                 </div>
+                                <x-membership-request-map :membership-request="$request" />
                                 <div>
                                     <span class="tab-title">تعداد طبقات:</span>
                                     <span>{{ $request->number_of_floors }}</span>
@@ -141,6 +143,7 @@
                                     <span class="tab-title">آدرس:</span>
                                     <span>{{ $request->address }}</span>
                                 </div>
+                                <x-membership-request-map :membership-request="$request" />
                                 <div>
                                     <span class="tab-title">تعداد طبقات:</span>
                                     <span>{{ $request->number_of_floors }}</span>

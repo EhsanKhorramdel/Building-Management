@@ -1,4 +1,14 @@
 <div class="buildings-section setting-window" data-panel="setting" hidden>
+    <section class="settings-card mb-3">
+        <h2 class="mb-2 text-xl font-bold">موقعیت ساختمان روی نقشه</h2>
+        <form class="space-y-3" method="POST" action="{{ route('building.location.update', $complex) }}">
+            @csrf
+            @method('PATCH')
+            <x-complex-map-picker field-id="building-location" error-bag="complexLocation"
+                :latitude="$complex->latitude" :longitude="$complex->longitude" />
+            <button type="submit" class="action">ذخیره موقعیت</button>
+        </form>
+    </section>
     <div class="mb-3">
         <!--MODAL ITEM-->
         <div class="settings-card">

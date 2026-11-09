@@ -70,3 +70,19 @@ npm run test:visual
 ```
 
 Leave PLAYWRIGHT_CHANNEL unset to use installed Playwright Chromium. VISUAL_BASE_URL overrides the local URL. VISUAL_STAGE=before selects the historical capture mode when running against the Phase 4 view code.
+
+## Phase 7 map review
+
+The Playwright map spec captures the manager's location picker and the home map after saving a point. It covers 390px and 1440px in light and dark. Captures and the guard JSON files are in `storage/app/test-screenshots/phase-7`.
+
+The eight captures showed the marker, zoom controls and attribution. The mobile map is 260px high with 40px zoom controls. The desktop map is 320px high. Document width stayed within the viewport and there were no console or page errors. Live OpenStreetMap tiles loaded in all eight captures.
+
+The browser flow cleared the fields, selected a point by clicking the map, dragged the marker, typed a coordinate pair, saved it and found the same point on home. The home map and its marker were read-only. A separate browser check submitted coordinates from the registration picker and opened the saved point in the admin's request card before approving it. Denied geolocation left the fields blank and showed a toast. Granted geolocation filled both coordinates.
+
+Use the seeded SQLite setup above and run the map spec against that isolated server. The test changes the demo complex's location.
+
+```powershell
+npm run test:visual -- map.spec.js
+```
+
+If the default tile host is unavailable, set `MAP_VISUAL_OFFLINE=1` for the map spec. It substitutes transparent tiles from that host and still checks the container, marker, controls, attribution, overflow and console output. Leave this flag off to verify live tiles.

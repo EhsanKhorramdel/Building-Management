@@ -4,6 +4,7 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\BuildingDashboardController;
 use App\Http\Controllers\ChargeController;
+use App\Http\Controllers\ComplexLocationController;
 use App\Http\Controllers\GroupController;
 use App\Http\Controllers\IncidentalCostController;
 use App\Http\Controllers\PaymentsReportController;
@@ -65,6 +66,8 @@ Route::post('/adminPanel/reject/{MembershipRequest}', [AdminController::class, '
 Route::middleware('auth')->group(function () {
     Route::patch('/dashboard/update', [ProfileController::class, 'update'])->name('profile.update');
 });
+
+Route::patch('/dashboard/building/{complex}/location', [ComplexLocationController::class, 'update'])->name('building.location.update');
 
 Route::post('/dashboard/building/{complex}/join-link', [RoleController::class, 'regenerateJoinLink'])->name('building.regenerateJoinLink');
 

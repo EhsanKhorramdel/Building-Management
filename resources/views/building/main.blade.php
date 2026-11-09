@@ -1,4 +1,15 @@
 <div class="buildings-section home-window" data-panel="home">
+    <section class="complex-location-card mb-3 space-y-2">
+        <h2 class="text-xl font-bold">آدرس ساختمان</h2>
+        <p>{{ $complex->address }}</p>
+        @if ($complex->latitude !== null && $complex->longitude !== null)
+            <x-complex-map :latitude="$complex->latitude" :longitude="$complex->longitude" />
+            <a class="action" href="https://www.openstreetmap.org/directions?to={{ $complex->latitude }}%2C{{ $complex->longitude }}#map=15/{{ $complex->latitude }}/{{ $complex->longitude }}"
+                target="_blank" rel="noopener noreferrer">مسیریابی روی نقشه</a>
+        @elseif ($isManager)
+            <p><a class="underline" href="{{ route('building', ['complex' => $complex, 'tab' => 'setting']) }}" data-map-settings>موقعیت ساختمان را روی نقشه تنظیم کنید.</a></p>
+        @endif
+    </section>
     <div class="buildings-section-header">
         <p>ساکنین ساختمان</p>
     </div>

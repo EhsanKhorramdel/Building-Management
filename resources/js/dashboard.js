@@ -1,6 +1,8 @@
 import { openDialog, closeDialog } from './ui';
 import { navigation } from './building/navigation';
+import { maps } from './building/map';
 
+maps();
 navigation(document.body.dataset.initialPanel);
 for (const card of document.querySelectorAll('[data-complex-id]')) {
     const details = card.querySelector('details');

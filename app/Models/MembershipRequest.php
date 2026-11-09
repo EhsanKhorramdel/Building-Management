@@ -10,8 +10,10 @@ class MembershipRequest extends Model
 {
     use HasFactory;
     protected $fillable = [
-        'user_id', 'name', 'address', 'location', 'number_of_floors', 'number_of_units', 'request_status'
+        'user_id', 'name', 'address', 'location', 'number_of_floors', 'number_of_units', 'request_status', 'latitude', 'longitude'
     ];
+
+    protected $casts = ['latitude' => 'float', 'longitude' => 'float'];
 
     public function user(): BelongsTo
     {

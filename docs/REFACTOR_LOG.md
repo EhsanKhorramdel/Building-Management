@@ -815,3 +815,67 @@ Findings remain open unless a closing commit is recorded below. The named phases
 - **Files:** README.md, docs/REFACTOR_LOG.md. The scratch checkout was outside the repository.
 - **Verified by:** Setup started at e25d0f25a31db69daee8902e0e5c4eeb0dfd3987 and the retry and tests ran at 017d39a869094a481b9a93ee9e52b7d8dbe65a38. The sign-in redirected to the dashboard with the seeded complex visible. The storage image returned HTTP 200. Both checkouts passed 332 tests with 776 assertions. The test files are unchanged.
 - **Risk & rollback:** The check used only a local SQLite database and the log broadcaster. Live MySQL migrations and Pusher delivery still require their deployment environments.
+
+### [Phase 7] Use the existing complex coordinate columns
+- **Before:** Phase 3 defined nullable decimal(10,7) latitude and longitude on complexes. The model did not expose them for writes or cast them.
+- **After:** Complex accepts both coordinates and reads them as floats. The existing free-text location field keeps its behavior.
+- **Why:** Forms and map data need the stored point as a numeric pair.
+- **Files:** app/Models/Complex.php.
+- **Verified by:** Checked the Phase 3 migration and the SQLite schema. The settings test reloads both coordinates as floats and verifies that the text location is unchanged.
+- **Risk & rollback:** The Phase 3 schema remains in place. Reverting the map can leave saved complex coordinates in those columns.
+
+### [Phase 7] Keep registration coordinates with the pending request
+- **Before:** Building registration writes a pending membership request. Complexes only exist after approval, and the request table had no coordinate columns.
+- **After:** One migration adds the nullable decimal(10,7) pair to membership_requests. The applicant's point stays with the request and is copied to the complex inside the existing approval transaction. An approval without coordinates leaves them null. Rejection still creates no complex. An expandable map in the admin request card shows the submitted point without edit controls.
+- **Why:** The applicant knows the location when submitting the other building details. The approver needs to see that same point before deciding.
+- **Files:** database/migrations/2026_11_09_000004_add_coordinates_to_membership_requests.php, MembershipRequest, UserController, AdminController, admin request cards and map component.
+- **Verified by:** Registration saves the pair as floats. Tests approve requests with and without coordinates and check the read-only review markup. The browser submitted a point and opened it in the pending admin card before approval.
+- **Risk & rollback:** The migration is limited to pending-request storage and leaves existing migrations untouched. Rolling it back drops the saved coordinates on membership requests.
+
+### [Phase 7] Validate the coordinate pair in both forms
+- **Before:** Registration had no coordinate validation and settings had no location save.
+- **After:** Both requests require a numeric latitude in -90..90 and longitude in -180..180 when either is supplied. Persian validation errors remain in each form's own error bag. Values are rounded to the storage precision of seven decimal places. Omitting both fields keeps the saved settings. Submitting both blank clears them.
+- **Why:** Partial points cannot be mapped, and SQLite and MySQL should write the same precision.
+- **Files:** ComplexLocationRequest, MembershipRequestStoreRequest, coordinate picker and ComplexLocationController.
+- **Verified by:** Feature cases cover both bounds, both missing-partner cases, a nonnumeric value, omission, clearing, and persistence with a zero coordinate.
+- **Risk & rollback:** A malformed pair is rejected before any write. Removing the forms and their validation together reverts this behavior.
+
+### [Phase 7] Bundle the location picker
+- **Before:** The registration and settings screens could not select a point.
+- **After:** The shared picker supports map click, marker drag, editable coordinate fields, browser location and clearing. It opens at zoom 15 for a saved point or at Tehran at zoom 11 for an empty pair. Hidden map panels initialize once they have dimensions. Vite bundles Leaflet 1.9.4, its CSS and explicit standard, retina and shadow image imports.
+- **Why:** The picker needs to work in both layouts without relying on a remote script or runtime marker path detection.
+- **Files:** package.json, package-lock.json, resources/js/building/map.js, Vite page entries, resources/css/map.css and coordinate picker component.
+- **Verified by:** The production build emitted the marker PNGs and the browser rendered the marker from those assets. The browser checked click, drag, typed values, clearing and geolocation. A simulated denial left the fields empty and showed a toast.
+- **Risk & rollback:** The browser may deny geolocation. Manual entry remains available. Remove the picker calls and imports together when reverting.
+
+### [Phase 7] Show the complex location on the home tab
+- **Before:** The building home tab had no map.
+- **After:** The address sits above a map for saved coordinates, with zoom controls and an external directions link. Dragging and wheel zoom are disabled. Without coordinates, the address stays visible and only managers get a settings hint. Coordinates are passed through Blade data attributes.
+- **Why:** Members need to see the location without changing it or losing page scroll to the map.
+- **Files:** building home view, building page entry, map component and styles.
+- **Verified by:** Feature cases cover manager and resident views with and without coordinates. The browser saved a point in settings and found the same marker on home.
+- **Risk & rollback:** Removing the display leaves saved coordinates and the address intact.
+
+### [Phase 7] Configure the tile source
+- **Before:** There was no tile configuration.
+- **After:** MAP_TILE_URL and MAP_TILE_ATTRIBUTION default to OpenStreetMap's standard tiles and contributor attribution. Both overrides appear as commented examples.
+- **Why:** Deployments can use a local mirror or another source without a rebuild.
+- **Files:** config/map.php, .env.example, map component and README.md.
+- **Verified by:** Live browser requests returned OpenStreetMap tiles and showed attribution. The Vite bundle uses rendered tile configuration.
+- **Risk & rollback:** Tile availability depends on the configured source. Clearing both overrides restores the defaults.
+
+### [Phase 7] Limit location settings to the scoped manager
+- **Before:** The manager settings panel had no coordinate write action.
+- **After:** PATCH /dashboard/building/{complex}/location uses the existing authenticated manager middleware and Complex policy. Existing route names, methods and URLs are unchanged.
+- **Why:** Only active managers in the target complex can change its settings.
+- **Files:** routes/web.php, ComplexLocationController and building settings view.
+- **Verified by:** The matching manager can save. Foreign managers, residents, inactive managers and global admins without a matching role receive 403. Guests are redirected to sign in.
+- **Risk & rollback:** Removing the endpoint and form removes manager editing without affecting existing authorization.
+
+### [Phase 7] Verify the map and document its setup
+- **Before:** The visual suite had no map picker or saved-map captures.
+- **After:** The map test saves a location, opens home and captures both screens at 390px and 1440px in light and dark. The README lists map locations and the tile settings. The architecture and changelog record the registration and manager flows.
+- **Why:** The map must stay usable in both themes and viewport sizes after a real form save.
+- **Files:** tests/Browser/map.spec.js, ComplexLocationTest, MembershipLocationTest, docs/VISUAL_QA.md, README.md, docs/ARCHITECTURE.md and CHANGELOG.md.
+- **Verified by:** The PHP suite passed 354 tests with 895 assertions, up from 332 tests and 776 assertions. SQLite migrate:fresh and DemoSeeder passed. The asset build passed. Four browser cases captured eight screens with no horizontal overflow or console errors. Mobile zoom buttons meet the 40px target.
+- **Risk & rollback:** Browser captures use an isolated seeded database because the flow writes a location. The screenshots remain outside Git.

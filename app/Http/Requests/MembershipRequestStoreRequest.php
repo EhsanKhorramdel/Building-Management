@@ -2,15 +2,13 @@
 
 namespace App\Http\Requests;
 
-use Illuminate\Foundation\Http\FormRequest;
-
-class MembershipRequestStoreRequest extends FormRequest
+class MembershipRequestStoreRequest extends ComplexLocationRequest
 {
     protected $errorBag = 'registerBuilding';
 
     public function rules(): array
     {
-        return [
+        return parent::rules() + [
             'name' => 'required|string',
             'address' => 'required|string',
             'floors' => 'required|integer|min:1',
@@ -20,7 +18,7 @@ class MembershipRequestStoreRequest extends FormRequest
 
     public function messages(): array
     {
-        return [
+        return parent::messages() + [
             'name.required' => 'فیلد نام الزامی است.',
             'name.string' => 'فیلد نام باید یک رشته باشد.',
 

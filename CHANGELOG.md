@@ -8,6 +8,7 @@ See [REFACTOR_LOG.md](docs/REFACTOR_LOG.md) for the engineering record and verif
 
 - Local demo data for administrators, managers and residents.
 - A printable payment report, install metadata and clearer empty and loading states.
+- Optional map locations during building registration, admin review, and manager settings.
 
 ### Changed
 

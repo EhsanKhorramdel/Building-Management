@@ -8,7 +8,7 @@ The application uses Laravel 12, Blade, and Vite. The Laravel 11 and 12 upgrades
 | --- | --- |
 | Complex | Owns units, user roles, announcements, monthly charges, incidental costs, polls and chat groups. |
 | User and user role | A user can hold roles in multiple complexes. Each scoped role belongs to a complex and can point to a unit. Votes and both kinds of payment point to a role. A site administrator holds a global role. |
-| Membership request | Belongs to the applicant. Approval of a pending request creates the complex, its initial manager role and its chat group in one transaction. |
+| Membership request | Belongs to the applicant. Approval of a pending request creates the complex, its initial manager role and its chat group in one transaction. Any submitted coordinates are copied to the complex at approval. |
 | Announcement | Belongs to a complex and its authoring manager. Cancellation archives it. |
 | Monthly charge and charge payment | A charge belongs to a complex and its author. A payment links the charge to the paying role and a Jalali month. |
 | Incidental cost and additional cost payment | A cost belongs to a complex. Its payment links the cost to the paying role. |
@@ -24,6 +24,7 @@ Admin is global. Manager and resident permissions require an active role in the 
 | Review, approve or reject building requests | Yes | No | No | No |
 | View a building dashboard and payment report | No | Yes | Yes | No |
 | Promote residents, step down, rotate a join link | No | Yes | No | No |
+| Set or clear the saved map location | No | Yes | No | No |
 | Publish or archive announcements, create charges or incidental costs | No | Yes | No | No |
 | Create polls, vote while open and view results | No | Yes | Yes | No |
 | Add a unit | No | Yes | Yes | No |

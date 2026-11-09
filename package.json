@@ -20,6 +20,7 @@
     "dependencies": {
         "chart.js": "^4.6.1",
         "laravel-echo": "^1.15.2",
+        "leaflet": "^1.9.4",
         "pusher-js": "^8.3.0"
     }
 }

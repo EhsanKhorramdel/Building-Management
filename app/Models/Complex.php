@@ -13,8 +13,10 @@ class Complex extends Model
 {
     use HasFactory;
     protected $fillable = [
-        'name', 'address', 'location', 'number_of_floors', 'number_of_units', 'join_link'
+        'name', 'address', 'location', 'number_of_floors', 'number_of_units', 'join_link', 'latitude', 'longitude'
     ];
+
+    protected $casts = ['latitude' => 'float', 'longitude' => 'float'];
 
     public function units(): HasMany
     {

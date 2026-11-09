@@ -11,6 +11,7 @@ Managers administer their own complexes, publish notices and set charges and inc
 - Monthly charges, incidental costs and a printable payment report.
 - Announcements, timed polls and vote results.
 - Per-complex group chat with image attachments and read receipts.
+- Optional map locations for complexes, with a picker during registration and in manager settings.
 - Responsive pages with a light and dark theme.
 
 ## Requirements
@@ -78,6 +79,7 @@ These shared credentials are for local demos only. Never seed them into a deploy
 
 - **Broadcasting.** The template uses `BROADCAST_CONNECTION=log`, which records chat events locally. Set it to `pusher` for live chat and configure `PUSHER_APP_ID`, `PUSHER_APP_KEY`, `PUSHER_APP_SECRET` and `PUSHER_APP_CLUSTER`. The template maps the public key and cluster to `VITE_PUSHER_APP_KEY` and `VITE_PUSHER_APP_CLUSTER`. The browser gets those public values from the rendered page. It authorizes each private complex channel through the signed-in session.
 - **Uploads.** Announcements, invoices and chat images live under `storage/app/public`, the root of the public disk. `php artisan storage:link` exposes them at `/storage`.
+- **Maps.** The default tile URL and attribution use OpenStreetMap. Set `MAP_TILE_URL` and `MAP_TILE_ATTRIBUTION` together to use another tile source. Keep the source's attribution visible and follow its usage policy. See the [OpenStreetMap tile usage policy](https://operations.osmfoundation.org/policies/tiles/).
 - **Mail.** The template points SMTP to Mailpit on port 1025. The local setup above writes mail to the log. Configure a real mail transport for a deployment that sends password reset links.
 
 ## Tests
@@ -100,4 +102,4 @@ See [Architecture](docs/ARCHITECTURE.md) for domain and deployment details, and 
 
 ## Roadmap
 
-Building maps, online payment processing and SMS notifications are planned.
+Online payment processing and SMS notifications are planned.
