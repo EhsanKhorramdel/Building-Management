@@ -89,7 +89,9 @@ The action queues work after saving. A dedicated database worker processes the `
 
 ## Deployment
 
-Use PHP 8.3 or a newer PHP 8.x release, and MySQL 8. Install the locked PHP dependencies, build assets with `npm run build`, run migrations and point the web root at `public`. Persist `storage/app/public` and `storage/app/private/chats` across releases. Run `php artisan storage:link` for public announcement and cost images. Chat attachments are served through the complex membership check, with a global admin exception. Keep the app key and production credentials in the deployment environment and leave demo seeding for local use.
+Use PHP 8.3 or a newer PHP 8.x release, and MySQL 8. Install the locked PHP dependencies, build assets with `npm run build`, run migrations and point the web root at `public`. Keep the app key and production credentials in the deployment environment and leave demo seeding for local use.
+
+Persist `storage/app/private` and `storage/app/public` across releases. Chat, announcement and incidental-cost attachments use private storage. Their routes check active membership in the owning complex or a global admin role before streaming image bytes. The `php artisan storage:link` command exposes stock assets such as the placeholder. When upgrading from public attachments, run the two move commands in the README and resolve any reported conflicts before reopening traffic.
 
 The template uses a synchronous default queue and logs broadcasts. Configure Pusher for live updates. When SMS is enabled, run `php artisan queue:work database --queue=sms` for its dedicated queue. Serve production traffic over HTTPS.
 

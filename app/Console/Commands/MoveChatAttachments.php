@@ -3,8 +3,8 @@
 namespace App\Console\Commands;
 
 use App\Models\Message;
+use App\Services\AttachmentMover;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Storage;
 
 class MoveChatAttachments extends Command
 {
@@ -12,44 +12,14 @@ class MoveChatAttachments extends Command
 
     protected $description = 'Move legacy chat attachments out of the public disk';
 
-    public function handle(): int
+    public function handle(AttachmentMover $mover): int
     {
-        $disk = Storage::disk('local');
-        $public = 'public/chats';
-        $files = $disk->allFiles($public);
-        $moved = $duplicates = $conflicts = $failed = 0;
-
-        foreach ($files as $file) {
-            $destination = Message::ATTACHMENT_DIRECTORY.'/'.substr($file, strlen($public) + 1);
-
-            if ($disk->fileExists($destination)) {
-                $checksum = $disk->checksum($file, ['checksum_algo' => 'sha256']);
-                if (! $checksum || $checksum !== $disk->checksum($destination, ['checksum_algo' => 'sha256'])) {
-                    $this->warn("Conflicting attachment: {$file}");
-                    $conflicts++;
-
-                    continue;
-                }
-
-                if ($disk->delete($file)) {
-                    $duplicates++;
-                } else {
-                    $failed++;
-                }
-
-                continue;
-            }
-
-            if ($disk->move($file, $destination)) {
-                $moved++;
-            } else {
-                $failed++;
-            }
+        $result = $mover->move('public/chats', Message::ATTACHMENT_DIRECTORY);
+        foreach ($result['warnings'] as $warning) {
+            $this->warn($warning);
         }
+        $this->info($result['summary']);
 
-        $this->info(sprintf('Found: %d. Moved: %d. Duplicate copies removed: %d. Conflicts: %d. Failed: %d.',
-            count($files), $moved, $duplicates, $conflicts, $failed));
-
-        return $conflicts || $failed ? self::FAILURE : self::SUCCESS;
+        return $result['successful'] ? self::SUCCESS : self::FAILURE;
     }
 }

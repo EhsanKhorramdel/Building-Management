@@ -54,7 +54,7 @@ class E2ESeeder extends Seeder
 
             $image = file_get_contents(public_path('assets/images/app-icon-192.png'));
             Storage::disk('local')->put('public/default.png', $image);
-            Storage::disk('local')->put('public/notificationFiles/e2e-announcement.png', $image);
+            Storage::disk('local')->put(Announcement::ATTACHMENT_DIRECTORY.'/e2e-announcement.png', $image);
             Storage::disk('local')->put(Message::ATTACHMENT_DIRECTORY.'/e2e-attachment.png', $image);
 
             Announcement::create([

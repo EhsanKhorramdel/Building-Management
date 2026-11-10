@@ -19,7 +19,7 @@
                     <div class="building-box-footer flex justify-center gap-2.5">
                         <button type="button" data-amount="{{ $incidentalCost->share_amount }}" data-payment-id="{{ $incidentalCost->id }}" class="text-center cost-pay-open-Btn">{{ config('payments.enabled') ? 'پرداخت آنلاین' : 'پرداخت' }}</button>
 
-                        <button type="button" data-invoice="{{ asset($incidentalCost->cost_invoice ? '/storage/incidentalCostFiles/' . $incidentalCost->cost_invoice : '/storage/default.png') }}">مشاهده فاکتور</button>
+                        <button type="button" data-invoice="{{ $incidentalCost->cost_invoice ? route('incidental-costs.attachment', $incidentalCost) : asset('storage/default.png') }}">مشاهده فاکتور</button>
                     </div>
                 </div>
             </div>

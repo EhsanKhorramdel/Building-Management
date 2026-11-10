@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AnnouncementController;
+use App\Http\Controllers\BuildingAttachmentController;
 use App\Http\Controllers\BuildingDashboardController;
 use App\Http\Controllers\ChargeController;
 use App\Http\Controllers\ChatAttachmentController;
@@ -35,6 +36,10 @@ Route::get('/', function () {
 
 Route::get('/chat/attachments/{message}', [ChatAttachmentController::class, 'show'])
     ->middleware('auth')->name('chat.attachments.show');
+Route::get('/announcements/{announcement}/attachment', [BuildingAttachmentController::class, 'announcement'])
+    ->middleware('auth')->name('announcements.attachment');
+Route::get('/incidental-costs/{incidentalCost}/attachment', [BuildingAttachmentController::class, 'incidentalCost'])
+    ->middleware('auth')->name('incidental-costs.attachment');
 
 Route::get('/dashboard/building/{complex}/group/{lastReceivedMessageId}', [GroupController::class, 'index']);
 Route::get('/dashboard/building/{complex}/lastMessageSeenId', [GroupController::class, 'lastMessageSeenId']);

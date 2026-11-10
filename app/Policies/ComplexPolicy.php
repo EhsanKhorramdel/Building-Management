@@ -13,7 +13,7 @@ class ComplexPolicy
             ->whereIn('role', ['resident', 'manager'])->exists();
     }
 
-    public function viewChatAttachment(User $user, Complex $complex): bool
+    public function viewAttachment(User $user, Complex $complex): bool
     {
         return $this->view($user, $complex)
             || $user->userRoles()->where('role', 'admin')->where('active', true)->exists();

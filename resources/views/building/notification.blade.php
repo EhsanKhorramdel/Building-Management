@@ -28,7 +28,7 @@
                                     >لغو
                                     اعلان</button></form>
                             @endif
-                            <button type="button" data-announcement-image="{{ asset($announcement->image_url ? '/storage/notificationFiles/' . $announcement->image_url : '/storage/default.png') }}">مشاهده تصویر</button>
+                            <button type="button" data-announcement-image="{{ $announcement->image_url ? route('announcements.attachment', $announcement) : asset('storage/default.png') }}">مشاهده تصویر</button>
 
                         </div>
                     </div>
