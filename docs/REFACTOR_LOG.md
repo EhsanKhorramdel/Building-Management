@@ -1079,3 +1079,11 @@ Findings remain open unless a closing commit is recorded below. The named phases
 - **Files:** TypedInput, NumericFormRequest and its endpoint requests, AccessMiddleware, PollService, MockGateway, TypedInputTest, ARCHITECTURE.md.
 - **Verified by:** TypedInputTest covers ASCII, whitespace, zero, negative, a large integer, both local digit scripts, blank and absent values, and a fractional float.
 - **Risk & rollback:** Nullable ID and unit fields now reject non-integers. The shared boundary replaces three poll duration casts, two coordinate casts and the payable complex check's integer cast. Coordinate rounding, opaque gateway verification and persisted field formats stay in place. Revert the request and authorization changes together.
+
+### [Phase 8D] P1 Check browser and typed payload parity
+- **Before:** Most endpoint tests used native PHP numbers. The poll regression covered form-encoded durations without comparing the resulting state to a typed request.
+- **After:** Paired URL-encoded and JSON requests cover charge and cost creation, poll creation, unit add and update, building registration and location, profile update, both manual payments, online payment initiation and mock callback, voting, results, report, and chat send, edit, seen and viewers.
+- **Why:** The same fixtures and clock expose differences in response type, status, redirect, flash message and saved state. Separate database savepoints let both requests start from the same records.
+- **Files:** tests/Feature/Backend/FormEncodingParityTest.php.
+- **Verified by:** The pairs include Persian digits in coordinates, the current unit lookup and the national code. Blank and omitted profile and settings fields run as separate cases.
+- **Risk & rollback:** Test-only. The earlier browser poll regression remains unchanged.
