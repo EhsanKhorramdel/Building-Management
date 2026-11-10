@@ -1153,3 +1153,51 @@ Findings remain open unless a closing commit is recorded below. The named phases
 - **Files:** docs/FEATURE_AUDIT.md and 106 seeded browser captures under docs/audit-11.
 - **Verified by:** Chrome click-throughs in disposable SQLite sessions at 390px and 1440px in both themes, plus landscape and a shortened chat viewport. Route and test review confirmed the viewer audience and the three authorized attachment routes. The PHP suite passed 465 tests with 1,526 assertions. The build and default browser suite passed with 41 browser cases and one expected skip for the opt-in live check.
 - **Risk & rollback:** The audit changes documentation and evidence only. The shortened viewport does not establish physical keyboard or IME behavior. Revert the audit commit to remove the report and captures.
+
+### [Phase 11A, F11-01] Keep message actions reachable
+- **Before:** The chat list clipped the menu on the newest own message, hiding Edit, Delete and Viewers.
+- **After:** The menu opens in the browser top layer and uses the trigger and available viewport space for placement.
+- **Why:** Stacking the menu within the scroll box could not move it outside the clipping boundary.
+- **Files:** resources/js/building/chat.js, resources/css/chat.css, resources/css/panels.css, tests/e2e/chat.spec.js and the audit closure evidence.
+- **Verified by:** Four Playwright cases hit-test and click each action at 390 and 1440 in both themes.
+- **Risk & rollback:** Menu placement now uses the browser's Popover API. Revert the placement and interaction changes together if restoring the native-only disclosure.
+
+### [Phase 11A, F11-02] Dismiss message menus and restore focus
+- **Before:** More than one disclosure could stay open, and Escape or an outside click left it open.
+- **After:** The chat keeps one open menu. Escape and outside clicks close it and return focus to its trigger.
+- **Why:** Native disclosures do not supply outside dismissal or Escape handling.
+- **Files:** resources/js/building/chat.js, tests/e2e/chat.spec.js and the audit closure evidence.
+- **Verified by:** The browser opens two menus in sequence, then checks both dismissal methods and focus return.
+- **Risk & rollback:** Reverting this entry restores the old dismissal behavior. Menu placement is independent of the dismissal handlers.
+
+### [Phase 11A, F11-03] Keep keyboard focus in the open drawer
+- **Before:** Tab reached the dashboard join field while the drawer covered it.
+- **After:** The header and content behind the drawer become inert. Tab and Shift+Tab wrap inside the drawer. Closing clears inert state and restores the opener.
+- **Why:** Moving focus on open left the rest of the page in the tab order.
+- **Files:** resources/js/building/navigation.js, tests/e2e/chat.spec.js and the audit closure evidence.
+- **Verified by:** The 390px browser check verifies inert state, traversal in both directions and focus return.
+- **Risk & rollback:** Navigation and drawer share the handler. Reverting removes both inert state and the boundary.
+
+### [Phase 11A, F11-04] Fit chat into short landscape screens
+- **Before:** At 844 × 390 the desktop sidebar and minimum chat height pushed the composer below the viewport.
+- **After:** The short-landscape breakpoint uses the drawer, and the chat panel allocates the remaining height to the scrollable message list.
+- **Why:** The width breakpoint and minimum block size did not account for short phone screens.
+- **Files:** resources/css/panels.css, resources/css/chat.css, tests/e2e/chat.spec.js and the audit closure evidence.
+- **Verified by:** The landscape case checks the heading, paging, message list and composer in the same viewport and confirms that focusing the composer keeps the heading visible.
+- **Risk & rollback:** This breakpoint also changes navigation on short landscape screens outside chat. Revert the landscape media rules together to restore the earlier layout.
+
+### [Phase 11A, F11-05] Keep the close control in tall forms
+- **Before:** Scrolling the charge form to Submit moved its Close control out of reach.
+- **After:** A toolbar keeps Close at the top of the scrolling form panel, with the panel background behind the control.
+- **Why:** Close used to scroll with the long form fields.
+- **Files:** resources/css/panels.css, the four building creation views, tests/e2e/chat.spec.js and the audit closure evidence.
+- **Verified by:** The landscape charge case scrolls to Submit, checks Close is still visible, and verifies Close and Escape return focus.
+- **Risk & rollback:** The sticky toolbar takes one row of the dialog's visible height. Revert the toolbar markup and styling together to restore the previous layout.
+
+### [Phase 11A, F11-07] Scope access to message viewer names
+- **Before:** The menu showed Viewers for the author's own messages, but the endpoint permitted any active member of the complex.
+- **After:** The endpoint allows the message author or an active manager of that complex. The route and author menu stay as before.
+- **Why:** The owner chose author and complex-manager access to named receipts.
+- **Files:** app/Http/Controllers/GroupController.php, tests/Feature/Building/ChatTest.php, tests/Feature/Backend/FormEncodingParityTest.php, tests/e2e/chat.spec.js and the audit closure evidence. Pint also normalized the controller's existing JSON response docblocks.
+- **Verified by:** PHP and browser cases cover the author, manager, non-author resident and foreign manager. The named ChatTest expectation now requires 403 for a non-author resident. The viewer parity case checks the same denial for JSON and form bodies and retains manager success.
+- **Risk & rollback:** Reverting reopens named receipts to all active complex members. Keep the policy and its test expectations together.

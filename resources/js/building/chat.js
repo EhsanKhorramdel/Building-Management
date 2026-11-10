@@ -35,6 +35,50 @@ export function chat() {
     let last = null;
     let pending = false;
     let pagePending = false;
+    let openMenu = null;
+
+    function closeMenu(restore = true) {
+        if (!openMenu) return;
+        const { menu, trigger, actions } = openMenu;
+        openMenu = null;
+        actions.hidePopover();
+        menu.open = false;
+        if (restore) trigger.focus({ preventScroll: true });
+    }
+
+    function placeMenu() {
+        if (!openMenu) return;
+        const { trigger, actions } = openMenu;
+        const anchor = trigger.getBoundingClientRect();
+        const listBounds = scroll.getBoundingClientRect();
+        if (anchor.bottom <= listBounds.top || anchor.top >= listBounds.bottom) {
+            closeMenu(false);
+            return;
+        }
+
+        const gap = 6;
+        const viewport = document.documentElement;
+        const below = viewport.clientHeight - anchor.bottom - gap * 2;
+        const above = anchor.top - gap * 2;
+        const flip = actions.scrollHeight > below && above > below;
+        actions.style.maxHeight = Math.max(0, flip ? above : below) + 'px';
+        const width = actions.offsetWidth;
+        const left = getComputedStyle(trigger).direction === 'rtl' ? anchor.left : anchor.right - width;
+        actions.style.left = Math.max(gap, Math.min(left, viewport.clientWidth - width - gap)) + 'px';
+        actions.style.top = (flip ? anchor.top - actions.offsetHeight - gap : anchor.bottom + gap) + 'px';
+    }
+
+    document.addEventListener('click', event => {
+        if (openMenu && !openMenu.menu.contains(event.target)) closeMenu();
+    });
+    document.addEventListener('keydown', event => {
+        if (event.key === 'Escape' && openMenu) {
+            event.preventDefault();
+            closeMenu();
+        }
+    });
+    window.addEventListener('resize', placeMenu);
+    window.addEventListener('scroll', placeMenu, { capture: true });
 
     function cancelEdit() {
         editing = null;
@@ -75,6 +119,7 @@ export function chat() {
     function render() {
         const entries = [...messages.values()].sort((left, right) => left.message_id - right.message_id);
         let day;
+        closeMenu(false);
         list.replaceChildren();
         for (const message of entries) {
             const created = new Date(message.created_at.replace(' ', 'T'));
@@ -92,12 +137,24 @@ export function chat() {
             const trigger = node('summary', 'chat-menu-toggle', '⋯');
             trigger.setAttribute('aria-label', 'گزینه‌های پیام');
             const actions = node('div', 'chat-menu-actions');
+            actions.setAttribute('popover', 'manual');
+            trigger.addEventListener('click', event => {
+                event.preventDefault();
+                if (openMenu?.menu === menu) {
+                    closeMenu();
+                    return;
+                }
+                closeMenu(false);
+                menu.open = true;
+                actions.showPopover();
+                openMenu = { menu, trigger, actions };
+                placeMenu();
+            });
             function action(label, run) {
                 const button = node('button', 'chat-action', label);
                 button.type = 'button';
                 button.addEventListener('click', async () => {
-                    menu.open = false;
-                    trigger.focus();
+                    closeMenu();
                     await run(trigger);
                 });
                 actions.append(button);

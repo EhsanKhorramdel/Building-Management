@@ -202,6 +202,12 @@ it('matches form and typed chat message IDs', function (string $path, string $fi
     ]);
     compareFormEncoding("/dashboard/building/{$path}", [$field => $message->id, 'messageText' => 'Edited'],
         fn () => $state($message), status: 200);
+
+    if ($path === 'getMessageViewers') {
+        $this->actingAs($this->resident->user);
+        compareFormEncoding('/dashboard/building/getMessageViewers', ['message_id' => $message->id],
+            fn () => $state($message), status: 403);
+    }
 })->with([
     'edit' => ['group/edit', 'messageId', fn (Message $message) => $message->fresh()->only(['text', 'edited'])],
     'seen' => ['group/seen', 'messageId', fn (Message $message) => SeenMessage::where('message_id', $message->id)->count()],

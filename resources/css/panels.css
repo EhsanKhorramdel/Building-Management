@@ -67,7 +67,7 @@
     .box-content-header { @apply font-bold; }
     .box-content-subheader, .box-address-header { color: var(--muted); }
     .box-address-header { @apply p-0; }
-    .more-wrapper, .chat-menu { @apply relative; }
+    .more-wrapper { @apply relative; }
     .dropdownDots { @apply absolute end-0 top-full z-10 mt-1 w-40 rounded-lg border p-1 shadow-lg; background: var(--surface); border-color: var(--line); }
     .dropdownDots button { @apply block min-h-10 w-full rounded-lg px-2 text-start text-sm; }
     .dropdownDots button:hover { background: var(--accent-soft); }
@@ -87,6 +87,11 @@
         background: rgb(5 15 20 / 65%);
     }
     .register-section:not(.settings-panel) > .dialog-panel { margin-block: max(0px, calc((100dvh - 48rem) / 2)); }
+    .register-dialog-tools {
+        @apply sticky z-10;
+        inset-block-start: 0;
+        background: var(--surface);
+    }
     .register-close { @apply inline-flex min-h-10 min-w-10 items-center justify-center rounded-lg; color: var(--muted); }
     .register-form { @apply grid min-w-0 gap-3; }
     .register-form :is(input, textarea):not([type=hidden], [type=radio], [type=checkbox]) { @apply w-full; }
@@ -116,7 +121,8 @@
 }
 
 [data-drawer-overlay], button[data-open-drawer], button[data-close-drawer] { display: none; }
-@media (max-width: 767px) {
+@media (max-width: 767px), (orientation: landscape) and (max-height: 480px) and (max-width: 1023px) {
+    .app-content:has([data-drawer]) { grid-template-columns: minmax(0, 1fr); }
     button[data-open-drawer], button[data-close-drawer] { display: inline-flex; }
     [data-drawer-overlay]:not([hidden]) { display: block; position: fixed; inset: 0; z-index: 39; background: rgb(5 15 20 / 60%); }
     .app-sidebar[data-drawer] {

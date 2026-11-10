@@ -6,11 +6,16 @@ export function navigation(initial = 'home') {
     const overlay = document.querySelector('[data-drawer-overlay]');
     const links = [...drawer.querySelectorAll('[data-tab]')];
     const register = document.querySelector('.register-btn');
+    const background = [opener.closest('.app-header'), ...drawer.parentElement.children]
+        .filter(element => element && element !== drawer && element !== overlay);
+    let madeInert = [];
 
     function closeDrawer(restore = true) {
         drawer.classList.remove('drawer-open');
         overlay.hidden = true;
         opener.setAttribute('aria-expanded', 'false');
+        madeInert.forEach(element => { element.inert = false; });
+        madeInert = [];
         if (restore) opener.focus();
     }
 
@@ -37,6 +42,8 @@ export function navigation(initial = 'home') {
     }
 
     opener.addEventListener('click', () => {
+        madeInert = background.filter(element => !element.inert);
+        madeInert.forEach(element => { element.inert = true; });
         drawer.classList.add('drawer-open');
         overlay.hidden = false;
         opener.setAttribute('aria-expanded', 'true');
@@ -45,8 +52,19 @@ export function navigation(initial = 'home') {
     overlay.addEventListener('click', () => closeDrawer());
     drawer.querySelector('[data-close-drawer]').addEventListener('click', () => closeDrawer());
     links.forEach(link => link.addEventListener('click', () => select(link.dataset.tab)));
+    window.addEventListener('resize', () => {
+        if (drawer.classList.contains('drawer-open') && !opener.getClientRects().length) closeDrawer(false);
+    });
     document.addEventListener('keydown', event => {
-        if (event.key === 'Escape' && drawer.classList.contains('drawer-open')) closeDrawer();
+        if (!drawer.classList.contains('drawer-open')) return;
+        if (event.key === 'Escape') closeDrawer();
+        if (event.key !== 'Tab') return;
+        const controls = [...drawer.querySelectorAll('button:not(:disabled), a[href]')]
+            .filter(element => element.getClientRects().length);
+        const boundary = event.shiftKey ? controls[0] : controls.at(-1);
+        if (document.activeElement !== boundary && drawer.contains(document.activeElement)) return;
+        event.preventDefault();
+        (event.shiftKey ? controls.at(-1) : controls[0])?.focus();
     });
     document.querySelectorAll('.register-close').forEach(button => button.addEventListener('click', closeDialog));
     select(initial);
