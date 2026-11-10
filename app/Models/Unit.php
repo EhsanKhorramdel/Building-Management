@@ -10,11 +10,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Unit extends Model
 {
     use HasFactory;
+
     protected $fillable = [
-        'complex_id', 'zip_code', 'unit_number', 'floor_number'
+        'complex_id', 'zip_code', 'unit_number', 'floor_number',
     ];
 
-    // Relationships
     public function complex(): BelongsTo
     {
         return $this->belongsTo(Complex::class);
@@ -22,6 +22,6 @@ class Unit extends Model
 
     public function userRoles(): HasMany
     {
-        return $this->hasMany(UserRoles::class);
+        return $this->hasMany(UserRole::class);
     }
 }

@@ -1,7 +1,17 @@
-<div class="buildings-section setting-window">
+<div class="buildings-section setting-window" data-panel="setting" hidden>
+    <section class="settings-card mb-3">
+        <h2 class="mb-2 text-xl font-bold">موقعیت ساختمان روی نقشه</h2>
+        <form class="space-y-3" method="POST" action="{{ route('building.location.update', $complex) }}">
+            @csrf
+            @method('PATCH')
+            <x-complex-map-picker field-id="building-location" error-bag="complexLocation"
+                :latitude="$complex->latitude" :longitude="$complex->longitude" />
+            <button type="submit" class="action">ذخیره موقعیت</button>
+        </form>
+    </section>
     <div class="mb-3">
         <!--MODAL ITEM-->
-        <div class="bg-gray-100  mx-4 p-4 rounded-xl md:w-1/2 lg:w-1/3">
+        <div class="settings-card">
             <!--MODAL HEADER-->
             <div class="flex justify-between items-center border-b border-gray-200 py-3">
                 <div class="flex items-center justify-center">
@@ -16,7 +26,7 @@
                 <div class="flex justify-around my-4">
                     <!--FACEBOOK ICON-->
                     <a href="https://www.facebook.com/sharer/sharer.php?u={{ urlencode($complex->join_link) }}"
-                        target="_blank"
+                        target="_blank" rel="noopener noreferrer" aria-label="اشتراک در فیسبوک"
                         class="border hover:bg-[#1877f2] w-12 h-12 fill-[#1877f2] hover:fill-white border-blue-200 rounded-full flex items-center justify-center shadow-xl hover:shadow-blue-500/50 cursor-pointer">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
                             <path
@@ -25,7 +35,7 @@
                         </svg>
                     </a>
                     <!--TWITTER ICON-->
-                    <a href="https://twitter.com/intent/tweet?url={{ urlencode($complex->join_link) }}" target="_blank"
+                    <a href="https://twitter.com/intent/tweet?url={{ urlencode($complex->join_link) }}" target="_blank" rel="noopener noreferrer" aria-label="اشتراک در توییتر"
                         class="border hover:bg-[#1d9bf0] w-12 h-12 fill-[#1d9bf0] hover:fill-white border-blue-200 rounded-full flex items-center justify-center shadow-xl hover:shadow-sky-500/50 cursor-pointer">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
                             <path
@@ -34,7 +44,7 @@
                         </svg>
                     </a>
                     <!--INSTAGRAM ICON-->
-                    <a href="https://www.instagram.com/?url={{ urlencode($complex->join_link) }}" target="_blank"
+                    <a href="https://www.instagram.com/?url={{ urlencode($complex->join_link) }}" target="_blank" rel="noopener noreferrer" aria-label="اشتراک در اینستاگرام"
                         class="border hover:bg-[#bc2a8d] w-12 h-12 fill-[#bc2a8d] hover:fill-white border-pink-200 rounded-full flex items-center justify-center shadow-xl hover:shadow-pink-500/50 cursor-pointer">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
                             <path
@@ -48,7 +58,7 @@
                     </a>
 
                     <!--WHATSAPP ICON-->
-                    <a href="https://api.whatsapp.com/send?text={{ urlencode($complex->join_link) }}" target="_blank"
+                    <a href="https://api.whatsapp.com/send?text={{ urlencode($complex->join_link) }}" target="_blank" rel="noopener noreferrer" aria-label="اشتراک در واتس‌اپ"
                         class="border hover:bg-[#25D366] w-12 h-12 fill-[#25D366] hover:fill-white border-green-200 rounded-full flex items-center justify-center shadow-xl hover:shadow-green-500/50 cursor-pointer">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
                             <path fill-rule="evenodd" clip-rule="evenodd"
@@ -58,7 +68,7 @@
                     </a>
 
                     <!--TELEGRAM ICON-->
-                    <a href="https://t.me/share/url?url={{ urlencode($complex->join_link) }}" target="_blank"
+                    <a href="https://t.me/share/url?url={{ urlencode($complex->join_link) }}" target="_blank" rel="noopener noreferrer" aria-label="اشتراک در تلگرام"
                         class="border hover:bg-[#229ED9] w-12 h-12 fill-[#229ED9] hover:fill-white border-sky-200 rounded-full flex items-center justify-center shadow-xl hover:shadow-sky-500/50 cursor-pointer">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
                             <path
@@ -81,10 +91,11 @@
                         </path>
                     </svg>
 
-                    <input class="w-full outline-none bg-transparent complex-group-link" type="text"
-                        placeholder="link" value="{{ $complex->join_link }}">
-                    <button id="copyButton"
-                        class="bg-indigo-500 text-white text-center rounded text-sm py-2 px-8 ml-2 hover:bg-indigo-600 whitespace-nowrap">
+                    <label for="join-link" class="sr-only">لینک دعوت</label>
+<input id="join-link" class="w-full outline-none bg-transparent complex-group-link" type="text"
+                        placeholder="لینک دعوت" readonly value="{{ $complex->join_link }}">
+                    <button type="button" data-copy-join="{{ $complex->join_link }}"
+                        class="bg-indigo-700 text-white text-center rounded text-sm py-2 px-8 ml-2 hover:bg-indigo-800 whitespace-nowrap">
                         کپی
                     </button>
                 </div>
@@ -93,7 +104,7 @@
     </div>
     <div>
         <!--MODAL ITEM-->
-        <div class="bg-gray-100 mx-4 p-4 rounded-xl md:w-1/2 lg:w-1/3">
+        <div class="settings-card">
             <!--MODAL HEADER-->
             <div class="flex justify-between items-center border-b border-gray-200 py-3">
                 <div class="flex items-center justify-center">
@@ -107,12 +118,18 @@
                 </p>
                 <div class="border-2 border-gray-200 flex justify-center items-center mt-4 ml-3 py-2">
 
-                    <a href="{{ URL::route('building.downgradeRole', $complex->id) }}" id="copyButton"
-                        class="bg-red-500 text-white text-center rounded text-sm py-2 px-8 ml-2 hover:bg-red-600 w-full">
+                    <form method="POST" action="{{ URL::route('building.downgradeRole', $complex->id) }}" data-confirm="از مدیریت ساختمان انصراف می‌دهید؟">
+                    @csrf
+                    <button type="submit"
+                        class="bg-red-700 text-white text-center rounded text-sm py-2 px-8 ml-2 hover:bg-red-600 w-full">
                         انصراف از مدیریت
-                    </a>
+                    </button></form>
                 </div>
             </div>
         </div>
     </div>
+<form method="POST" action="{{ route('building.regenerateJoinLink', $complex) }}">
+                    @csrf
+                    <button type="submit">تولید لینک عضویت جدید</button></form>
+    <x-audit-events :complex="$complex" />
 </div>

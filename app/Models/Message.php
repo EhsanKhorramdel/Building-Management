@@ -7,12 +7,17 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * A chat entry in a complex group, with an author and per-user seen receipts.
+ */
 class Message extends Model
 {
     use HasFactory;
 
+    public const ATTACHMENT_DIRECTORY = 'private/chats';
+
     protected $fillable = [
-        'group_id', 'user_id', 'text', 'image_url', 'deleted', 'edited'
+        'group_id', 'user_id', 'text', 'image_url', 'deleted', 'edited',
     ];
 
     protected $casts = [
@@ -20,7 +25,6 @@ class Message extends Model
         'edited' => 'boolean',
     ];
 
-    // Relationships
     public function group(): BelongsTo
     {
         return $this->belongsTo(Group::class);

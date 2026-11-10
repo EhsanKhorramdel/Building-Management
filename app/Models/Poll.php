@@ -8,6 +8,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * A timed ballot in a complex with numbered options and votes tied to unit roles.
+ */
 class Poll extends Model
 {
     use HasFactory;
@@ -21,7 +24,6 @@ class Poll extends Model
         'end_date' => 'datetime',
     ];
 
-    // Relationships
     public function complex(): BelongsTo
     {
         return $this->belongsTo(Complex::class);

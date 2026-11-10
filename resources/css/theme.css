@@ -1,0 +1,127 @@
+@font-face {
+    font-family: IranSans;
+    src: url('../fonts/IRANSansWeb(FaNum).woff2') format('woff2');
+    font-display: swap;
+}
+@font-face {
+    font-family: IranSans;
+    src: url('../fonts/IRANSansWeb(FaNum)_Bold.woff2') format('woff2');
+    font-weight: 700;
+    font-display: swap;
+}
+
+:root {
+    color-scheme: light;
+    --page: #edf3f2;
+    --surface: #fff;
+    --muted-surface: #f3f7f6;
+    --ink: #152a2b;
+    --muted: #435d5f;
+    --line: #c8d8d6;
+    --accent: #146457;
+    --accent-soft: #d9ede6;
+    --accent-ink: #134f44;
+    --danger: #9a342e;
+    --danger-soft: #fbeae7;
+    --own: #d9eee4;
+    --shadow: 0 12px 32px rgb(18 45 43 / 9%);
+}
+.dark {
+    color-scheme: dark;
+    --page: #101b20;
+    --surface: #17272c;
+    --muted-surface: #203238;
+    --ink: #e9f4f2;
+    --muted: #b7cdca;
+    --line: #3c5658;
+    --accent: #8ce0c7;
+    --accent-soft: #254c45;
+    --accent-ink: #b3f1dc;
+    --danger: #ffb5ac;
+    --danger-soft: #542f31;
+    --own: #254c45;
+    --shadow: 0 12px 32px rgb(0 0 0 / 24%);
+}
+
+@layer base {
+    html { font-family: IranSans, sans-serif; }
+    body { background: var(--page); color: var(--ink); }
+    [hidden], .hidden { display: none !important; }
+    a, button, summary { cursor: pointer; }
+    :focus-visible { outline: 2px solid var(--accent) !important; outline-offset: 3px; }
+    button:disabled { cursor: wait; opacity: .55; }
+    input, select, textarea { max-inline-size: 100%; }
+    input:not([type=hidden], [type=checkbox], [type=radio], [type=file]), textarea, select {
+        background: var(--surface);
+        color: var(--ink);
+        border-color: var(--line);
+        border-radius: .625rem;
+    }
+    input::placeholder, textarea::placeholder { color: var(--muted); }
+    img { max-inline-size: 100%; }
+    summary { list-style: none; }
+    summary::-webkit-details-marker { display: none; }
+}
+
+@layer components {
+    .action, .building-box-footer a, .building-box-footer button, .register-form > button[type=submit] {
+        @apply inline-flex min-h-10 items-center justify-center rounded-lg px-4 py-2 text-sm font-bold;
+        background: var(--accent-soft);
+        color: var(--accent-ink);
+    }
+    .action-danger { background: var(--danger-soft); color: var(--danger); }
+    .icon-button {
+        @apply inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg;
+        background: var(--muted-surface);
+        color: var(--ink);
+    }
+    .empty-state {
+        @apply flex items-center gap-2 rounded-xl border border-dashed p-4 text-sm;
+        border-color: var(--line);
+        background: var(--muted-surface);
+        color: var(--muted);
+    }
+    .empty-state::before { content: '◇'; color: var(--accent); font-size: 1.25rem; }
+    .field-error { @apply block text-sm; color: var(--danger); }
+    .field-label { @apply mb-1 block text-sm font-bold; }
+    .toast-stack {
+        @apply fixed top-3 z-[100] flex flex-col gap-2;
+        inset-inline-end: .75rem;
+        inline-size: min(24rem, calc(100vw - 1.5rem));
+    }
+    .toast {
+        @apply flex items-center justify-between gap-3 rounded-xl border px-4 py-2 text-sm;
+        border-color: var(--line);
+        background: var(--accent-soft);
+        color: var(--accent-ink);
+        box-shadow: var(--shadow);
+    }
+    .toast[data-status=error] { background: var(--danger-soft); color: var(--danger); }
+    .toast button { @apply min-h-10 min-w-10 text-xl; }
+    .confirm-dialog {
+        @apply mx-auto max-w-sm rounded-xl p-5;
+        inline-size: calc(100% - 2rem);
+        background: var(--surface);
+        color: var(--ink);
+    }
+    .confirm-dialog::backdrop { background: rgb(5 15 20 / 65%); }
+}
+
+@media (max-width: 767px), (pointer: coarse) {
+    button:not([hidden]), summary, input:not([type=hidden], [type=checkbox], [type=radio]), select {
+        min-block-size: 40px;
+    }
+    .auth-page a, .building-box-footer a { min-block-size: 40px; display: inline-flex; align-items: center; }
+}
+
+.dark :is(.bg-white, .bg-gray-50, .bg-gray-100, .bg-gray-200, .bg-gray-300, .bg-blue-200) { background-color: var(--muted-surface); }
+.dark :is(.text-gray-900, .text-gray-800, .text-gray-700, .text-gray-600, .text-gray-500) { color: var(--ink); }
+.dark :is(.text-blue-500, .text-blue-600, .text-blue-700, .text-green-600) { color: var(--accent); }
+.dark :is(.text-red-600, .text-red-700, .text-red-800) { color: var(--danger); }
+.dark :is(.bg-red-100, .bg-red-200, .bg-red-300) { background-color: var(--danger-soft); }
+.dark :is(.bg-green-100, .bg-green-300) { background-color: var(--accent-soft); }
+.dark :is(.border-gray-100, .border-gray-200, .border-gray-300) { border-color: var(--line); }
+.dropzoneFileLabel:has(+ input:focus-visible), .chat-composer label:has(+ input:focus-visible) {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+}

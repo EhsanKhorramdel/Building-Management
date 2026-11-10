@@ -1,0 +1,44 @@
+@layer components {
+    .chat-shell {
+        @apply flex min-h-0 flex-col overflow-hidden rounded-xl border;
+        block-size: clamp(24rem, 68dvh, 48rem);
+        background: var(--muted-surface);
+        border-color: var(--line);
+    }
+    .chat-heading, .chat-composer {
+        @apply flex shrink-0 flex-wrap items-center gap-2 border-b p-2 sm:p-3;
+        background: var(--surface);
+        border-color: var(--line);
+    }
+    .chat-composer { @apply border-b-0 border-t; }
+    .chat-composer textarea { @apply min-w-0 flex-1 resize-y p-2 text-sm; max-block-size: 7rem; }
+    .chatContainer { @apply min-h-0 flex-1 overflow-auto px-2 py-3 sm:px-4; scrollbar-color: var(--line) transparent; }
+    .messagesContainer { @apply flex flex-col gap-2; }
+    .chat-date { @apply self-center rounded-full px-3 py-1 text-xs; background: var(--surface); color: var(--muted); }
+    .chat-message { @apply flex; }
+    .own-message { @apply justify-end; }
+    .chat-bubble {
+        @apply min-w-0 rounded-xl border px-3 py-2;
+        inline-size: fit-content;
+        max-inline-size: min(88%, 30rem);
+        background: var(--surface);
+        border-color: var(--line);
+        overflow-wrap: anywhere;
+    }
+    .own-message .chat-bubble { background: var(--own); }
+    .chat-message-heading { @apply flex items-center justify-between gap-2; }
+    .chat-author { @apply text-sm; color: var(--accent-ink); }
+    .chat-time { @apply mt-1 text-xs; color: var(--muted); }
+    .message-text { @apply whitespace-pre-wrap text-sm; }
+    .chat-image { @apply mt-2 max-h-48 rounded-lg object-contain; }
+    .chat-menu-toggle { @apply flex min-h-10 min-w-10 items-center justify-center rounded-lg; }
+    .chat-menu-actions {
+        @apply absolute z-20 grid w-36 gap-1 rounded-lg border p-1 shadow-lg;
+        inset-inline-end: 0;
+        background: var(--surface);
+        border-color: var(--line);
+    }
+    .chat-action { @apply min-h-10 rounded-md px-2 text-start text-sm; }
+    .chat-action:hover { background: var(--accent-soft); }
+    .viewer-row { @apply rounded-lg p-2 text-sm; background: var(--muted-surface); }
+}

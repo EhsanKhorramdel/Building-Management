@@ -1,7 +1,7 @@
 <?php
 
 use App\Models\User;
-use App\Providers\RouteServiceProvider;
+use App\Models\UserRole;
 
 test('login screen can be rendered', function () {
     $response = $this->get('/login');
@@ -18,7 +18,7 @@ test('users can authenticate using the login screen', function () {
     ]);
 
     $this->assertAuthenticated();
-    $response->assertRedirect(RouteServiceProvider::HOME);
+    $response->assertRedirect('/dashboard');
 });
 
 test('users can not authenticate with invalid password', function () {
@@ -28,6 +28,21 @@ test('users can not authenticate with invalid password', function () {
         'email' => $user->email,
         'password' => 'wrong-password',
     ]);
+
+    $this->assertGuest();
+});
+
+test('admins authenticate into the admin panel', function () {
+    $admin = User::factory()->create();
+    UserRole::factory()->admin()->create(['user_id' => $admin->id]);
+
+    $this->post('/login', ['email' => $admin->email, 'password' => 'password'])->assertRedirect('/adminPanel');
+
+    $this->assertAuthenticatedAs($admin);
+});
+
+test('users can log out through the registered post route', function () {
+    $this->actingAs(User::factory()->create())->post('/logout')->assertRedirect('/');
 
     $this->assertGuest();
 });

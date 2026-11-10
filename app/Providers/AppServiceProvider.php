@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Services\Payments\GatewayManager;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -11,7 +12,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->singleton(GatewayManager::class);
     }
 
     /**
@@ -19,6 +20,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        $this->loadTranslationsFrom(base_path('lang'), 'integrations');
     }
 }

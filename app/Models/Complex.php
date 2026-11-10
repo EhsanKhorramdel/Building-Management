@@ -6,12 +6,17 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * A building with units, scoped roles, announcements, charges, incidental costs, polls and chat groups.
+ */
 class Complex extends Model
 {
     use HasFactory;
     protected $fillable = [
-        'name', 'address', 'location', 'number_of_floors', 'number_of_units', 'join_link'
+        'name', 'address', 'location', 'number_of_floors', 'number_of_units', 'join_link', 'latitude', 'longitude'
     ];
+
+    protected $casts = ['latitude' => 'float', 'longitude' => 'float'];
 
     public function units(): HasMany
     {

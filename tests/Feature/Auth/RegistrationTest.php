@@ -1,6 +1,7 @@
 <?php
 
-use App\Providers\RouteServiceProvider;
+use App\Models\User;
+use Illuminate\Support\Facades\Hash;
 
 test('registration screen can be rendered', function () {
     $response = $this->get('/register');
@@ -17,5 +18,6 @@ test('new users can register', function () {
     ]);
 
     $this->assertAuthenticated();
-    $response->assertRedirect(RouteServiceProvider::HOME);
+    $response->assertRedirect('/dashboard');
+    expect(Hash::check('password', User::where('email', 'test@example.com')->firstOrFail()->password))->toBeTrue();
 });

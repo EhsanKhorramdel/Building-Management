@@ -15,7 +15,6 @@ class IncidentalCost extends Model
         'complex_id', 'cost_invoice', 'cost_explanation', 'title', 'total_amount', 'share_amount'
     ];
 
-    // Relationships
     public function complex(): BelongsTo
     {
         return $this->belongsTo(Complex::class);

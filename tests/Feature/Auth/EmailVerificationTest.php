@@ -51,3 +51,13 @@ test('email is not verified with invalid hash', function () {
 
     expect($user->fresh()->hasVerifiedEmail())->toBeFalse();
 });
+
+test('unverified users can request another verification email', function () {
+    \Illuminate\Support\Facades\Notification::fake();
+    $user = User::factory()->unverified()->create();
+
+    $this->actingAs($user)->from('/verify-email')->post(route('verification.send'))
+        ->assertRedirect('/verify-email')->assertSessionHas('status', 'verification-link-sent');
+
+    \Illuminate\Support\Facades\Notification::assertSentTo($user, \Illuminate\Auth\Notifications\VerifyEmail::class);
+});

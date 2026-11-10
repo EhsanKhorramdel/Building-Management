@@ -1,4 +1,15 @@
-<div class="buildings-section home-window">
+<div class="buildings-section home-window" data-panel="home">
+    <section class="complex-location-card mb-3 space-y-2">
+        <h2 class="text-xl font-bold">آدرس ساختمان</h2>
+        <p>{{ $complex->address }}</p>
+        @if ($complex->latitude !== null && $complex->longitude !== null)
+            <x-complex-map :latitude="$complex->latitude" :longitude="$complex->longitude" :address="$complex->address" />
+            <a class="action" href="https://www.openstreetmap.org/directions?to={{ $complex->latitude }}%2C{{ $complex->longitude }}#map=15/{{ $complex->latitude }}/{{ $complex->longitude }}"
+                target="_blank" rel="noopener noreferrer">مسیریابی روی نقشه</a>
+        @elseif ($isManager)
+            <p><a class="underline" href="{{ route('building', ['complex' => $complex, 'tab' => 'setting']) }}" data-map-settings>موقعیت ساختمان را روی نقشه تنظیم کنید.</a></p>
+        @endif
+    </section>
     <div class="buildings-section-header">
         <p>ساکنین ساختمان</p>
     </div>
@@ -18,31 +29,11 @@
             </div>
         </div>
         <div class="view-actions">
-            <button class="view-btn list-view" title="List View">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                    class="feather feather-list">
-                    <line x1="8" y1="6" x2="21" y2="6" />
-                    <line x1="8" y1="12" x2="21" y2="12" />
-                    <line x1="8" y1="18" x2="21" y2="18" />
-                    <line x1="3" y1="6" x2="3.01" y2="6" />
-                    <line x1="3" y1="12" x2="3.01" y2="12" />
-                    <line x1="3" y1="18" x2="3.01" y2="18" />
-                </svg>
-            </button>
-            <button class="view-btn grid-view active" title="Grid View">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                    class="feather feather-grid">
-                    <rect x="3" y="3" width="7" height="7" />
-                    <rect x="14" y="3" width="7" height="7" />
-                    <rect x="14" y="14" width="7" height="7" />
-                    <rect x="3" y="14" width="7" height="7" />
-                </svg>
-            </button>
+            <button type="button" class="view-btn list-view" aria-label="نمایش فهرستی"><x-icon name="list" /></button>
+            <button type="button" class="view-btn grid-view" aria-label="نمایش شبکه‌ای"><x-icon name="grid" /></button>
         </div>
     </div>
-    <div class="building-boxes jsGridView">
+    <div class="building-boxes jsGridView" data-layout>
         @php
             $residentsCollection = collect($residents);
             $sortedUnits = $residentsCollection->sortBy(function ($resident) {
@@ -51,15 +42,10 @@
         @endphp
 
         @foreach ($sortedUnits as $resident)
-            <div class="building-box-wrapper">
-                @if ($resident['role'] == 'manager')
-                    <div class="building-box">
-                    @else
-                        <div class="building-box bg-[#fee4cb]">
-                @endif
+            <x-building-card>
 
                 <div class="building-box-content-header">
-                    <p class="hidden">{{ $complex['id'] }}</p>
+
                     <p class="box-content-header">{{ $resident['name'] }}</p>
                     <p class="box-content-subheader">
                         {{ $resident['unitNumber'] ?? 'N/A' }}
@@ -70,11 +56,12 @@
                 </div>
                 <div class="building-box-footer h-full">
                     @if ($isManager && $resident['role'] === 'resident')
-                        <a href="{{ URL::route('building.upgradeRole', $resident['roleId']) }}">ارتقاء به مدیر</a>
+                        <form method="POST" action="{{ URL::route('building.upgradeRole', $resident['roleId']) }}">
+                    @csrf
+                    <button type="submit" >ارتقاء به مدیر</button></form>
                     @endif
                 </div>
-            </div>
-    </div>
+            </x-building-card>
     @endforeach
 </div>
 </div>

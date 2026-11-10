@@ -16,7 +16,6 @@ class Group extends Model
         'complex_id', 'group_name'
     ];
 
-    // Relationships
     public function complex(): BelongsTo
     {
         return $this->belongsTo(Complex::class);

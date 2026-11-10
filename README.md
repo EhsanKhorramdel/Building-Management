@@ -1,66 +1,135 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Building Management
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Building Management is a Persian-language web app for apartment complexes. Residents join a complex with an invite, register their units and use a shared dashboard for building activity.
 
-## About Laravel
+Managers administer their own complexes, publish notices and set charges and incidental costs. A site administrator reviews requests to register new complexes.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Features
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+- Complexes and units with global administrator and per-complex manager and resident roles.
+- Building registration approvals and manager-controlled join links.
+- Monthly charges, incidental costs and a printable payment report.
+- Announcements, timed polls and vote results.
+- Per-complex group chat with image attachments and read receipts.
+- Optional map locations for complexes, with a picker during registration and in manager settings.
+- Responsive pages with a light and dark theme.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Requirements
 
-## Learning Laravel
+- PHP 8.3 or a newer PHP 8.x release, and Composer 2.
+- Node.js 20 or later with npm. The project was built with Node.js 22.
+- SQLite with the PHP PDO SQLite extension for development and tests. Use MySQL 8 with PDO MySQL in production.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+## Local setup
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+Clone the repository and install its dependencies.
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains over 2000 video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+```sh
+git clone https://github.com/EhsanKhorramdel/Building-Management.git
+cd Building-Management
+composer install
+npm ci
+```
 
-## Laravel Sponsors
+Copy the environment template.
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the Laravel [Patreon page](https://patreon.com/taylorotwell).
+```sh
+cp .env.example .env
+```
 
-### Premium Partners
+In PowerShell, use `Copy-Item .env.example .env`.
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Cubet Techno Labs](https://cubettech.com)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[Many](https://www.many.co.uk)**
-- **[Webdock, Fast VPS Hosting](https://www.webdock.io/en)**
-- **[DevSquad](https://devsquad.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[OP.GG](https://op.gg)**
-- **[WebReinvent](https://webreinvent.com/?utm_source=laravel&utm_medium=github&utm_campaign=patreon-sponsors)**
-- **[Lendio](https://lendio.com)**
+In `.env`, set the following values. Remove the `DB_DATABASE` line so Laravel uses `database/database.sqlite`.
 
-## Contributing
+```dotenv
+APP_URL=http://127.0.0.1:8000
+DB_CONNECTION=sqlite
+MAIL_MAILER=log
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Create the SQLite file, generate the app key, migrate and seed the local data, then build and serve the app.
 
-## Code of Conduct
+```sh
+php -r "touch('database/database.sqlite');"
+php artisan key:generate
+php artisan migrate
+php artisan db:seed --class=DemoSeeder
+php artisan storage:link
+npm run build
+php artisan serve
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+Open `http://127.0.0.1:8000/login` and sign in with a demo account. For live asset updates while editing, run `npm run dev` in a second terminal in place of `npm run build`.
 
-## Security Vulnerabilities
+If port 8000 is occupied, set `APP_URL=http://127.0.0.1:8001`, run `php artisan serve --port=8001` and open `http://127.0.0.1:8001/login`.
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+Signing out ends the session and opens the public home page. Opening a protected page after signing out takes you to sign-in.
 
-## License
+### Demo accounts
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+These shared credentials are for local demos only. Never seed them into a deployed database. Every account below uses the password `password`.
+
+| Account | Email |
+| --- | --- |
+| Administrator | `admin@example.test` |
+| Manager | `manager@example.test` |
+| Resident 1 | `resident1@example.test` |
+| Resident 2 | `resident2@example.test` |
+| Resident 3 | `resident3@example.test` |
+
+## Configuration
+
+- **Broadcasting.** The template uses `BROADCAST_CONNECTION=log`, which records chat events locally. Set it to `pusher` for live chat and configure `PUSHER_APP_ID`, `PUSHER_APP_KEY`, `PUSHER_APP_SECRET` and `PUSHER_APP_CLUSTER`. The template maps the public key and cluster to `VITE_PUSHER_APP_KEY` and `VITE_PUSHER_APP_CLUSTER`. The browser gets those public values from the rendered page. It authorizes each private complex channel through the signed-in session.
+- **Uploads.** Announcement and incidental-cost images use `storage/app/public` and the `public/storage` link. Chat images use `storage/app/private/chats` and are served only to authenticated complex members or global admins.
+
+  When upgrading an existing installation, run `php artisan chat:move-attachments` before serving chat traffic. It moves the legacy files out of `storage/app/public/chats` and keeps their filenames. Reruns process any remaining files. A nonzero exit reports files that could not be moved or that conflict with an existing private copy. Resolve those before reopening chat.
+- **Maps.** The default tile URL and attribution use OpenStreetMap. Set `MAP_TILE_URL` and `MAP_TILE_ATTRIBUTION` together to use another tile source. Keep the source's attribution visible and follow its usage policy. See the [OpenStreetMap tile usage policy](https://operations.osmfoundation.org/policies/tiles/).
+- **Mail.** The template points SMTP to Mailpit on port 1025. The local setup above writes mail to the log. Configure a real mail transport for a deployment that sends password reset links.
+
+## Online payments and SMS
+
+Both integrations are disabled by default. With `PAYMENTS_ENABLED=false`, charges and costs use the existing manual payment record. With `SMS_ENABLED=false`, actions enqueue no SMS.
+
+For a local checkout, set `PAYMENTS_ENABLED=true` and `PAYMENTS_DRIVER=mock`. Use a demo manager or resident to open a charge or cost, enter their unit number and select online payment. The mock page offers Pay and Cancel and sends the result through the normal callback. A successful simulation records a payment without moving money. The building's Payments tab shows the signed-in user's online attempts. Production requires an explicit `PAYMENTS_DRIVER=mock` to allow simulation. `PAYMENTS_EXPIRY_MINUTES` defaults to 30.
+
+For a real provider that supports the reference HTTP contract, set `PAYMENTS_DRIVER=gateway` and supply `PAYMENTS_BASE_URL`, `PAYMENTS_MERCHANT_ID`, `PAYMENTS_API_KEY` and the public HTTPS `PAYMENTS_CALLBACK_URL`. Set `PAYMENTS_SANDBOX`, the initiate, verify and checkout paths, and the success and cancellation status values using the keys in `.env.example`. Map request and response field names to the provider's documentation with the `PAYMENTS_FIELD_MAP` JSON value. The verification response must include an authoritative amount and reference. For example, a token under `data.token` can be mapped with `'{"initiate_authority":"data.token"}'`. Set `PAYMENTS_ENABLED=true` after testing the sandbox. Refresh cached Laravel config and routes after changing drivers.
+
+For a local SMS run, set `SMS_ENABLED=true` and `SMS_DRIVER=log`. This records messages in `sms_logs` and writes a log entry. For HTTP delivery, set `SMS_DRIVER=gateway` with `SMS_BASE_URL`, `SMS_API_KEY` and an optional `SMS_SENDER`. The HTTPS endpoint must accept bearer authentication and a JSON body with `to` and `message`. An optional sender is sent as `X-Sender`. Both modes use the dedicated database queue. Run its worker with the same environment as the app.
+
+```sh
+php artisan queue:work database --queue=sms
+```
+
+## Tests
+
+Run the PHP suite from the repository root. It uses an in-memory SQLite database.
+
+```sh
+php artisan test
+```
+
+### Browser suite
+
+Install the Composer and npm dependencies first. Use Node.js 20 or later and PHP 8.3 with SQLite. Playwright needs Chromium. On Windows the default is installed Chrome. To use the managed browser, install it once with `npx playwright install chromium` and set `PLAYWRIGHT_CHANNEL=chromium`. Set `E2E_PHP` if PHP 8.3 is at a different path from the harness default (`D:/tools/php-8.3/php.exe` on Windows and `php` elsewhere).
+
+```sh
+npm run test:e2e
+```
+
+The command builds assets and runs the suite. To refresh only the four committed visual baselines, run the command below and review the image diff before committing.
+
+```sh
+npm run test:e2e:update
+```
+
+Leave loopback ports 8001 and 8002 free. The runner starts both servers from temporary app copies with their own SQLite files, sessions and upload storage. It never loads the checkout's `.env` or database. The second server enables mock payment and the SMS log driver for integration coverage. Both use the log broadcaster and a local blank map tile. Setup seeds the databases automatically and the runner removes them at exit.
+
+See [visual QA](docs/VISUAL_QA.md#phase-9-browser-suite) for the capture matrix, report locations and known browser findings.
+
+## Screenshots
+
+- Desktop dashboard at 1440px ([light](docs/screenshots/dashboard-1440-light.png), [dark](docs/screenshots/dashboard-1440-dark.png))
+- Phone chat at 390px ([light](docs/screenshots/building-chat-390-light.png), [dark](docs/screenshots/building-chat-390-dark.png))
+- [Building home on a 768px tablet](docs/screenshots/building-home-768-light.png)
+
+See [Architecture](docs/ARCHITECTURE.md) for domain and deployment details, and the [changelog](CHANGELOG.md) for a summary of recent work.

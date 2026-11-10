@@ -2,84 +2,51 @@
 
 use App\Models\User;
 
-test('profile page is displayed', function () {
+test('profile details are saved through the dashboard update route', function () {
     $user = User::factory()->create();
 
-    $response = $this
-        ->actingAs($user)
-        ->get('/profile');
-
-    $response->assertOk();
-});
-
-test('profile information can be updated', function () {
-    $user = User::factory()->create();
-
-    $response = $this
-        ->actingAs($user)
-        ->patch('/profile', [
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
-
-    $response
-        ->assertSessionHasNoErrors()
-        ->assertRedirect('/profile');
+    $this->actingAs($user)->from('/dashboard')->patch(route('profile.update'), [
+        'name' => 'Updated Resident', 'email' => 'updated@example.test',
+        'ncode' => '1234567890', 'phoneNumber' => '09123456789',
+    ])->assertSessionHasNoErrors()->assertRedirect('/dashboard')->assertSessionHas('page', 'setting');
 
     $user->refresh();
-
-    $this->assertSame('Test User', $user->name);
-    $this->assertSame('test@example.com', $user->email);
-    $this->assertNull($user->email_verified_at);
+    expect($user->name)->toBe('Updated Resident')->and($user->email)->toBe('updated@example.test')
+        ->and($user->national_code)->toBe('1234567890')->and($user->phone_number)->toBe('09123456789')
+        ->and($user->email_verified_at)->toBeNull();
 });
 
-test('email verification status is unchanged when the email address is unchanged', function () {
+test('profile updates keep email verification when the email is unchanged', function () {
     $user = User::factory()->create();
+    $verifiedAt = $user->email_verified_at->toDateTimeString();
 
-    $response = $this
-        ->actingAs($user)
-        ->patch('/profile', [
-            'name' => 'Test User',
-            'email' => $user->email,
-        ]);
+    $this->actingAs($user)->from('/dashboard')->patch(route('profile.update'), [
+        'name' => 'Same Email', 'email' => $user->email, 'ncode' => null, 'phoneNumber' => null,
+    ])->assertSessionHasNoErrors()->assertRedirect('/dashboard');
 
-    $response
-        ->assertSessionHasNoErrors()
-        ->assertRedirect('/profile');
-
-    $this->assertNotNull($user->refresh()->email_verified_at);
+    expect($user->refresh()->email_verified_at->toDateTimeString())->toBe($verifiedAt)
+        ->and($user->national_code)->toBeNull()->and($user->phone_number)->toBeNull();
 });
 
-test('user can delete their account', function () {
+test('profile updates reject an email already used by another user', function () {
     $user = User::factory()->create();
+    $other = User::factory()->create();
 
-    $response = $this
-        ->actingAs($user)
-        ->delete('/profile', [
-            'password' => 'password',
-        ]);
+    $this->actingAs($user)->from('/dashboard')->patch(route('profile.update'), [
+        'name' => 'Changed', 'email' => $other->email, 'ncode' => null, 'phoneNumber' => null,
+    ])->assertSessionHasErrors('email')->assertRedirect('/dashboard');
 
-    $response
-        ->assertSessionHasNoErrors()
-        ->assertRedirect('/');
-
-    $this->assertGuest();
-    $this->assertNull($user->fresh());
+    expect($user->refresh()->email)->not->toBe($other->email);
 });
 
-test('correct password must be provided to delete account', function () {
+test('profile updates validate national code and phone fields', function () {
     $user = User::factory()->create();
 
-    $response = $this
-        ->actingAs($user)
-        ->from('/profile')
-        ->delete('/profile', [
-            'password' => 'wrong-password',
-        ]);
+    $this->actingAs($user)->patch(route('profile.update'), [
+        'name' => $user->name, 'email' => $user->email, 'ncode' => 'not-a-number', 'phoneNumber' => 'invalid',
+    ])->assertSessionHasErrors(['ncode', 'phoneNumber']);
+});
 
-    $response
-        ->assertSessionHasErrorsIn('userDeletion', 'password')
-        ->assertRedirect('/profile');
-
-    $this->assertNotNull($user->fresh());
+test('guests cannot update profile details', function () {
+    $this->patch(route('profile.update'), [])->assertRedirect('/login');
 });

@@ -6,23 +6,26 @@
     <title>صفحه اصلی - مدیریت هوشمند ساختمان</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('assets/images/favIcon/apartment.ico') }}" />
-    <link rel="stylesheet" href="{{ asset('css/fonts.css') }}" />
-    <link rel="stylesheet" href="{{ asset('css/mainPage.css') }}" />
+
+
+    <x-page-assets />
 </head>
 
 <body>
-    <div class="c-buttons">
-        <button class="c-buttons__button c-buttons__button--register">
-            <a href="{{ route('register') }}">ثبت نام</a>
-        </button>
-        <button class="c-buttons__button c-buttons__button--login">
-            <a href="{{ route('login') }}">ورود</a>
-        </button>
-    </div>
-    <section class="c-section">
-        <h2 class="c-section__title"><span></span></h2>
-
-        <ul class="c-services">
+<main class="landing">
+    <header class="landing-nav">
+        <p class="font-bold">مدیریت ساختمان</p>
+        <nav aria-label="حساب کاربری" class="flex flex-wrap items-center gap-2">
+            <a class="action" href="{{ route('register') }}">ثبت نام</a>
+            <a class="action" href="{{ route('login') }}">ورود</a>
+            <x-theme-button />
+        </nav>
+    </header>
+    <section class="landing-hero">
+        <h1>مدیریت هوشمند ساختمان</h1>
+        <p>ساختمان، هزینه‌ها، رأی‌گیری و گفت‌وگو با ساکنین را در یک پنل دنبال کنید.</p>
+    </section>
+    <ul class="c-services">
             <li class="c-services__item">
                 <h3>مدیریت آسان تر</h3>
                 <p>
@@ -57,7 +60,7 @@
                 <p>با دسترسی به پنل ساختمان خود، مدیریت ساختمان خود را به آسانی پیش ببرید</p>
             </li>
         </ul>
-    </section>
+    </main>
 </body>
 
 </html>
