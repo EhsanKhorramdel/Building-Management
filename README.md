@@ -106,7 +106,23 @@ Run the PHP suite from the repository root. It uses an in-memory SQLite database
 php artisan test
 ```
 
-See [visual QA](docs/VISUAL_QA.md#repeat-the-after-capture) for Playwright setup and the browser capture command.
+### Browser suite
+
+Install the Composer and npm dependencies first. Use Node.js 20 or later and PHP 8.3 with SQLite. Playwright needs Chromium. On Windows the default is installed Chrome. To use the managed browser, install it once with `npx playwright install chromium` and set `PLAYWRIGHT_CHANNEL=chromium`. Set `E2E_PHP` if PHP 8.3 is at a different path from the harness default (`D:/tools/php-8.3/php.exe` on Windows and `php` elsewhere).
+
+```sh
+npm run test:e2e
+```
+
+The command builds assets and runs the suite. To refresh only the four committed visual baselines, run the command below and review the image diff before committing.
+
+```sh
+npm run test:e2e:update
+```
+
+Leave loopback ports 8001 and 8002 free. The runner starts both servers from temporary app copies with their own SQLite files, sessions and upload storage. It never loads the checkout's `.env` or database. The second server enables mock payment and the SMS log driver for integration coverage. Both use the log broadcaster and a local blank map tile. Setup seeds the databases automatically and the runner removes them at exit.
+
+See [visual QA](docs/VISUAL_QA.md#phase-9-browser-suite) for the capture matrix, report locations and known browser findings.
 
 ## Screenshots
 

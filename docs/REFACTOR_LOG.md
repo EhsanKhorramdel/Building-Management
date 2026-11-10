@@ -1103,3 +1103,11 @@ Findings remain open unless a closing commit is recorded below. The named phases
 - **Files:** tests/Support/QueryBudget.php, tests/Feature/Backend/QueryBudgetTest.php.
 - **Verified by:** At 2, 8 and 32 units, the payments report used 6/6/6 queries, the building dashboard used 11/11/11 and the user dashboard used 2/2/2. These are controller action counts with fixtures, authorization, route binding and Blade rendering outside the window, as in the comparison audit. A separate render of the manager dashboard with an empty audit list measured 13/13/13 including the action.
 - **Risk & rollback:** Test-only. The new audit list runs its permission check and retrieval when Blade renders it. The original action caps are unchanged.
+
+### [Phase 9] Run browser journeys with isolated fixtures
+- **Before:** Browser checks depended on a manually seeded server, opt-in capture specs and separate audit scripts.
+- **After:** `npm run test:e2e` builds the assets and starts two loopback Artisan servers on ports 8001 and 8002. The harness assembles a temporary application root for each mode and supplies explicit SQLite, session and storage settings. Global setup migrates and seeds both with E2ESeeder. Only port 8002 enables mock payments and the SMS log driver. Both use the log broadcaster and a local blank map tile.
+- **Why:** Manual and online scenarios need different flags, and each run needs fixtures that can be reset without reading the checkout environment or writing to its database or upload paths. The existing opt-in visual command keeps its own config.
+- **Files:** Playwright configs, npm scripts and lockfile, E2ESeeder, tests/e2e, four baseline PNGs, .gitignore, README and VISUAL_QA.md.
+- **Verified by:** PHP passed 447 tests and 1,414 assertions. The browser run had 38 passes, one expected failure and one pending case. The 250-capture sweep and 25 axe scans passed. Four refreshed comparisons had zero changed pixels. Build, Pint and the staged style scan passed.
+- **Risk & rollback:** The runner removes both temporary roots at exit. The browser findings record the logout redirect to the public home page. The reload-based chat check passes with the log broadcaster. Live delivery without a reload stays pending until a real broadcaster is available.

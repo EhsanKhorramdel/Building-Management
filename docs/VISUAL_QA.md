@@ -116,3 +116,32 @@ npm run test:visual -- findings.spec.js
 ```
 
 Captures and `guards.json` are in `storage/app/test-screenshots/phase-8c`.
+
+## Phase 9 browser suite
+
+`npm run test:e2e` builds assets, starts the isolated manual and mock-payment servers and runs the specs under `tests/e2e`. The browser sweep covers 25 states at 360, 390, 768, 1024 and 1440px in both themes. It checks page width, console and runtime errors, visible images, theme and touch targets. Touch widths use the Phase 8C visible-label rule. The desktop light sweep runs axe-core against WCAG 2 and 2.1 A/AA tags and fails on critical or serious violations.
+
+Capture PNGs and per-matrix guard JSON are under `storage/app/test-screenshots/phase-9/sweep`. The run report is `playwright-report/results.json`. Failed tests retain screenshots and traces in `test-results`. The browser uses a local transparent map tile, so the checks cover markers, maps and controls without an external tile service.
+
+The four reference PNGs under `tests/e2e/baselines` cover the 1440px dashboard in both themes, the dark 390px chat and the light 768px building home. `npm run test:e2e:update` refreshes those four files. Regular runs write the actual and diff PNGs and comparison JSON under `storage/app/test-screenshots/phase-9/baselines`. Pixelmatch uses a 0.15 color threshold and reports a difference above 0.5% changed pixels or when dimensions change. The result is advisory.
+
+The first comparison found 16,531 changed pixels (5.17%) in the mobile chat reference, which captured paging in progress. The refreshed reference waits until the newest message is in view and the paging controls are available again. The original comparison is kept in `chat-390-dark-initial-diff.png`. The full rerun found zero changed pixels across all four references.
+
+Logout ends the session, but the response lands on the public home page. A protected page then redirects to login. The direct-to-login assertion is an expected failure in `auth.spec.js`. The observed URL is attached to the test, and the screenshot is in `storage/app/test-screenshots/phase-9/findings/logout-destination.png`. The two-context chat test checks delivery after a reload. Live delivery without a reload is pending a real broadcaster.
+
+| Spec | Passed | Expected failure | Pending | Unexpected failures |
+| --- | ---: | ---: | ---: | ---: |
+| Auth | 6 | 1 | 0 | 0 |
+| Baselines | 4 | 0 | 0 | 0 |
+| Building | 2 | 0 | 0 | 0 |
+| Chat | 3 | 0 | 0 | 0 |
+| Gateway | 3 | 0 | 0 | 0 |
+| Map | 1 | 0 | 0 | 0 |
+| Membership | 2 | 0 | 0 | 0 |
+| Poll | 3 | 0 | 0 | 0 |
+| Realtime | 1 | 0 | 1 | 0 |
+| Settings | 3 | 0 | 0 | 0 |
+| Sweep | 10 | 0 | 0 | 0 |
+| **Total** | **38** | **1** | **1** | **0** |
+
+The full command took 14m 18s including the build. Playwright reported 12m 25s for startup, setup and tests. All 250 sweep captures passed the guards. The 25 axe scans reported zero violations. The capture contact sheets and the four references were reviewed.
