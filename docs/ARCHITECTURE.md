@@ -95,7 +95,7 @@ Persist `storage/app/private` and `storage/app/public` across releases. Chat, an
 
 The template uses a synchronous default queue and logs broadcasts. Configure Pusher for live updates. When SMS is enabled, run `php artisan queue:work database --queue=sms` for its dedicated queue. Serve production traffic over HTTPS.
 
-Migration, one rollback step, fresh migration and demo seeding passed on scratch MySQL 8.4.13. The feature suite's bootstrap enforces in-memory SQLite, so full MySQL test coverage remains open. Live Pusher delivery is pending a configured broadcasting app.
+Migration, one rollback step, fresh migration and demo seeding passed on scratch MySQL 8.4.13. The feature suite's bootstrap enforces in-memory SQLite, so full MySQL test coverage remains open. Two signed-in browser sessions verified live Pusher delivery and a third session verified the cross-complex authorization boundary. See [visual QA](VISUAL_QA.md#live-chat-delivery).
 
 ## Numeric form inputs
 

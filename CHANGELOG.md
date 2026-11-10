@@ -4,6 +4,10 @@ See [REFACTOR_LOG.md](docs/REFACTOR_LOG.md) for the engineering record and verif
 
 ## [Unreleased]
 
+### Added
+
+- Live building chat delivery without a reload is verified with two signed-in browser sessions. The live check can be run on demand.
+
 ### Security
 
 - Announcement images and incidental-cost invoices require building membership or global admin access, including when someone opens a copied image URL.
@@ -44,7 +48,7 @@ See [REFACTOR_LOG.md](docs/REFACTOR_LOG.md) for the engineering record and verif
 
 ### Open items
 
-- Live Pusher delivery test is pending a configured broadcasting app.
+- Live Pusher delivery was pending at release. The live browser check now passes under [Unreleased](#unreleased).
 - Full MySQL test coverage remains open. MySQL 8.4.13 passed migration, one rollback step, fresh migration and demo seeding. The test harness requires in-memory SQLite and stopped all 437 feature cases during bootstrap.
 - Announcement and incidental-cost images used public storage at release. Attachment privacy is now closed under [Unreleased](#unreleased).
 - Post-refactor backlog is tracked in the items marked Later. [Proposals](docs/PROPOSALS.md)

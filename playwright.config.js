@@ -1,5 +1,5 @@
 import { defineConfig } from '@playwright/test';
-import { environments, php } from './tests/e2e/environment.js';
+import { environments, liveBroadcast, php } from './tests/e2e/environment.js';
 
 export default defineConfig({
     testDir: 'tests/e2e',
@@ -17,7 +17,7 @@ export default defineConfig({
         viewport: { width: 1440, height: 900 },
         actionTimeout: 12_000,
         navigationTimeout: 60_000,
-        trace: 'retain-on-failure',
+        trace: liveBroadcast ? 'off' : 'retain-on-failure',
         screenshot: 'only-on-failure',
     },
     webServer: Object.values(environments).map(({ app, url, port, env }) => ({
