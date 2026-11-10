@@ -122,9 +122,9 @@ The command builds assets and runs the suite. To refresh only the four committed
 npm run test:e2e:update
 ```
 
-Leave loopback ports 8001 and 8002 free. The runner starts both servers from temporary app copies with their own SQLite files, sessions and upload storage. It never loads the checkout's `.env` or database. The second server enables mock payment and the SMS log driver for integration coverage. Both use the log broadcaster and a local blank map tile. Setup seeds the databases automatically and the runner removes them at exit.
+Leave loopback ports 8001 and 8002 free. The runner starts both servers from temporary app copies with their own SQLite files, sessions and upload storage. The second server enables mock payment and the SMS log driver for integration coverage. Both use the log broadcaster and a local blank map tile by default. The opt-in live chat check reads only the Pusher settings from the checkout's `.env`. Setup seeds the databases automatically and the runner removes them at exit.
 
-See [visual QA](docs/VISUAL_QA.md#phase-9-browser-suite) for the capture matrix, report locations and known browser findings.
+See [visual QA](docs/VISUAL_QA.md#phase-9-browser-suite) for the capture matrix and report locations, and [live chat delivery](docs/VISUAL_QA.md#live-chat-delivery) for the opt-in check.
 
 ## Screenshots
 

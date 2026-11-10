@@ -1124,7 +1124,7 @@ Findings remain open unless a closing commit is recorded below. The named phases
 
 #### Open items
 
-- Live Pusher delivery test is pending a configured broadcasting app.
+- Live Pusher delivery was pending at release and is closed by the activation check below.
 - Full MySQL test coverage remains open. MySQL 8.4.13 passed migration, one rollback step, fresh migration and demo seeding. The test harness requires in-memory SQLite and stopped all 437 feature cases during bootstrap.
 - Announcement and incidental-cost images still use public storage. This is accepted scope. Chat attachments require authorization.
 - Post-refactor backlog is tracked in the items marked Later. [Proposals](PROPOSALS.md)
@@ -1137,3 +1137,11 @@ Findings remain open unless a closing commit is recorded below. The named phases
 - **Verified by:** The PHP suite passed 465 cases. Each image type has guest, foreign resident, inactive member, resident, manager, global admin, missing file and invalid content coverage. The upload tests assert private paths and verify the rendered preview URLs. The move tests cover filenames, identical copies, conflicts and clean reruns. The browser suite passed 41 cases with one pending realtime case. Both image cases checked resident access, guest and foreign-resident denial and the absence of legacy upload URLs in the rendered page. All 250 visual captures and the fresh SQLite demo seed passed.
 - **Local move:** `attachments:move-building-images` found and moved one announcement image. It found zero incidental-cost images. Both types reported zero duplicates, conflicts and failures. The private file matched the original checksum and the public junction path was gone. A repeat found zero files in either directory.
 - **Risk & rollback:** Run the move before reopening web traffic and resolve any reported conflicts or failures. Coordinate the storage layout with the code if reverting a deployment. The stock placeholder remains public.
+
+### [Pusher activation] Verify live private chat delivery
+- **Before:** The browser suite checked that a second session could see a message after a reload. Live delivery remained open in the release notes.
+- **After:** Credentials set in the ignored local environment. The local app uses Pusher. The live browser case checks both private-channel subscriptions, delivery without navigation and HTTP 403 for a resident of a different complex. The case runs on explicit opt-in. Default PHP and browser tests use the log broadcaster.
+- **Why:** A reload proves that the message was stored. Two subscribed sessions verify that the broadcaster delivers the stored message to an authorized reader without a reload.
+- **Files:** playwright.config.js, tests/e2e/environment.js, tests/e2e/realtime.spec.js, phpunit.xml, README.md, VISUAL_QA.md, ARCHITECTURE.md and CHANGELOG.md.
+- **Verified by:** The live browser case passed twice. The receiving session displayed the message in about five seconds on the first run and about two seconds on the rerun. The unauthorized channel request returned HTTP 403 both times. The captures are in the ignored QA output directory. The PHP suite passed 465 cases with 1,526 assertions. The default browser suite passed 41 cases with the live check skipped by design. This closes the live delivery item in the 1.0.0 release notes.
+- **Risk & rollback:** Use a test broadcasting app for the opt-in check. It sends seeded chat content to real channels. Traces are disabled for the live run to keep channel signatures out of test artifacts. To return the local app to the log broadcaster, set `BROADCAST_CONNECTION=log` and clear the config cache.

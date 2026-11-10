@@ -149,3 +149,17 @@ The full command took 14m 18s including the build. Playwright reported 12m 25s f
 ## Phase 10 release check
 
 The clean-room run passed 39 browser cases with one pending live-push case and zero expected failures. Playwright reported 6m 50s for startup, setup and tests. All 250 captures passed, the 25 axe scans found zero violations and the four references matched at zero changed pixels.
+
+## Live chat delivery
+
+The live check passed twice against the configured broadcaster on the isolated Artisan server. A manager sent a message and a resident of the same complex saw it without a page reload, about five seconds after the send action in the first run and about two seconds in the rerun. A resident of a different complex connected to their own channel, then received HTTP 403 when requesting authorization for the first complex's channel.
+
+Use Node.js 20.12 or later with `util.parseEnv` and set the four `PUSHER_APP_*` credentials in the ignored local `.env`. To run only the live case in PowerShell:
+
+```powershell
+$env:E2E_BROADCAST_CONNECTION = 'pusher'
+npm run test:e2e -- realtime.spec.js -g 'without a reload'
+Remove-Item Env:E2E_BROADCAST_CONNECTION
+```
+
+The gate passes the Pusher settings to the manual test server. Both servers still use temporary databases and test accounts. Live runs disable traces because browser network records can contain channel signatures. The live spec saves `live-chat-delivery.png` in its test output directory. The activation capture is retained under `storage/app/test-screenshots/pusher-activation`. The default suite runs the two-session reload check with the log broadcaster and skips the live case with an explicit reason.
