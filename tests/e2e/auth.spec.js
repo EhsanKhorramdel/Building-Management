@@ -1,5 +1,4 @@
 import { expect, test } from '@playwright/test';
-import { mkdir } from 'node:fs/promises';
 import { dashboardCard, fields, login, register, submit } from './ui.js';
 
 for (const role of ['admin', 'manager', 'resident']) {
@@ -26,28 +25,27 @@ test('wrong password shows the sign-in error', async ({ page }) => {
     await expect(page.locator('.field-error').first()).toBeVisible();
 });
 
-test('logout ends the session and a protected page redirects to login', async ({ page }) => {
+test('logout lands on the public home page and protects the dashboard', async ({ page, baseURL }) => {
     await login(page, 'admin');
     await submit(page.locator('form[action$="/logout"]'));
+    await expect(page).toHaveURL(new URL('/', baseURL).href);
+    await expect(page.getByRole('link', { name: 'ورود', exact: true })).toBeVisible();
     await page.goto('/dashboard');
     await expect(page).toHaveURL(/\/login$/);
     await expect(page.locator('[name=email]')).toBeVisible();
 });
 
-test('logout lands directly on the login page', async ({ page }, info) => {
+test('the signed-out user can sign in again from the public home page', async ({ page, baseURL }) => {
     await login(page, 'admin');
     await submit(page.locator('form[action$="/logout"]'));
-    await expect(page.getByRole('heading', { name: 'پنل ادمین' })).toBeHidden();
-    if (new URL(page.url()).pathname === '/') {
-        const directory = 'storage/app/test-screenshots/phase-9/findings';
-        const screenshot = directory + '/logout-destination.png';
-        await mkdir(directory, { recursive: true });
-        await page.screenshot({ path: screenshot });
-        await info.attach('logout destination', { body: page.url(), contentType: 'text/plain' });
-        await info.attach('logout page', { path: screenshot });
-        test.fail(true, 'Logout currently redirects to the public landing page.');
-    }
-    await expect(page).toHaveURL(/\/login$/, { timeout: 1_500 });
+    await expect(page).toHaveURL(new URL('/', baseURL).href);
+    await page.getByRole('link', { name: 'ورود', exact: true }).click();
+    await expect(page).toHaveURL(/\/login$/);
+    const form = page.locator('form').filter({ has: page.locator('[name=password]') });
+    await fields(form, { email: 'admin@example.test', password: 'password' });
+    await submit(form);
+    await expect(page).toHaveURL(/\/adminPanel$/);
+    await expect(page.getByRole('heading', { name: 'پنل ادمین' })).toBeVisible();
 });
 
 test('register signs in the new account on its dashboard', async ({ page }) => {
