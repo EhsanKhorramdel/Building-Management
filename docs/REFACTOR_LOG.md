@@ -1095,3 +1095,11 @@ Findings remain open unless a closing commit is recorded below. The named phases
 - **Files:** create_audit_events_table migration, AuditEvent, AuditLogger, AuditEventPolicy, RoleController, AdminController, audit-events component and translation, AuditEventsTest, ARCHITECTURE.md.
 - **Verified by:** Thirteen tests cover the five writes, five injected write failures, repeated decisions, admin limit and manager scoping. The rotation test scans the stored row for both the original and replacement links. The migration has no update timestamp and the app exposes no edit or purge action.
 - **Risk & rollback:** A failed append leaves the original action in place and emits a warning. Actor and complex foreign keys protect the references while the rows are retained. The migration rollback drops the audit history.
+
+### [Phase 8D] P4 Pin query budgets as the fixture grows
+- **Before:** The comparison audit measured the three actions at 2, 8 and 32 units without making those counts part of the suite.
+- **After:** QueryBudget uses a query listener around each action. Each fixture includes one user, one poll with two options and two payments per unit. Tests assert zero query growth and the original caps.
+- **Why:** A single fixture size cannot distinguish a fixed query cost from a query per unit.
+- **Files:** tests/Support/QueryBudget.php, tests/Feature/Backend/QueryBudgetTest.php.
+- **Verified by:** At 2, 8 and 32 units, the payments report used 6/6/6 queries, the building dashboard used 11/11/11 and the user dashboard used 2/2/2. These are controller action counts with fixtures, authorization, route binding and Blade rendering outside the window, as in the comparison audit. A separate render of the manager dashboard with an empty audit list measured 13/13/13 including the action.
+- **Risk & rollback:** Test-only. The new audit list runs its permission check and retrieval when Blade renders it. The original action caps are unchanged.
