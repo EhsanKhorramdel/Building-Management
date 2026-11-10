@@ -163,3 +163,11 @@ Remove-Item Env:E2E_BROADCAST_CONNECTION
 ```
 
 The gate passes the Pusher settings to the manual test server. Both servers still use temporary databases and test accounts. Live runs disable traces because browser network records can contain channel signatures. The live spec saves `live-chat-delivery.png` in its test output directory. The activation capture is retained under `storage/app/test-screenshots/pusher-activation`. The default suite runs the two-session reload check with the log broadcaster and skips the live case with an explicit reason.
+
+## Phase 11D: media and aggregate receipts
+
+The shared viewer was checked at 390 and 1440 in light and dark. The captures are gallery-*, announcement-* and invoice-* under `storage/app/test-screenshots/phase-11d` (ignored). Visual review confirmed both themes, reachable controls and a contained image area. Browser checks cover two gallery pages, previous/next and arrow keys, keyboard/wheel/pinch zoom, panning, touch swipe-down, download through the authorized route, and Escape with focus restoration. Loading and denied-image states are explicit. Boundary loading initially lost navigation focus, and native Shift+Tab could leave the dialog; both were corrected and the browser checks retained.
+
+A separate live run on the private complex channel verified an author's count increasing without reload, the manager's corresponding count, and no inline count for another resident. Captured event keys were exactly `message_id` and `count`. Names remain in the authorized detail endpoint. Evidence: `seen-live-author.png` and `seen-live-manager.png` in the same capture directory. The default run uses the log broadcaster; the live branch runs when `E2E_BROADCAST_CONNECTION=pusher`.
+
+Final default run: 63 passed, one existing live gate skipped, 12.4 minutes. All 250 sweep states passed. The separate live receipt case passed in 59.7 seconds. No existing browser spec changed.

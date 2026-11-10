@@ -27,23 +27,6 @@
         @if (count($incidentalCosts) === 0)
             <p class="empty-state">هزینه‌ای تعریف نشده است. موارد تازه اینجا نمایش داده می‌شوند.</p>
         @endif
-        <div class="dialog-shell cost-modal hidden" role="dialog" aria-modal="true">
-            <div class="bg-white p-6 rounded shadow-md max-w-sm mx-auto rounded-xl">
-                <h3 class="text-xl font-semibold mb-4 text-center">
-                    فاکتور هزینه
-                </h3>
-                <img alt="تصویر فاکتور هزینه"
-                    class="w-full rounded-2xl transition-transform hover:scale-125 transition-all duration-300"
-                    id="CostInvoice">
-                <div class="flex flex-col mt-5">
-                    <button
-                        class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline mr-2 cost-close-Btn"
-                        type="button">
-                        بستن
-                    </button>
-                </div>
-            </div>
-        </div>
     </div>
 </div>
 

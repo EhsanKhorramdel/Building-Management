@@ -4,6 +4,7 @@ import { closeDialog, openDialog, toast } from '../ui';
 import { chatSocial } from './chat-social';
 import { chatPower } from './chat-power';
 import { typingIndicator } from './chat-typing';
+import { mediaViewer } from '../media-viewer';
 
 const root = '/dashboard/building';
 const group = root + '/group';
@@ -35,6 +36,8 @@ export function chat() {
     const messages = new Map();
     const marked = new Set();
     const deletions = new Map();
+    const receipts = new Map();
+    const media = mediaViewer();
     const social = chatSocial(group, root + '/' + config.complexId + '/chat-pins', jumpTo);
     const power = chatPower({ groupUrl: group, render, jumpTo, applyDeletions });
     const typingOutput = document.querySelector('[data-chat-typing]');
@@ -131,6 +134,7 @@ export function chat() {
     }
 
     function rememberDeletion(id, kind) {
+        media.remove(id);
         deletions.set(id, kind);
         social.remove(id);
         power.remove(id);
@@ -189,6 +193,28 @@ export function chat() {
         }));
         if (!results.length) wrapper.append(node('p', 'empty-state', 'هنوز کسی این پیام را ندیده است.'));
         openDialog(viewerDialog, trigger);
+    }
+
+    function receipt({ message_id: id, count }) {
+        const message = messages.get(id);
+        if (!message || message.is_deleted || (message.user_id !== config.userId && !config.canPin)) return;
+        receipts.set(id, Math.max(receipts.get(id) ?? 0, count));
+        const label = list.querySelector('[data-seen-message="' + id + '"]');
+        if (label) {
+            label.textContent = 'دیده شد • ' + receipts.get(id).toLocaleString('fa-IR');
+            label.hidden = receipts.get(id) === 0;
+        }
+    }
+
+    async function loadReceipts() {
+        const ids = [...messages.values()].filter(message => !message.is_deleted
+            && (message.user_id === config.userId || config.canPin)).map(message => message.message_id);
+        for (let offset = 0; offset < ids.length; offset += 50) {
+            const parameters = new URLSearchParams();
+            ids.slice(offset, offset + 50).forEach(id => parameters.append('message_ids[]', id));
+            const result = await request(root + '/' + config.complexId + '/chat-seen-counts?' + parameters);
+            result?.counts.forEach(receipt);
+        }
     }
 
     function render() {
@@ -294,10 +320,23 @@ export function chat() {
                 const photo = node('img', 'chat-image');
                 photo.src = message.image_url;
                 photo.alt = 'تصویر پیام ' + message.user_name;
-                bubble.append(photo);
+                const control = node('button', 'chat-image-open');
+                control.type = 'button';
+                control.setAttribute('aria-label', 'باز کردن ' + photo.alt);
+                control.append(photo);
+                control.addEventListener('click', () => media.open({ id: message.message_id, url: message.image_url, alt: photo.alt }, control));
+                bubble.append(control);
             }
             if (message.text) bubble.append(node('p', 'message-text', message.text));
-            bubble.append(node('p', 'chat-time', time.format(created) + (message.is_edited ? ' · ویرایش شده' : '')));
+            const timestamp = node('p', 'chat-time', time.format(created) + (message.is_edited ? ' · ویرایش شده' : ''));
+            if (own || config.canPin) {
+                const count = receipts.get(message.message_id) ?? 0;
+                const label = node('span', 'chat-seen-count', 'دیده شد • ' + count.toLocaleString('fa-IR'));
+                label.dataset.seenMessage = message.message_id;
+                label.hidden = count === 0;
+                timestamp.append(label);
+            }
+            bubble.append(timestamp);
             const reactionRow = node('div', 'chat-reactions');
             social.renderReactions(reactionRow, message.message_id);
             bubble.append(reactionRow);
@@ -376,6 +415,7 @@ export function chat() {
                 if (before) scroll.scrollTop = oldTop + scroll.scrollHeight - oldHeight;
             }
             void markVisible();
+            void loadReceipts();
         } finally {
             delete state.dataset.loading;
             older.disabled = newer.disabled = latest.disabled = false;
@@ -483,5 +523,6 @@ export function chat() {
         channel.bind('ChatMessagesDeleted', ({ messages: deletedMessages }) => applyDeletions(deletedMessages));
         channel.bind('ChatReactionsChanged', social.applyReactions);
         channel.bind('ChatPinChanged', social.applyPin);
+        channel.bind('ChatSeenCountChanged', receipt);
     }
 }

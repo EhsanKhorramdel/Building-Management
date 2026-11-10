@@ -1,16 +1,12 @@
-import { openDialog, closeDialog, toast } from '../ui';
+import { toast } from '../ui';
+import { mediaViewer } from '../media-viewer';
 
 export function announcements() {
     document.querySelectorAll('[data-announcement-image]').forEach(button => {
         button.addEventListener('click', () => {
-            const dialog = document.querySelector('.modal-announcement');
-            const image = dialog?.querySelector('img');
-            if (!image) return;
-            image.src = button.dataset.announcementImage;
-            openDialog(dialog, button);
+            mediaViewer().open({ id: 'announcement', url: button.dataset.announcementImage, alt: 'تصویر اعلان' }, button, 'announcement');
         });
     });
-    document.querySelectorAll('.close-Btn-announcement').forEach(button => button.addEventListener('click', closeDialog));
     document.querySelector('[data-copy-join]')?.addEventListener('click', async event => {
         try {
             await navigator.clipboard.writeText(event.currentTarget.dataset.copyJoin);

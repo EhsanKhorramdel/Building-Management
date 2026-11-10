@@ -93,7 +93,7 @@ The browser checks opened the controls and used the resulting state. The automat
 | F11-05 | Closed. The tall form keeps Close reachable while its content scrolls. | At 844 × 390, the charge form has both Close and Submit in view after scrolling to the end. Close and Escape restore focus. [Scrolled dialog](audit-11a/F11-05-dialog-scrolled-landscape.png) |
 | F11-07 | Closed. The endpoint permits the message author and active managers of the message's complex. The browser menu still exposes Viewers only for the author's messages. | The author and manager received the same named receipt, and a non-author resident and foreign manager received HTTP 403. The resident denial has JSON and form parity coverage. [Author dialog](audit-11a/F11-07-author-viewers-390.png) · [Non-author menu](audit-11a/F11-07-non-author-menu-390.png) |
 
-F11-06 remains open. The chat image still uses its inline presentation.
+F11-06 closed in Phase 11D: inline image buttons now open the shared authorized viewer, with gallery paging, zoom, download and restored focus. A16 and A14 are implemented in the same phase; aggregate seen receipts preserve the author/manager detail audience. The original discovery status table above records the pre-implementation state. Phase verification and capture locations are in REFACTOR_LOG.md.
 
 ### Capture index
 

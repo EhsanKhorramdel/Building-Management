@@ -38,23 +38,6 @@
         @if (!$counter)
             <p class="empty-state">اعلانی وجود ندارد. اعلان‌های تازه اینجا نمایش داده می‌شوند.</p>
         @endif
-        <div class="dialog-shell modal-announcement hidden" role="dialog" aria-modal="true">
-            <div class="bg-white p-6 rounded shadow-md max-w-sm mx-auto rounded-xl">
-                <h3 class="text-xl font-semibold mb-4 text-center">
-                    عکس اعلان
-                </h3>
-                <img alt="تصویر اعلان"
-                    class="w-full rounded-2xl transition-transform hover:scale-125 transition-all duration-300"
-                    id="NotifPicture">
-                <div class="flex flex-col mt-5">
-                    <button
-                        class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline mr-2 close-Btn-announcement"
-                        type="button">
-                        بستن
-                    </button>
-                </div>
-            </div>
-        </div>
     </div>
 </div>
 
