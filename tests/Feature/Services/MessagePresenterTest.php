@@ -15,11 +15,13 @@ test('presenter preserves the HTTP and new-message shape and viewer ownership', 
     ])->and($presenter->present($message)['is_owned_by_logged_in_user'])->toBeFalse();
 });
 
-test('edit and delete broadcasts keep the original model shaped payload', function () {
+test('edit preserves its payload and deletion sends only its ID and tombstone kind', function () {
     $message = Message::factory()->create(['image_url' => 'image.png']);
     $attributes = $message->attributesToArray();
     $attributes['image_url'] = route('chat.attachments.show', $message, absolute: false);
 
     expect((new EditChatMessage($message))->broadcastWith())->toBe(['editedMessage' => $attributes])
-        ->and((new DeleteChatMessage($message))->broadcastWith())->toBe(['deletedMessage' => $attributes]);
+        ->and((new DeleteChatMessage($message))->broadcastWith())->toBe([
+            'deletedMessage' => ['id' => $message->id, 'deletion_kind' => 'author'],
+        ]);
 });

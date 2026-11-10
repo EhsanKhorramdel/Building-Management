@@ -17,12 +17,13 @@ class Message extends Model
     public const ATTACHMENT_DIRECTORY = 'private/chats';
 
     protected $fillable = [
-        'group_id', 'user_id', 'text', 'image_url', 'deleted', 'edited',
+        'group_id', 'user_id', 'text', 'image_url', 'deleted', 'edited', 'parent_id',
     ];
 
     protected $casts = [
         'deleted' => 'boolean',
         'edited' => 'boolean',
+        'pinned_at' => 'datetime',
     ];
 
     public function group(): BelongsTo
@@ -38,5 +39,15 @@ class Message extends Model
     public function seenMessages(): HasMany
     {
         return $this->hasMany(SeenMessage::class);
+    }
+
+    public function parent(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'parent_id');
+    }
+
+    public function reactions(): HasMany
+    {
+        return $this->hasMany(MessageReaction::class);
     }
 }

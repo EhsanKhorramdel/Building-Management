@@ -38,6 +38,11 @@ class EditChatMessage implements ShouldBroadcast
 
     public function broadcastWith(): array
     {
-        return ['editedMessage' => app(MessagePresenter::class)->broadcastModel($this->editedMessage)];
+        $presenter = app(MessagePresenter::class);
+        $current = Message::findOrFail($this->editedMessage->id);
+
+        return ['editedMessage' => $current->deleted
+            ? $presenter->deletion($current)
+            : $presenter->broadcastModel($this->editedMessage)];
     }
 }

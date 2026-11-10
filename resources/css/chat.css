@@ -43,6 +43,32 @@
     .chat-action { @apply min-h-10 rounded-md px-2 text-start text-sm; }
     .chat-action:hover { background: var(--accent-soft); }
     .viewer-row { @apply rounded-lg p-2 text-sm; background: var(--muted-surface); }
+    .chat-social-actions, .chat-reactions, .chat-reaction-picker {
+        @apply flex flex-wrap items-center gap-1;
+    }
+    .chat-reactions:not(:empty) { @apply mt-2; }
+    .chat-reaction-picker { @apply gap-2; }
+    .chat-social-button, .chat-reaction {
+        @apply inline-flex min-h-10 min-w-10 items-center justify-center rounded-lg px-2;
+        background: var(--surface);
+        color: var(--ink);
+    }
+    .chat-reaction[aria-pressed=true] {
+        background: var(--accent-soft);
+        color: var(--accent-ink);
+        outline: 1px solid var(--accent);
+    }
+    .chat-quote, .chat-pin {
+        @apply block min-h-10 w-full min-w-0 rounded-md border-s-2 px-2 py-1 text-start text-sm;
+        border-color: var(--accent);
+        background: var(--muted-surface);
+        color: var(--ink);
+    }
+    .chat-quote { @apply my-1; }
+    .chat-quote span, .chat-pin span, .chat-reply-preview p { @apply block truncate; }
+    .chat-pins { @apply grid max-h-24 shrink-0 gap-1 overflow-auto border-b p-2; border-color: var(--line); }
+    .chat-tombstone { @apply text-sm italic; color: var(--muted); }
+    .chat-message:focus { outline: 2px solid var(--accent); outline-offset: -2px; }
 }
 
 @media (orientation: landscape) and (max-height: 480px) and (max-width: 1023px) {
@@ -62,4 +88,5 @@
     }
     .chat-window .chat-shell { flex: 1; block-size: auto; }
     .chat-window :is(.chat-heading, .chat-composer) { padding-block: .375rem; }
+    .chat-window .chat-pins { max-block-size: 3.5rem; }
 }

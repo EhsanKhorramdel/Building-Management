@@ -3,6 +3,7 @@
 namespace App\Events;
 
 use App\Models\Message;
+use App\Services\MessagePresenter;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
@@ -33,5 +34,13 @@ class NewChatMessage implements ShouldBroadcast
     public function broadcastAs(): string
     {
         return 'NewChatMessage';
+    }
+
+    public function broadcastWith(): array
+    {
+        // Resolve the quote when broadcasting in case its parent was deleted while the event was queued.
+        $message = Message::with(MessagePresenter::RELATIONS)->findOrFail($this->message['message_id']);
+
+        return ['message' => app(MessagePresenter::class)->present($message)];
     }
 }
