@@ -1177,3 +1177,11 @@ Findings remain open unless a closing commit is recorded below. The named phases
 - **Files:** resources/js/building/navigation.js, tests/e2e/chat.spec.js and the audit closure evidence.
 - **Verified by:** The 390px browser check verifies inert state, traversal in both directions and focus return.
 - **Risk & rollback:** Navigation and drawer share the handler. Reverting removes both inert state and the boundary.
+
+### [Phase 11A, F11-04] Fit chat into short landscape screens
+- **Before:** At 844 × 390 the desktop sidebar and minimum chat height pushed the composer below the viewport.
+- **After:** The short-landscape breakpoint uses the drawer, and the chat panel allocates the remaining height to the scrollable message list.
+- **Why:** The width breakpoint and minimum block size did not account for short phone screens.
+- **Files:** resources/css/panels.css, resources/css/chat.css, tests/e2e/chat.spec.js and the audit closure evidence.
+- **Verified by:** The landscape case checks the heading, paging, message list and composer in the same viewport and confirms that focusing the composer keeps the heading visible.
+- **Risk & rollback:** This breakpoint also changes navigation on short landscape screens outside chat. Revert the landscape media rules together to restore the earlier layout.

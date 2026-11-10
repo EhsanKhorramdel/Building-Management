@@ -179,3 +179,23 @@ test('the dashboard drawer keeps keyboard focus inside and restores it on close'
     await expect(opener).toBeFocused();
     await expect(page.locator('.home-window')).not.toHaveAttribute('inert');
 });
+
+test('phone landscape keeps the chat heading, thread and composer in view together', async ({ page }) => {
+    await page.setViewportSize({ width: 844, height: 390 });
+    const heading = page.locator('.chat-window > .buildings-section-header');
+    const thread = page.locator('.chatContainer');
+    const composer = page.locator('#messageForm');
+    const paging = page.locator('.chat-shell > .chat-heading').first();
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await expect(page.locator('[data-open-drawer]')).toBeVisible();
+    for (const element of [heading, paging, thread, composer]) {
+        await expect(element).toBeInViewport({ ratio: 1 });
+    }
+    expect((await thread.boundingBox()).height).toBeGreaterThanOrEqual(100);
+    await page.locator('#message-text').focus();
+    await expect(heading).toBeInViewport({ ratio: 1 });
+    await expect(page.locator('.sendBtn')).toBeInViewport({ ratio: 1 });
+    await captureInteraction(page, 'F11-04-chat-landscape-light');
+    await page.locator('.mode-switch').click();
+    await captureInteraction(page, 'F11-04-chat-landscape-dark');
+});

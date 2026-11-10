@@ -44,3 +44,22 @@
     .chat-action:hover { background: var(--accent-soft); }
     .viewer-row { @apply rounded-lg p-2 text-sm; background: var(--muted-surface); }
 }
+
+@media (orientation: landscape) and (max-height: 480px) and (max-width: 1023px) {
+    .app-container:has(.chat-window:not([hidden])) .app-header {
+        min-block-size: 3.5rem;
+        padding-block: .5rem;
+    }
+    .chat-window:not([hidden]) {
+        display: flex;
+        flex-direction: column;
+        block-size: calc(100dvh - 3.5rem);
+        padding-block: .75rem;
+    }
+    .chat-window > .buildings-section-header {
+        flex-shrink: 0;
+        margin-block-end: .5rem;
+    }
+    .chat-window .chat-shell { flex: 1; block-size: auto; }
+    .chat-window :is(.chat-heading, .chat-composer) { padding-block: .375rem; }
+}

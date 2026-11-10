@@ -116,7 +116,8 @@
 }
 
 [data-drawer-overlay], button[data-open-drawer], button[data-close-drawer] { display: none; }
-@media (max-width: 767px) {
+@media (max-width: 767px), (orientation: landscape) and (max-height: 480px) and (max-width: 1023px) {
+    .app-content:has([data-drawer]) { grid-template-columns: minmax(0, 1fr); }
     button[data-open-drawer], button[data-close-drawer] { display: inline-flex; }
     [data-drawer-overlay]:not([hidden]) { display: block; position: fixed; inset: 0; z-index: 39; background: rgb(5 15 20 / 60%); }
     .app-sidebar[data-drawer] {
