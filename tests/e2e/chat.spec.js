@@ -134,3 +134,23 @@ for (const width of [390, 1440]) {
         });
     }
 }
+
+test('only one chat menu opens and Escape and outside clicks return focus', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    const message = await latestOwnMessage(page, 'پیام بستن منو');
+    const newest = message.locator('summary');
+    const earlier = page.locator('.chat-message').filter({ hasText: 'پیام نمونه 36' }).locator('summary');
+    await newest.click();
+    await expect(newest.locator('..')).toHaveAttribute('open', '');
+    await earlier.click();
+    await expect(page.locator('.chat-menu[open]')).toHaveCount(1);
+    await expect(earlier.locator('..')).toHaveAttribute('open', '');
+    await page.keyboard.press('Escape');
+    await expect(page.locator('.chat-menu[open]')).toHaveCount(0);
+    await expect(earlier).toBeFocused();
+    await newest.click();
+    await page.locator('.chat-window > .buildings-section-header').click();
+    await expect(page.locator('.chat-menu[open]')).toHaveCount(0);
+    await expect(newest).toBeFocused();
+    await captureInteraction(page, 'F11-02-dismissed-menu-390');
+});

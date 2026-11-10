@@ -87,6 +87,7 @@ The browser checks opened the controls and used the resulting state. The automat
 | ID | Result | Regression evidence |
 | --- | --- | --- |
 | F11-01 | Closed. The newest-message menu opens in the browser top layer and positions itself within the viewport. | Copy, Edit, Delete and Viewers passed hit testing and real clicks at 390 and 1440 in both themes. [390 light](audit-11a/F11-01-newest-menu-390-light.png) · [390 dark](audit-11a/F11-01-newest-menu-390-dark.png) · [1440 light](audit-11a/F11-01-newest-menu-1440-light.png) · [1440 dark](audit-11a/F11-01-newest-menu-1440-dark.png) |
+| F11-02 | Closed. Opening another menu closes the previous one. Escape and outside clicks dismiss it and restore focus. | Playwright checked both dismissal paths, focus return and one open menu. [Dismissed menu](audit-11a/F11-02-dismissed-menu-390.png) |
 
 F11-06 remains open. The chat image still uses its inline presentation.
 

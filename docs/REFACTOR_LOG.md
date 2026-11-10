@@ -1161,3 +1161,11 @@ Findings remain open unless a closing commit is recorded below. The named phases
 - **Files:** resources/js/building/chat.js, resources/css/chat.css, resources/css/panels.css, tests/e2e/chat.spec.js and the audit closure evidence.
 - **Verified by:** Four Playwright cases hit-test and click each action at 390 and 1440 in both themes.
 - **Risk & rollback:** Menu placement now uses the browser's Popover API. Revert the placement and interaction changes together if restoring the native-only disclosure.
+
+### [Phase 11A, F11-02] Dismiss message menus and restore focus
+- **Before:** More than one disclosure could stay open, and Escape or an outside click left it open.
+- **After:** The chat keeps one open menu. Escape and outside clicks close it and return focus to its trigger.
+- **Why:** Native disclosures do not supply outside dismissal or Escape handling.
+- **Files:** resources/js/building/chat.js, tests/e2e/chat.spec.js and the audit closure evidence.
+- **Verified by:** The browser opens two menus in sequence, then checks both dismissal methods and focus return.
+- **Risk & rollback:** Reverting this entry restores the old dismissal behavior. Menu placement is independent of the dismissal handlers.

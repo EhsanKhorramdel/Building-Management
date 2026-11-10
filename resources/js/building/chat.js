@@ -68,6 +68,15 @@ export function chat() {
         actions.style.top = (flip ? anchor.top - actions.offsetHeight - gap : anchor.bottom + gap) + 'px';
     }
 
+    document.addEventListener('click', event => {
+        if (openMenu && !openMenu.menu.contains(event.target)) closeMenu();
+    });
+    document.addEventListener('keydown', event => {
+        if (event.key === 'Escape' && openMenu) {
+            event.preventDefault();
+            closeMenu();
+        }
+    });
     window.addEventListener('resize', placeMenu);
     window.addEventListener('scroll', placeMenu, { capture: true });
 
