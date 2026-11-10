@@ -93,8 +93,15 @@ Use PHP 8.3 or later and MySQL 8. Install the locked PHP dependencies, build ass
 The template runs queued work synchronously and logs broadcasts. Configure Pusher for live updates and run a queue worker if the selected queue connection is asynchronous. Serve production traffic over HTTPS.
 
 Live MySQL migration and rollback verification is pending a MySQL environment. The end-to-end live Pusher check is pending a configured Pusher environment.
+
 ## Numeric form inputs
 
 Numeric form requests normalize Persian and Arabic-Indic digits to ASCII and trim whitespace before validation. Validated quantities and IDs become integers or floats before reaching controllers and services. Complex authorization uses the same integer parser for IDs it needs before validation.
 
 Blank optional values become null. Missing keys stay absent, so profile numbers and a saved coordinate pair are kept unless the form explicitly clears them. A missing or blank poll duration part contributes zero. Postal, national and phone numbers stay strings to retain leading zeroes.
+
+## Audit events
+
+`audit_events` records the actor, optional complex, event name, polymorphic subject, optional JSON metadata and creation time. Role changes capture the previous and new roles. Membership decisions capture the requested complex name. A rejection has no complex ID. Join-link rotation stores no metadata, and neither the previous nor the new link is passed to the logger.
+
+Events are append-only. There is no update or purge action. The admin panel shows the latest 100 events across complexes to global admins. Building settings show up to 100 events for that complex to its active managers. The lists show the event, actor, complex and time. Actions record events after the domain write, and audit storage failures are logged without interrupting the action.

@@ -1087,3 +1087,11 @@ Findings remain open unless a closing commit is recorded below. The named phases
 - **Files:** tests/Feature/Backend/FormEncodingParityTest.php.
 - **Verified by:** The pairs include Persian digits in coordinates, the current unit lookup and the national code. Blank and omitted profile and settings fields run as separate cases.
 - **Risk & rollback:** Test-only. The earlier browser poll regression remains unchanged.
+
+### [Phase 8D] P3 Record scoped audit events
+- **Before:** Role changes, membership decisions and join-link rotations had no shared history.
+- **After:** AuditLogger appends `role.upgraded`, `role.downgraded`, `membership.approved`, `membership.rejected` and `join_link.rotated` after the domain write. Admins see the latest 100 across all complexes. Active managers see up to 100 for their own complex in settings. Residents see no list.
+- **Why:** The actions know when the change succeeded and who made it. The subject morph supports both users and complexes. Rejections retain the requested name with a null complex ID. Rotation has null metadata so no link material reaches the event.
+- **Files:** create_audit_events_table migration, AuditEvent, AuditLogger, AuditEventPolicy, RoleController, AdminController, audit-events component and translation, AuditEventsTest, ARCHITECTURE.md.
+- **Verified by:** Thirteen tests cover the five writes, five injected write failures, repeated decisions, admin limit and manager scoping. The rotation test scans the stored row for both the original and replacement links. The migration has no update timestamp and the app exposes no edit or purge action.
+- **Risk & rollback:** A failed append leaves the original action in place and emits a warning. Actor and complex foreign keys protect the references while the rows are retained. The migration rollback drops the audit history.

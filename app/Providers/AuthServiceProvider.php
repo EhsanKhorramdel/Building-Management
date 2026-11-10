@@ -2,7 +2,9 @@
 
 namespace App\Providers;
 
+use App\Models\AuditEvent;
 use App\Models\Complex;
+use App\Policies\AuditEventPolicy;
 use App\Policies\ComplexPolicy;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 
@@ -14,6 +16,7 @@ class AuthServiceProvider extends ServiceProvider
      * @var array<class-string, class-string>
      */
     protected $policies = [
+        AuditEvent::class => AuditEventPolicy::class,
         Complex::class => ComplexPolicy::class,
     ];
 

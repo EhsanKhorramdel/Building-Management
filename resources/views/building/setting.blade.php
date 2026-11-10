@@ -131,4 +131,5 @@
 <form method="POST" action="{{ route('building.regenerateJoinLink', $complex) }}">
                     @csrf
                     <button type="submit">تولید لینک عضویت جدید</button></form>
+    <x-audit-events :complex="$complex" />
 </div>

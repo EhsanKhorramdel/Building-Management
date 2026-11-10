@@ -6,7 +6,9 @@ use App\Http\Middleware\AccessMiddleware;
 use App\Models\Complex;
 use App\Models\Group;
 use App\Models\MembershipRequest;
+use App\Models\User;
 use App\Models\UserRole;
+use App\Services\AuditLogger;
 use App\Services\SmsService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -29,12 +31,12 @@ class AdminController extends Controller
         return view('adminPanel', ['allMembershipRequests' => $allMembershipRequests]);
     }
 
-    public function accept(MembershipRequest $MembershipRequest, SmsService $sms)
+    public function accept(MembershipRequest $MembershipRequest, SmsService $sms, AuditLogger $audit)
     {
-        $accepted = DB::transaction(function () use ($MembershipRequest) {
+        $complex = DB::transaction(function () use ($MembershipRequest) {
             $request = MembershipRequest::whereKey($MembershipRequest->id)->lockForUpdate()->firstOrFail();
             if ($request->request_status !== 'pending') {
-                return false;
+                return null;
             }
 
             $complex = Complex::create([
@@ -59,23 +61,28 @@ class AdminController extends Controller
             $request->request_status = 'accepted';
             $request->save();
 
-            return true;
+            return $complex;
         });
 
-        if (! $accepted) {
+        if (! $complex) {
             return redirect()->back()->with(['status' => 'error', 'message' => 'این درخواست قبلاً بررسی شده است.']);
         }
 
+        $audit->record('membership.approved', auth()->id(), $complex->id, User::class, $MembershipRequest->user_id, ['complex_name' => $complex->name]);
         $sms->queue('membership_approved', $MembershipRequest->user_id);
 
         return redirect()->back();
     }
 
-    public function reject(MembershipRequest $MembershipRequest)
+    public function reject(MembershipRequest $MembershipRequest, AuditLogger $audit)
     {
 
         $MembershipRequest->request_status = 'rejected';
         $MembershipRequest->save();
+
+        if ($MembershipRequest->wasChanged('request_status')) {
+            $audit->record('membership.rejected', auth()->id(), null, User::class, $MembershipRequest->user_id, ['complex_name' => $MembershipRequest->name]);
+        }
 
         return redirect()->back();
     }

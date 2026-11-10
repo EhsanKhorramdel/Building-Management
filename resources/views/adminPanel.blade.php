@@ -171,6 +171,7 @@
 @endforelse
             </ul>
         </div>
+        <x-audit-events />
     </main>
 </body>
 
