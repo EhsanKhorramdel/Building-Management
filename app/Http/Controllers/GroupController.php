@@ -2,11 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\ChatPinChanged;
+use App\Events\ChatReactionsChanged;
 use App\Events\DeleteChatMessage;
 use App\Events\EditChatMessage;
 use App\Events\NewChatMessage;
 use App\Http\Middleware\AccessMiddleware;
 use App\Http\Requests\ChatEditRequest;
+use App\Http\Requests\ChatPinRequest;
+use App\Http\Requests\ChatReactionRequest;
 use App\Http\Requests\ChatSeenRequest;
 use App\Http\Requests\ChatStoreRequest;
 use App\Http\Requests\MessageViewersRequest;
@@ -14,6 +18,7 @@ use App\Models\Complex;
 use App\Models\Group;
 use App\Models\Message;
 use App\Services\ChatService;
+use App\Services\ChatSocialService;
 use App\Services\MessagePresenter;
 use Illuminate\Http\JsonResponse;
 
@@ -22,6 +27,7 @@ class GroupController extends Controller
     public function __construct(private ChatService $chat)
     {
         $this->middleware(['auth', AccessMiddleware::class.':member']);
+        $this->middleware(AccessMiddleware::class.':manager')->only('pin');
     }
 
     /**
@@ -78,6 +84,27 @@ class GroupController extends Controller
         }
     }
 
+    public function react(ChatReactionRequest $request, Message $Message, ChatSocialService $social): JsonResponse
+    {
+        $update = $social->toggleReaction($Message, $request->user()->id, $request->validated('emoji'));
+        event(new ChatReactionsChanged($Message->group->complex_id, $Message->id));
+
+        return response()->json($update);
+    }
+
+    public function pins(Complex $complex, ChatSocialService $social): JsonResponse
+    {
+        return response()->json($social->pins($this->group($complex)));
+    }
+
+    public function pin(ChatPinRequest $request, Message $Message, ChatSocialService $social): JsonResponse
+    {
+        $update = $social->setPin($Message, $request->user()->id, (bool) $request->validated('pinned'));
+        event(new ChatPinChanged($Message->group->complex_id, $Message->id));
+
+        return response()->json($update);
+    }
+
     public function seen(ChatSeenRequest $request)
     {
         $this->chat->seen($request->validated()['messageId'], auth()->id());
@@ -87,35 +114,35 @@ class GroupController extends Controller
     {
         $data = $request->validated();
         $message = Message::findOrFail($data['messageId']);
-        if ($message->user_id == auth()->id()) {
-            $message->text = $data['messageText'] ?? null;
-            $message->edited = true;
-            $message->save();
-            event(new EditChatMessage($message));
+        if ($message->user_id == auth()->id() && Message::whereKey($message->id)->where('deleted', false)
+            ->update(['text' => $data['messageText'] ?? null, 'edited' => true])) {
+            event(new EditChatMessage($message->refresh()));
         }
     }
 
     /**
-     * @return JsonResponse Body is array{message: string, status: '200'|'403'}.
+     * @return JsonResponse Body is array{message: string, status: '200'|'403', deletedMessage?: array{id: int, deletion_kind: string}}.
      */
-    public function destroy(Message $Message)
+    public function destroy(Message $Message, ChatSocialService $social, MessagePresenter $presenter)
     {
         if ($Message->user_id == auth()->id()) {
-            event(new DeleteChatMessage($Message));
-            $Message->deleted = true;
-            $Message->save();
-            $status = '200';
-            $message = 'پیام با موفقیت حذف شد.';
-        } else {
-            $status = '403';
-            $message = 'نمی‌توان پیام کاربر دیگری را حذف کرد.';
+            $deleted = $social->delete($Message, auth()->id());
+            if ($deleted) {
+                event(new DeleteChatMessage($deleted));
+            }
+
+            return response()->json([
+                'status' => '200',
+                'message' => 'پیام با موفقیت حذف شد.',
+                'deletedMessage' => $presenter->deletion($deleted ?? $Message->refresh()),
+            ]);
         }
 
-        return response()->json(compact('message', 'status'));
+        return response()->json(['status' => '403', 'message' => 'نمی‌توان پیام کاربر دیگری را حذف کرد.']);
     }
 
     private function group(Complex $complex): Group
     {
-        return Group::where('complex_id', $complex->id)->firstOrFail();
+        return Group::where('complex_id', $complex->id)->orderBy('id')->firstOrFail();
     }
 }

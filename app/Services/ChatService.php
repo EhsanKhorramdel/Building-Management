@@ -7,24 +7,25 @@ use App\Models\Message;
 use App\Models\SeenMessage;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Validation\ValidationException;
 
 class ChatService
 {
     public function __construct(private MessagePresenter $presenter, private FileUploadService $uploads) {}
 
     /**
-     * A zero anchor starts at the latest visible message. One-sided pages exclude the
+     * A zero anchor starts at the latest message. One-sided pages exclude the
      * anchor and keep it as the cursor when no further messages exist.
      *
-     * @return array{messages: list<array{message_id: int, user_name: string, user_id: int, text: string|null, image_url: string|null, created_at: string, is_deleted: bool|null, is_edited: bool|null, is_owned_by_logged_in_user: bool}>, first_message_id?: int|null, last_message_id?: int|null}
+     * @return array{messages: list<array<string, mixed>>, first_message_id?: int|null, last_message_id?: int|null}
      */
     public function fetch(Group $group, string $direction, int $cursorId, int $limit, int $viewerId): array
     {
         if ($direction === 'around') {
-            $query = $group->messages()->where('deleted', false)->with('user');
+            $query = $group->messages()->with(MessagePresenter::RELATIONS);
             $current = $cursorId === 0 ? $query->orderByDesc('id')->first() : $query->find($cursorId);
             if (! $current) {
-                abort_if($group->messages()->where('deleted', false)->exists(), 404);
+                abort_if($group->messages()->exists(), 404);
 
                 return ['messages' => [], 'first_message_id' => null, 'last_message_id' => null];
             }
@@ -38,7 +39,7 @@ class ChatService
             ];
         }
         $before = $direction === 'before';
-        $messages = $group->messages()->where('deleted', false)->with('user')
+        $messages = $group->messages()->with(MessagePresenter::RELATIONS)
             ->where('id', $before ? '<' : '>', $cursorId)
             ->orderBy('id', $before ? 'desc' : 'asc')->limit($limit)->get();
         if ($before) {
@@ -61,12 +62,17 @@ class ChatService
 
     public function store(array $data, int $userId): Message
     {
-        $group = Group::where('complex_id', $data['complexId'])->firstOrFail();
+        $group = Group::where('complex_id', $data['complexId'])->orderBy('id')->firstOrFail();
+        $parent = $data['parent_id'] ?? null;
+        if ($parent !== null && ! $group->messages()->whereKey($parent)->where('deleted', false)->exists()) {
+            throw ValidationException::withMessages(['parent_id' => 'پیام پاسخ در این گفتگو در دسترس نیست.']);
+        }
 
         return Message::create([
             'group_id' => $group->id,
             'user_id' => $userId,
             'text' => $data['messageText'] ?? null,
+            'parent_id' => $parent,
             'image_url' => isset($data['messageImage']) ? $this->uploads->store($data['messageImage'], Message::ATTACHMENT_DIRECTORY) : null,
         ]);
     }

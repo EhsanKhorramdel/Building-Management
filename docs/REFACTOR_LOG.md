@@ -1201,3 +1201,39 @@ Findings remain open unless a closing commit is recorded below. The named phases
 - **Files:** app/Http/Controllers/GroupController.php, tests/Feature/Building/ChatTest.php, tests/Feature/Backend/FormEncodingParityTest.php, tests/e2e/chat.spec.js and the audit closure evidence. Pint also normalized the controller's existing JSON response docblocks.
 - **Verified by:** PHP and browser cases cover the author, manager, non-author resident and foreign manager. The named ChatTest expectation now requires 403 for a non-author resident. The viewer parity case checks the same denial for JSON and form bodies and retains manager success.
 - **Risk & rollback:** Reverting reopens named receipts to all active complex members. Keep the policy and its test expectations together.
+
+### [Phase 11B, A05] Add named chat reactions
+- **Before:** Chat had no stored reactions, picker or counts.
+- **After:** Active members can toggle any of seven palette emoji. The unique message, user and emoji key allows different reactions while preventing duplicate rows. A quick control and the message menu open the same picker. Counts highlight the viewer's reactions and open the reactor list.
+- **Why:** Each viewer needs the same counts and names but a different selected state. The private-channel event sends the full summary with reactor IDs, and the browser derives its own selected state. History and mutation responses can include that state directly. A version prevents a late update from replacing a newer summary.
+- **Files:** The chat social migration, MessageReaction, ChatReactionRequest, GroupController, ChatSocialService, MessagePresenter, ChatReactionsChanged, chat-social.js, chat views and styles, and the chat tests.
+- **Verified by:** Feature cases cover scope, palette validation, the unique key, reversible toggles, independent emoji and the named event payload. The browser matrix checks both picker entry points, 40px palette targets, highlighting and reactor names at 390 and 1440 in both themes. The opt-in live run verified the reaction summary and per-viewer highlight in a second session, with no history or pin refetch.
+- **Risk & rollback:** The shared summary grows with the number of reactors. The migration uses binary emoji comparison on MySQL-compatible engines so distinct emoji do not collide under the default collation. Rolling it back removes stored reactions.
+
+### [Phase 11B, A06] Reply to a message and jump to it
+- **Before:** A new message could only carry text or an attachment.
+- **After:** A reply may reference a live message in the exact group where the reply is sent. The composer previews the author and a short snippet and can cancel without clearing the draft. Clicking a quote focuses the original and loads its page when necessary. Sending returns to the latest page, and editing returns to the edited row.
+- **Why:** The prior read marker could point to an old page after a jump. The quote follows the current parent, and both history and delayed new-message broadcasts replace a deleted parent's author and text with a tombstone reference.
+- **Files:** The chat social migration, Message, ChatStoreRequest, ChatService, MessagePresenter, NewChatMessage, chat.js, chat markup and styles, and the chat tests.
+- **Verified by:** PHP rejects foreign, same-complex different-group and deleted parents. It compares the live quote and paged quote before and after deletion. The browser follows a quote to an older page and checks focus and redaction. A live second session received the quote and its later redaction without reloading.
+- **Risk & rollback:** The self-reference is nullable and clears if the referenced row is physically removed. Rolling back the migration drops the reply references.
+
+### [Phase 11B, A07] Pin messages with manager approval
+- **Before:** Chat had no pinned strip or pin history.
+- **After:** Active managers can pin and unpin multiple messages. The strip orders pins by newest timestamp and then message ID, and each item jumps to its message. Pin changes publish to the private complex channel and record the actor and message in the scoped audit log. Deletion clears a pin and records the reason.
+- **Why:** Pin permissions are separate from chat membership. The explicit set or clear operation preserves the pinner and timestamp when the requested state is already set.
+- **Files:** The chat social migration, ChatPinRequest, GroupController, ChatSocialService, MessagePresenter, ChatPinChanged, audit translations, chat-social.js, chat markup and styles, and the chat tests.
+- **Verified by:** PHP checks manager permissions, several pins, order, removal, audit scope and the private event. The browser pins an older message, jumps from the strip and verifies cleanup after deletion. In the live run the second session saw the pin and its removal without refetching.
+- **Risk & rollback:** The strip adds a read when the chat panel opens. Rolling back the migration removes pin state. The audit records remain in the existing append-only table.
+
+### [Phase 11B, A02] Keep deleted messages as tombstones
+- **Before:** Deletion removed a message from history and the live thread. Its attachment route already denied access after deletion.
+- **After:** History and live deletion preserve the row and its cursor while redacting text, attachment and quote content. The deletion event carries the ID and kind only. The same renderer can display an actor-specific label from the deletion kind. Attachment denial remains in force.
+- **Why:** Quotes, cursor jumps and adjacent messages need a stable target after deletion.
+- **Files:** The chat social migration, GroupController, ChatService, ChatSocialService, MessagePresenter, DeleteChatMessage, EditChatMessage, chat.js, chat styles and the chat tests.
+- **Verified by:** PHP checks history, broadcast redaction and the previously readable attachment becoming unavailable. Updated deletion expectations cover the cursor page in ChatServiceTest, the delete event in MessagePresenterTest, and the deleted row and latest-page anchor in chat.spec.js. The approved 11A reachability and other-author menu assertions in chat.spec.js now check the expanded menu and preserve resident and ownership restrictions.
+- **Risk & rollback:** Existing deleted rows render with the author label. Reverting the feature hides those rows from history again.
+
+#### Phase 11B verification
+
+The PHP suite passed 498 cases with 1,677 assertions, an increase of 29 cases over Phase 11A. The browser suite passed 54 cases with zero failures and its one default opt-in live skip, an increase of four cases. The live two-context social flow passed separately with no history or pin refetch on the receiving client. Fresh SQLite migration and DemoSeeder, one rollback step, re-migration, the frontend build, Pint and JavaScript syntax checks passed. The 250-state browser sweep passed. Captures for the four features at 390 and 1440 in both themes are under the ignored `storage/app/test-screenshots/phase-11b` directory.

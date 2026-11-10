@@ -18,9 +18,9 @@ test('cursor pages retain ascending order ownership and unchanged boundary curso
     $chat = app(ChatService::class);
     $before = $chat->fetch($building->group, 'before', $messages[12]->id, 3, $building->manager->id);
     $after = $chat->fetch($building->group, 'after', $messages[12]->id, 3, $building->manager->id);
-    expect(array_column($before['messages'], 'message_id'))->toBe([$messages[8]->id, $messages[9]->id, $messages[11]->id])
+    expect(array_column($before['messages'], 'message_id'))->toBe([$messages[9]->id, $messages[10]->id, $messages[11]->id])
         ->and(array_column($after['messages'], 'message_id'))->toBe([$messages[13]->id, $messages[14]->id, $messages[15]->id])
-        ->and($before['first_message_id'])->toBe($messages[8]->id)
+        ->and($before['first_message_id'])->toBe($messages[9]->id)
         ->and($after['last_message_id'])->toBe($messages[15]->id)
         ->and($before['messages'][0]['is_owned_by_logged_in_user'])->toBeTrue();
     expect($chat->fetch($building->group, 'before', $messages->first()->id, 10, $building->manager->id))
@@ -28,7 +28,7 @@ test('cursor pages retain ascending order ownership and unchanged boundary curso
     expect($chat->fetch($building->group, 'after', $messages->last()->id, 10, $building->manager->id))
         ->toBe(['messages' => [], 'last_message_id' => $messages->last()->id]);
     $around = $chat->fetch($building->group, 'around', $messages[12]->id, 2, $building->manager->id);
-    expect(array_column($around['messages'], 'message_id'))->toBe([$messages[9]->id, $messages[11]->id, $messages[12]->id, $messages[13]->id, $messages[14]->id]);
+    expect(array_column($around['messages'], 'message_id'))->toBe([$messages[10]->id, $messages[11]->id, $messages[12]->id, $messages[13]->id, $messages[14]->id]);
 });
 
 test('empty chat and absent read receipts return null without losing the initial message page', function () {

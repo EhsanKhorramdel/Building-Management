@@ -25,17 +25,19 @@ test('sends, edits and confirms deletion of a chat message', async ({ page }) =>
     const edited = page.locator('.chat-message').filter({ hasText: 'پیام اصلاح‌شده آزمون' });
     await expect(edited).toBeVisible({ timeout: 20_000 });
     await expect(original).toHaveCount(0);
+    const row = page.locator('#' + await edited.getAttribute('id'));
     await edited.locator('summary').click();
     await edited.getByRole('button', { name: 'حذف', exact: true }).click();
     await expect(page.locator('[data-confirm-dialog]')).toBeVisible();
     await page.locator('[data-confirm-dialog] button[value=confirm]').click();
     await expect(edited).toHaveCount(0);
+    await expect(row).toHaveText('این پیام حذف شد');
 });
 
 test('pages backward and jumps to the latest visible message', async ({ page }) => {
     const messages = page.locator('.chat-message');
     const count = await messages.count();
-    const newest = await messages.last().locator('.message-text').textContent();
+    const newest = await messages.last().getAttribute('id');
     const older = page.locator('[data-older]');
     await older.click();
     await expect.poll(() => messages.count()).toBeGreaterThan(count);
@@ -43,7 +45,7 @@ test('pages backward and jumps to the latest visible message', async ({ page }) 
     await latest.click();
     await expect(latest).toBeEnabled();
     await expect(messages).toHaveCount(count);
-    await expect(messages.last().locator('.message-text')).toHaveText(newest);
+    await expect(messages.last()).toHaveAttribute('id', newest);
     await expect.poll(() => page.locator('.chatContainer').evaluate(box => box.scrollHeight - box.clientHeight - box.scrollTop)).toBeLessThanOrEqual(1);
     await expect(older).toBeVisible();
     await expect(page.locator('[data-newer]')).toBeVisible();
@@ -103,11 +105,12 @@ for (const width of [390, 1440]) {
             const text = 'پیام منوی آزمون ' + state;
             const message = await latestOwnMessage(page, text);
             const trigger = message.locator('summary');
-            const actions = ['کپی', 'ویرایش', 'حذف', 'مشاهده کنندگان'];
+            const actions = ['کپی', 'ویرایش', 'حذف', 'مشاهده کنندگان', 'واکنش', 'پاسخ', 'سنجاق کردن'];
+            const menu = message.locator('.chat-menu-actions');
             await trigger.click();
-            await expect(message.getByRole('button')).toHaveCount(4);
+            await expect(menu.getByRole('button')).toHaveCount(actions.length);
             for (const name of actions) {
-                const action = message.getByRole('button', { name, exact: true });
+                const action = menu.getByRole('button', { name, exact: true });
                 await expect(action).toBeInViewport({ ratio: 1 });
                 expect(await action.evaluate(button => {
                     const rect = button.getBoundingClientRect();
@@ -131,6 +134,21 @@ for (const width of [390, 1440]) {
             await trigger.click();
             await message.getByRole('button', { name: actions[3], exact: true }).click();
             await expect(page.locator('.modal-message-viewer')).toBeVisible();
+            await page.keyboard.press('Escape');
+            await trigger.click();
+            await menu.getByRole('button', { name: actions[4], exact: true }).click();
+            await expect(page.locator('[data-chat-social-dialog]')).toBeVisible();
+            await page.keyboard.press('Escape');
+            await trigger.click();
+            await menu.getByRole('button', { name: actions[5], exact: true }).click();
+            await expect(page.locator('[data-chat-reply]')).toContainText(text);
+            await page.getByRole('button', { name: 'لغو پاسخ' }).click();
+            await trigger.click();
+            await menu.getByRole('button', { name: actions[6], exact: true }).click();
+            await expect(page.locator('[data-chat-pins]')).toContainText(text);
+            await trigger.click();
+            await menu.getByRole('button', { name: 'برداشتن سنجاق', exact: true }).click();
+            await expect(page.locator('[data-chat-pins]')).toBeHidden();
         });
     }
 }
@@ -269,7 +287,9 @@ test('viewer names are available to the author and complex manager only', async 
         await captureInteraction(author.session, 'F11-07-author-viewers-390');
         const otherMessage = received.locator('xpath=ancestor::article');
         await otherMessage.locator('summary').click();
-        await expect(otherMessage.getByRole('button')).toHaveText(['کپی']);
+        const otherMenu = otherMessage.locator('.chat-menu-actions');
+        await expect(otherMenu.getByRole('button')).toHaveText(['کپی', 'واکنش', 'پاسخ']);
+        await expect(otherMenu.getByRole('button', { name: /ویرایش|حذف|سنجاق|مشاهده کنندگان/ })).toHaveCount(0);
         await captureInteraction(neighbor.session, 'F11-07-non-author-menu-390');
     } finally {
         await Promise.all(contexts.map(({ context }) => context.close()));

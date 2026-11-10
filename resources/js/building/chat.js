@@ -1,6 +1,7 @@
 import Pusher from 'pusher-js';
 import { config, csrf, request } from './api';
 import { closeDialog, confirmAction, openDialog, toast } from '../ui';
+import { chatSocial } from './chat-social';
 
 const root = '/dashboard/building';
 const group = root + '/group';
@@ -27,10 +28,14 @@ export function chat() {
     const newer = document.querySelector('[data-newer]');
     const latest = document.querySelector('[data-latest]');
     const editState = document.querySelector('[data-chat-edit]');
+    const replyState = document.querySelector('[data-chat-reply]');
     const viewerDialog = document.querySelector('.modal-message-viewer');
     const messages = new Map();
     const marked = new Set();
+    const deletions = new Map();
+    const social = chatSocial(group, root + '/' + config.complexId + '/chat-pins', jumpTo);
     let editing = null;
+    let replying = null;
     let first = null;
     let last = null;
     let pending = false;
@@ -87,6 +92,16 @@ export function chat() {
     }
 
     editState.querySelector('button').addEventListener('click', cancelEdit);
+    function clearReply() {
+        replying = null;
+        replyState.hidden = true;
+        replyState.querySelector('[data-reply-author]').textContent = '';
+        replyState.querySelector('[data-reply-snippet]').textContent = '';
+    }
+    replyState.querySelector('button').addEventListener('click', () => {
+        clearReply();
+        text.focus();
+    });
     image.addEventListener('change', () => { fileName.textContent = image.files[0]?.name || ''; });
 
     async function markVisible() {
@@ -98,10 +113,56 @@ export function chat() {
         });
         for (const item of visible) {
             const id = Number(item.dataset.messageId);
-            if (marked.has(id)) continue;
+            if (marked.has(id) || deletions.has(id)) continue;
             marked.add(id);
             if (!await request(group + '/seen', { method: 'POST', data: { messageId: id }, json: false })) marked.delete(id);
         }
+    }
+
+    function redact(message, kind) {
+        Object.assign(message, { is_deleted: true, deletion_kind: kind, text: null, image_url: null, quote: null });
+    }
+
+    function rememberDeletion(id, kind) {
+        deletions.set(id, kind);
+        social.remove(id);
+        const message = messages.get(id);
+        if (message) redact(message, kind);
+        for (const reply of messages.values()) {
+            if (reply.quote?.message_id === id) reply.quote = { message_id: id, deleted: true };
+        }
+        if (replying === id) clearReply();
+        if (editing?.message_id === id) cancelEdit();
+    }
+
+    function applyDeletion({ id, deletion_kind: kind }) {
+        rememberDeletion(id, kind);
+        const top = scroll.scrollTop;
+        render();
+        scroll.scrollTop = top;
+    }
+
+    function startReply(message) {
+        if (editing) cancelEdit();
+        replying = message.message_id;
+        replyState.querySelector('[data-reply-author]').textContent = message.user_name;
+        const snippet = (message.text ?? '').replace(/\s+/g, ' ').trim() || 'تصویر';
+        replyState.querySelector('[data-reply-snippet]').textContent = snippet.length > 96 ? snippet.slice(0, 96) + '…' : snippet;
+        replyState.hidden = false;
+        text.focus();
+    }
+
+    function focusMessage(id) {
+        const row = document.getElementById('message-' + id);
+        if (!row) return false;
+        scroll.scrollTop += row.getBoundingClientRect().top - scroll.getBoundingClientRect().top
+            - (scroll.clientHeight - row.offsetHeight) / 2;
+        row.focus({ preventScroll: true });
+        return true;
+    }
+
+    function jumpTo(id) {
+        if (!focusMessage(id)) void load('jump', id);
     }
 
     async function viewers(messageId, trigger) {
@@ -130,7 +191,15 @@ export function chat() {
             const row = node('article', own ? 'chat-message own-message' : 'chat-message');
             row.dataset.messageId = message.message_id;
             row.id = 'message-' + message.message_id;
+            row.tabIndex = -1;
             const bubble = node('div', 'chat-bubble');
+            if (message.is_deleted) {
+                const label = message.deletion_kind === 'manager' ? 'این پیام توسط مدیر حذف شد' : 'این پیام حذف شد';
+                bubble.append(node('p', 'chat-tombstone', label));
+                row.append(bubble);
+                list.append(row);
+                continue;
+            }
             const heading = node('div', 'chat-message-heading');
             heading.append(node('strong', 'chat-author', message.user_name));
             const menu = node('details', 'chat-menu');
@@ -138,6 +207,7 @@ export function chat() {
             trigger.setAttribute('aria-label', 'گزینه‌های پیام');
             const actions = node('div', 'chat-menu-actions');
             actions.setAttribute('popover', 'manual');
+            let pinAction;
             trigger.addEventListener('click', event => {
                 event.preventDefault();
                 if (openMenu?.menu === menu) {
@@ -145,6 +215,7 @@ export function chat() {
                     return;
                 }
                 closeMenu(false);
+                if (pinAction) pinAction.textContent = social.pinLabel(message.message_id);
                 menu.open = true;
                 actions.showPopover();
                 openMenu = { menu, trigger, actions };
@@ -158,6 +229,7 @@ export function chat() {
                     await run(trigger);
                 });
                 actions.append(button);
+                return button;
             }
             if (message.text) action('کپی', async () => {
                 try {
@@ -169,6 +241,7 @@ export function chat() {
             });
             if (own) {
                 action('ویرایش', () => {
+                    clearReply();
                     editing = message;
                     editState.hidden = false;
                     text.value = message.text || '';
@@ -179,18 +252,33 @@ export function chat() {
                     const result = await request(group + '/' + message.message_id, { method: 'DELETE' });
                     if (!result) return;
                     if (String(result.status) === '403') toast(result.message, 'error');
-                    else {
-                        messages.delete(message.message_id);
-                        render();
-                    }
+                    else applyDeletion(result.deletedMessage);
                 });
                 action('مشاهده کنندگان', opener => viewers(message.message_id, opener));
             }
-            if (actions.childElementCount) {
-                menu.append(trigger, actions);
-                heading.append(menu);
+            action('واکنش', opener => social.pickReaction(message.message_id, opener));
+            action('پاسخ', () => startReply(message));
+            if (config.canPin) {
+                pinAction = action(social.pinLabel(message.message_id), () => social.togglePin(message.message_id));
             }
+            const quick = node('button', 'chat-social-button', '☺');
+            quick.type = 'button';
+            quick.dataset.quickReaction = '';
+            quick.setAttribute('aria-label', 'افزودن واکنش');
+            quick.addEventListener('click', () => social.pickReaction(message.message_id, quick));
+            menu.append(trigger, actions);
+            const controls = node('div', 'chat-social-actions');
+            controls.append(quick, menu);
+            heading.append(controls);
             bubble.append(heading);
+            if (message.quote) {
+                const quote = node('button', 'chat-quote');
+                quote.type = 'button';
+                if (message.quote.deleted) quote.textContent = 'این پیام حذف شد';
+                else quote.append(node('strong', '', message.quote.user_name), node('span', '', message.quote.snippet));
+                quote.addEventListener('click', () => jumpTo(message.quote.message_id));
+                bubble.append(quote);
+            }
             if (message.image_url) {
                 const photo = node('img', 'chat-image');
                 photo.src = message.image_url;
@@ -199,6 +287,9 @@ export function chat() {
             }
             if (message.text) bubble.append(node('p', 'message-text', message.text));
             bubble.append(node('p', 'chat-time', time.format(created) + (message.is_edited ? ' · ویرایش شده' : '')));
+            const reactionRow = node('div', 'chat-reactions');
+            social.renderReactions(reactionRow, message.message_id);
+            bubble.append(reactionRow);
             row.append(bubble);
             list.append(row);
         }
@@ -208,19 +299,32 @@ export function chat() {
     }
 
     function merge(results) {
-        for (const item of results.messages) messages.set(item.message_id, item);
+        for (const item of results.messages) {
+            if (item.is_deleted) {
+                rememberDeletion(item.message_id, item.deletion_kind);
+            }
+        }
+        for (const item of results.messages) {
+            if (deletions.has(item.message_id)) redact(item, deletions.get(item.message_id));
+            if (deletions.has(item.quote?.message_id)) item.quote = { message_id: item.quote.message_id, deleted: true };
+            if (item.reactions) social.rememberReactions({
+                message_id: item.message_id, reactions: item.reactions, version: item.reaction_version,
+            });
+            messages.set(item.message_id, item);
+        }
     }
 
-    async function load(direction = 'initial') {
+    async function load(direction = 'initial', target = 0) {
         if (pagePending) return;
         pagePending = true;
         older.disabled = newer.disabled = latest.disabled = true;
         try {
-            if (direction === 'initial' || direction === 'latest') {
+            if (direction === 'initial' || direction === 'latest' || direction === 'jump') {
                 state.textContent = 'در حال دریافت پیام‌ها…';
                 state.hidden = false;
                 state.dataset.loading = '';
-                const receipt = direction === 'latest' ? {} : await request(root + '/' + config.complexId + '/lastMessageSeenId');
+                const receipt = direction === 'initial' ? await request(root + '/' + config.complexId + '/lastMessageSeenId')
+                    : { last_message_seen_id: target };
                 const result = receipt && await request(root + '/' + config.complexId + '/group/' + (receipt.last_message_seen_id ?? 0));
                 if (!result) {
                     state.textContent = 'پیام‌ها دریافت نشدند.';
@@ -233,12 +337,15 @@ export function chat() {
                 older.hidden = first === null;
                 newer.hidden = last === null;
                 render();
-                if (direction === 'latest') {
+                if (direction !== 'initial') {
                     await Promise.allSettled([...list.querySelectorAll('img')].map(image => image.decode()));
                 }
-                const anchor = document.getElementById('message-' + receipt.last_message_seen_id);
-                if (anchor) scroll.scrollTop = anchor.offsetTop - scroll.offsetTop;
-                else scroll.scrollTop = scroll.scrollHeight;
+                if (direction === 'jump') focusMessage(target);
+                else {
+                    const anchor = document.getElementById('message-' + receipt.last_message_seen_id);
+                    if (anchor) scroll.scrollTop = anchor.offsetTop - scroll.offsetTop;
+                    else scroll.scrollTop = scroll.scrollHeight;
+                }
             } else {
                 const before = direction === 'before';
                 const cursor = before ? first : last;
@@ -273,7 +380,10 @@ export function chat() {
         scrollTimer = setTimeout(markVisible, 180);
     });
     document.addEventListener('panelchange', event => {
-        if (event.detail === 'chat') void load();
+        if (event.detail === 'chat') {
+            void load();
+            void social.loadPins();
+        }
     });
 
     form.addEventListener('submit', async event => {
@@ -288,9 +398,11 @@ export function chat() {
         send.disabled = true;
         form.setAttribute('aria-busy', 'true');
         try {
+            const editedId = editing?.message_id;
             const data = editing ? { messageId: editing.message_id, messageText: editedText } : new FormData(form);
             if (!editing) {
                 data.set('complexId', config.complexId);
+                if (replying !== null) data.set('parent_id', replying);
                 if (!image.files.length) data.delete('messageImage');
             }
             const result = await request(group + (editing ? '/edit' : '/send'), { method: 'POST', data, json: false });
@@ -298,7 +410,13 @@ export function chat() {
             form.reset();
             fileName.textContent = '';
             cancelEdit();
-            await load();
+            clearReply();
+            if (editedId) {
+                await load('jump', editedId);
+                void social.loadPins();
+            } else {
+                await load('latest');
+            }
         } finally {
             pending = false;
             send.disabled = false;
@@ -327,7 +445,7 @@ export function chat() {
         channel.bind('pusher:subscription_error', () => toast('اتصال گفت‌وگوی زنده برقرار نشد.', 'error'));
         channel.bind('NewChatMessage', ({ message }) => {
             if (document.querySelector('.chat-window').hidden) return;
-            messages.set(message.message_id, message);
+            merge({ messages: [message] });
             first ??= message.message_id;
             last = Math.max(last ?? 0, message.message_id);
             render();
@@ -336,14 +454,14 @@ export function chat() {
         });
         channel.bind('EditChatMessage', ({ editedMessage }) => {
             const message = messages.get(editedMessage.id);
-            if (message) {
+            if (message && !message.is_deleted && !editedMessage.deletion_kind) {
                 message.text = editedMessage.text;
                 message.is_edited = true;
                 render();
             }
         });
-        channel.bind('DeleteChatMessage', ({ deletedMessage }) => {
-            if (messages.delete(deletedMessage.id)) render();
-        });
+        channel.bind('DeleteChatMessage', ({ deletedMessage }) => applyDeletion(deletedMessage));
+        channel.bind('ChatReactionsChanged', social.applyReactions);
+        channel.bind('ChatPinChanged', social.applyPin);
     }
 }

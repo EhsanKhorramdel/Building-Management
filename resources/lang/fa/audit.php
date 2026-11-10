@@ -12,4 +12,8 @@ return [
     'join_link' => [
         'rotated' => 'بروزرسانی لینک عضویت',
     ],
+    'chat' => [
+        'message_pinned' => 'سنجاق کردن پیام',
+        'message_unpinned' => 'برداشتن سنجاق پیام',
+    ],
 ];

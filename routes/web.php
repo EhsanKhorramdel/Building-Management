@@ -49,6 +49,9 @@ Route::post('/dashboard/building/getMessageViewers', [GroupController::class, 'g
 Route::post('/dashboard/building/group/send', [GroupController::class, 'store']);
 Route::post('/dashboard/building/group/edit', [GroupController::class, 'edit']);
 Route::post('/dashboard/building/group/seen/', [GroupController::class, 'seen']);
+Route::get('/dashboard/building/{complex}/chat-pins', [GroupController::class, 'pins']);
+Route::post('/dashboard/building/group/{Message}/reactions', [GroupController::class, 'react']);
+Route::put('/dashboard/building/group/{Message}/pin', [GroupController::class, 'pin']);
 Route::delete('/dashboard/building/group/{Message}', [GroupController::class, 'destroy']);
 
 Route::get('/dashboard/building/{complex}', [BuildingDashboardController::class, 'index'])->name('building');

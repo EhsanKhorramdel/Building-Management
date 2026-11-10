@@ -38,6 +38,6 @@ class DeleteChatMessage implements ShouldBroadcast
 
     public function broadcastWith(): array
     {
-        return ['deletedMessage' => app(MessagePresenter::class)->broadcastModel($this->deletedMessage)];
+        return ['deletedMessage' => app(MessagePresenter::class)->deletion($this->deletedMessage)];
     }
 }
