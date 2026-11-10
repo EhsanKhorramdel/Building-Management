@@ -1,5 +1,7 @@
 # Findings
 
+All findings were closed in Phase 8C (commit `fae3a88`).
+
 The audit reviewed the accepted Phase 8 build. These entries are for owner review. Effort estimates use S for a small localized change, M for coordinated changes or tests, and L for work across several areas.
 
 ## Audit results

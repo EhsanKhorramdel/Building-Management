@@ -16,7 +16,7 @@ Managers administer their own complexes, publish notices and set charges and inc
 
 ## Requirements
 
-- PHP 8.3 or later and Composer 2.
+- PHP 8.3 or a newer PHP 8.x release, and Composer 2.
 - Node.js 20 or later with npm. The project was built with Node.js 22.
 - SQLite with the PHP PDO SQLite extension for development and tests. Use MySQL 8 with PDO MySQL in production.
 

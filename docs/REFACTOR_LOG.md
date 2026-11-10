@@ -58,7 +58,7 @@ Findings remain open unless a closing commit is recorded below. The named phases
 
 ### [Baseline] Predictable join links
 - **Status:** CLOSED in 1505f640593e5257ee3c78557a6ff822b6612015.
-- **Before:** `join_link` generated with `uniqid()` in `AdminController@accept`.
+- **Before:** `AdminController@accept` used `uniqid()` for `join_link`.
 - **Why it matters:** time-based and guessable — anyone can join any complex as resident.
 - **Cause:** `uniqid()` used as if it were a random token.
 - **Closed by:** Phase 2.
@@ -1111,3 +1111,20 @@ Findings remain open unless a closing commit is recorded below. The named phases
 - **Files:** Playwright configs, npm scripts and lockfile, E2ESeeder, tests/e2e, four baseline PNGs, .gitignore, README and VISUAL_QA.md.
 - **Verified by:** PHP passed 447 tests and 1,414 assertions. The browser run had 38 passes, one expected failure and one pending case. The 250-capture sweep and 25 axe scans passed. Four refreshed comparisons had zero changed pixels. Build, Pint and the staged style scan passed.
 - **Risk & rollback:** The runner removes both temporary roots at exit. The browser findings record the logout redirect to the public home page. The reload-based chat check passes with the log broadcaster. Live delivery without a reload stays pending until a real broadcaster is available.
+
+### [Phase 10] Verify and release the refactor baseline
+- **Before:** The browser suite treated the public logout destination as an expected failure. The dependency refresh, clean-room setup and MySQL attempt were outstanding.
+- **After:** The browser checks assert the approved public logout destination, the redirect from a protected page and signing in again. The release includes the building permission boundaries, private chat attachments, payment integrity checks, audit events, responsive layouts, maps and optional integrations. The README uses the npm lockfile for installation.
+- **Why:** The logout test now checks the reviewed contract. A clean checkout exercises the documented path and locked dependencies without using the development database.
+- **Files:** tests/e2e/auth.spec.js, composer.lock, README, CHANGELOG, ARCHITECTURE.md, FINDINGS.md and VISUAL_QA.md.
+- **Verified by:** PHP 8.3.36 and Laravel 12.72.0 passed 447 PHP tests with 1,414 assertions. The clean-room browser run passed 39 cases with one pending live-push case and zero expected failures. Composer and npm audits reported zero advisories. The frontend build and JavaScript syntax checks passed. Both Pint versions reported the same 48 pre-existing PHP formatting findings.
+- **Dependency review:** Seven Composer packages moved within their existing major versions. The prior optional metadata was retained for three unchanged Spatie packages. The npm audit fix left package versions unchanged.
+- **MySQL attempt:** A portable MySQL 8.4.13 instance on loopback port 33316 passed migrate, rollback, migrate:fresh and DemoSeeder in a scratch schema. The full test command used a separate schema. Its 10 unit cases passed, and the bootstrap guard rejected all 437 feature cases because the suite requires in-memory SQLite. The scratch server shut down cleanly.
+- **Risk & rollback:** The normal installation retains disabled-by-default payment and SMS settings. The clean-room run used a local clone at `8310571` and isolated browser databases. The release notes list the remaining coverage and attachment scope.
+
+#### Open items
+
+- Live Pusher delivery test is pending a configured broadcasting app.
+- Full MySQL test coverage remains open. MySQL 8.4.13 passed migration, one rollback step, fresh migration and demo seeding. The test harness requires in-memory SQLite and stopped all 437 feature cases during bootstrap.
+- Announcement and incidental-cost images still use public storage. This is accepted scope. Chat attachments require authorization.
+- Post-refactor backlog is tracked in the items marked Later. [Proposals](PROPOSALS.md)

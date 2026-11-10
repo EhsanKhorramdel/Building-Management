@@ -89,11 +89,11 @@ The action queues work after saving. A dedicated database worker processes the `
 
 ## Deployment
 
-Use PHP 8.3 or later and MySQL 8. Install the locked PHP dependencies, build assets with `npm run build`, run migrations and point the web root at `public`. Persist `storage/app/public` and `storage/app/private/chats` across releases. Run `php artisan storage:link` for public announcement and cost images. Chat attachments are served through the complex membership check, with a global admin exception. Keep the app key and production credentials in the deployment environment and leave demo seeding for local use.
+Use PHP 8.3 or a newer PHP 8.x release, and MySQL 8. Install the locked PHP dependencies, build assets with `npm run build`, run migrations and point the web root at `public`. Persist `storage/app/public` and `storage/app/private/chats` across releases. Run `php artisan storage:link` for public announcement and cost images. Chat attachments are served through the complex membership check, with a global admin exception. Keep the app key and production credentials in the deployment environment and leave demo seeding for local use.
 
-The template runs queued work synchronously and logs broadcasts. Configure Pusher for live updates and run a queue worker if the selected queue connection is asynchronous. Serve production traffic over HTTPS.
+The template uses a synchronous default queue and logs broadcasts. Configure Pusher for live updates. When SMS is enabled, run `php artisan queue:work database --queue=sms` for its dedicated queue. Serve production traffic over HTTPS.
 
-Live MySQL migration and rollback verification is pending a MySQL environment. The end-to-end live Pusher check is pending a configured Pusher environment.
+Migration, one rollback step, fresh migration and demo seeding passed on scratch MySQL 8.4.13. The feature suite's bootstrap enforces in-memory SQLite, so full MySQL test coverage remains open. Live Pusher delivery is pending a configured broadcasting app.
 
 ## Numeric form inputs
 

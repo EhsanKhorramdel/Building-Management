@@ -127,7 +127,7 @@ The four reference PNGs under `tests/e2e/baselines` cover the 1440px dashboard i
 
 The first comparison found 16,531 changed pixels (5.17%) in the mobile chat reference, which captured paging in progress. The refreshed reference waits until the newest message is in view and the paging controls are available again. The original comparison is kept in `chat-390-dark-initial-diff.png`. The full rerun found zero changed pixels across all four references.
 
-Logout ends the session, but the response lands on the public home page. A protected page then redirects to login. The direct-to-login assertion is an expected failure in `auth.spec.js`. The observed URL is attached to the test, and the screenshot is in `storage/app/test-screenshots/phase-9/findings/logout-destination.png`. The two-context chat test checks delivery after a reload. Live delivery without a reload is pending a real broadcaster.
+In Phase 9, the direct-to-login assertion was an expected failure in `auth.spec.js`. The observed URL was attached to the test, and the screenshot is in `storage/app/test-screenshots/phase-9/findings/logout-destination.png`. Phase 10 accepted the public home page as the logout destination. The current browser suite checks that a protected page redirects to sign-in after logout and that the user can sign in again. The two-context chat test checks delivery after a reload. Live delivery without a reload is pending a real broadcaster.
 
 | Spec | Passed | Expected failure | Pending | Unexpected failures |
 | --- | ---: | ---: | ---: | ---: |
@@ -145,3 +145,7 @@ Logout ends the session, but the response lands on the public home page. A prote
 | **Total** | **38** | **1** | **1** | **0** |
 
 The full command took 14m 18s including the build. Playwright reported 12m 25s for startup, setup and tests. All 250 sweep captures passed the guards. The 25 axe scans reported zero violations. The capture contact sheets and the four references were reviewed.
+
+## Phase 10 release check
+
+The clean-room run passed 39 browser cases with one pending live-push case and zero expected failures. Playwright reported 6m 50s for startup, setup and tests. All 250 captures passed, the 25 axe scans found zero violations and the four references matched at zero changed pixels.
