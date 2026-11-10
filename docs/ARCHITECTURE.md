@@ -84,7 +84,8 @@ The action queues work after saving. A dedicated database worker processes the `
 
 - PHP unit and feature tests run with `php artisan test` on in-memory SQLite. Feature coverage includes auth, building workflows, payment period boundaries, schema constraints and domain services.
 - The authorization matrix checks guests, admins, scoped managers and residents, and access from a different complex. Broadcast tests cover the channel callback and event channel names.
-- Playwright captures seeded screens in light and dark across five widths, with checks for overflow and browser errors. See [visual QA](VISUAL_QA.md).
+- `npm run test:e2e` starts isolated SQLite servers for manual and mock-payment flows. Playwright checks the browser journeys and captures seeded screens in light and dark across five widths. See [visual QA](VISUAL_QA.md).
+- Logout ends the session and redirects to the public home page. Authentication middleware sends subsequent requests for protected pages to sign-in.
 
 ## Deployment
 

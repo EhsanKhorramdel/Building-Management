@@ -28,7 +28,7 @@ Clone the repository and install its dependencies.
 git clone https://github.com/EhsanKhorramdel/Building-Management.git
 cd Building-Management
 composer install
-npm install
+npm ci
 ```
 
 Copy the environment template.
@@ -62,6 +62,8 @@ php artisan serve
 Open `http://127.0.0.1:8000/login` and sign in with a demo account. For live asset updates while editing, run `npm run dev` in a second terminal in place of `npm run build`.
 
 If port 8000 is occupied, set `APP_URL=http://127.0.0.1:8001`, run `php artisan serve --port=8001` and open `http://127.0.0.1:8001/login`.
+
+Signing out ends the session and opens the public home page. Opening a protected page after signing out takes you to sign-in.
 
 ### Demo accounts
 
