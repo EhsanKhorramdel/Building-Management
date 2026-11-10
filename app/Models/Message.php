@@ -24,6 +24,7 @@ class Message extends Model
         'deleted' => 'boolean',
         'edited' => 'boolean',
         'pinned_at' => 'datetime',
+        'deleted_at' => 'datetime',
     ];
 
     public function group(): BelongsTo

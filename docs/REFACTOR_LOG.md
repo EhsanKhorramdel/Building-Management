@@ -1237,3 +1237,39 @@ Findings remain open unless a closing commit is recorded below. The named phases
 #### Phase 11B verification
 
 The PHP suite passed 498 cases with 1,677 assertions, an increase of 29 cases over Phase 11A. The browser suite passed 54 cases with zero failures and its one default opt-in live skip, an increase of four cases. The live two-context social flow passed separately with no history or pin refetch on the receiving client. Fresh SQLite migration and DemoSeeder, one rollback step, re-migration, the frontend build, Pint and JavaScript syntax checks passed. The 250-state browser sweep passed. Captures for the four features at 390 and 1440 in both themes are under the ignored `storage/app/test-screenshots/phase-11b` directory.
+
+### [Phase 11C, A04] Delete messages as a complex manager
+- **Before:** A manager could delete only their own messages.
+- **After:** An active manager can delete another author's message with a required reason, capped at 240 characters. The new migration adds the deletion actor, reason and time. The tombstone renders the manager kind, and a scoped audit event stores the message subject and reason.
+- **Why:** Moderation needs accountability without exposing the removed body or internal reason in member-facing history and broadcasts.
+- **Files:** ChatDeleteRequest, GroupController, ChatSocialService, Message, MessagePresenter, the deletion-details migration, audit translations, chat views and modules, ChatPowerTest and chat-power.spec.js.
+- **Verified by:** PHP covers resident, foreign-manager and inactive-manager denial, required and bounded reasons, audit scope, metadata and retry behavior. Browser flows cover the reason dialog and manager tombstone at 390 and 1440 in both themes.
+- **Risk & rollback:** Historical deletions keep null actor, reason and time. Rolling back the migration removes the new details. The retained bodies remain inaccessible through chat history and attachments.
+
+### [Phase 11C, A09] Select and delete a batch of messages
+- **Before:** Chat could delete one message at a time.
+- **After:** A menu action or touch hold starts selection. Checkboxes, a live count and Cancel remain available while paging. One request accepts at most 50 distinct IDs from the selected complex's group. Each item follows author or manager deletion rules, with one shared moderation reason. Results state success or denial per item, and one private event carries the resulting tombstones.
+- **Why:** A mixed batch needs to make progress without granting access to foreign messages or hiding individual denials.
+- **Files:** ChatBulkDeleteRequest, GroupController, ChatSocialService, ChatMessagesDeleted, chat-power.js, chat.js, views and CSS, and the new PHP and browser cases.
+- **Verified by:** PHP tests mixed own/other/foreign IDs, partial success, missing moderation reason, duplicate IDs, the 50/51 boundary and retries. Browser flows select three messages, including other authors, and check the shared reason and counts. The existing chat.spec.js menu checks now include Select while retaining reachability and ownership checks.
+- **Risk & rollback:** Each row commits separately, so retrying a partially completed request may report already-deleted rows. The response identifies those rows explicitly. Revert the endpoint and client selection controls together.
+
+### [Phase 11C, A10] Search current chat text
+- **Before:** Chat history could be paged by ID but had no text search.
+- **After:** A scoped endpoint returns 20 matches at a time, with author, Jalali date and a snippet. Search reuses the typed boundary's digit replacements and adds the requested letter variants. The same replacements run on the stored text side of the query. Tombstones are excluded, edits are read from the current body, and result clicks jump and briefly highlight the original row.
+- **Why:** Search must match Persian and Arabic spellings without rewriting historical bodies or exposing deleted content.
+- **Files:** TypedInput, ChatSearchRequest, ChatSearchService, GroupController, routes, chat-power.js, chat.js, views, styles and tests.
+- **Verified by:** PHP covers both directions of the letter variants, Arabic-Indic and Persian digits, literal wildcard characters, pagination, edited and deleted content, group authorization and the paging target. The browser matrix searches an older message and checks focus and highlighting after the jump. The 390px search controls have opened-state hit checks.
+- **Risk & rollback:** The portable SQL replacements scan matching text within the indexed group scope. Search is ordered by descending message ID. Remove the route and controls together to roll back.
+
+### [Phase 11C, A11] Signal typing over the private channel
+- **Before:** Chat had no typing signal.
+- **After:** The Pusher client sends client-typing whispers containing an ID, bounded name and active flag. Active signals are throttled to 1.5 seconds. Send, clear and leaving the panel stop immediately, and peer names expire after five seconds. The log broadcaster uses a no-op handler. No server typing route, event class or storage was added.
+- **Why:** Typing is short-lived client state. It should expire even when a peer disconnects without a final stop signal.
+- **Files:** chat-typing.js, chat.js, the building config and typing element, client unit tests, the live branch of chat-power.spec.js, README and ARCHITECTURE.md.
+- **Verified by:** Six Node tests cover payload shape, no-op use, throttling, immediate stop, expiry, malformed input and subscription readiness. Route snapshots show only the new search and bulk routes. Initial live retries reached both private subscriptions but the provider rejected whispers until Client Events was enabled on the configured app. After the owner saved that setting, a fresh two-context browser run passed: the peer saw the typing name without reload, clearing hid it promptly, and an idle signal expired within five seconds. The same live run passed moderation, bulk deletion and search. Evidence is typing-live-390-light.png in the phase capture directory. No credential or broadcaster configuration changed.
+- **Risk & rollback:** The broadcasting app must enable Client Events. Typing names are advisory client signals. Revert the module and template element together to remove the indicator.
+
+#### Phase 11C verification
+
+The PHP suite passed 521 cases with 1,805 assertions, an increase of 23 cases over Phase 11B. Six client typing unit tests passed. The default browser suite passed 58 cases with its one opt-in live skip, an increase of four cases. The 250-state sweep passed overflow, console, image, touch-target and accessibility guards. The four new browser flows cover 390 and 1440 in both themes. Captures are under the ignored `storage/app/test-screenshots/phase-11c` directory; visual review caught and corrected a clipped search Close control and a cramped selection count on the phone layout. Fresh SQLite migration and DemoSeeder, one rollback step, re-migration, the frontend build, Pint, JavaScript syntax checks and the staged style check passed. The only existing test file edited was chat.spec.js: its two exact-menu assertions now include Select, with the existing reachability and ownership restrictions retained. No existing PHP test changed.

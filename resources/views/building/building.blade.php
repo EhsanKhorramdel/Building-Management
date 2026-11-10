@@ -54,6 +54,7 @@
         'broadcastAuth' => url('/broadcasting/auth'),
         'complexId' => $complex->id,
         'userId' => $userLogInId,
+        'userName' => auth()->user()->name,
         'canPin' => $isManager,
         'reactionPalette' => \App\Models\MessageReaction::PALETTE,
         'initialPanel' => $initialPanel,

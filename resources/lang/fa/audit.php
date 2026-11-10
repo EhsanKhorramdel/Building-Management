@@ -15,5 +15,6 @@ return [
     'chat' => [
         'message_pinned' => 'سنجاق کردن پیام',
         'message_unpinned' => 'برداشتن سنجاق پیام',
+        'message_moderated' => 'حذف پیام توسط مدیر',
     ],
 ];

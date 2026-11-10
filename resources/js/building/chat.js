@@ -1,7 +1,9 @@
 import Pusher from 'pusher-js';
 import { config, csrf, request } from './api';
-import { closeDialog, confirmAction, openDialog, toast } from '../ui';
+import { closeDialog, openDialog, toast } from '../ui';
 import { chatSocial } from './chat-social';
+import { chatPower } from './chat-power';
+import { typingIndicator } from './chat-typing';
 
 const root = '/dashboard/building';
 const group = root + '/group';
@@ -34,6 +36,10 @@ export function chat() {
     const marked = new Set();
     const deletions = new Map();
     const social = chatSocial(group, root + '/' + config.complexId + '/chat-pins', jumpTo);
+    const power = chatPower({ groupUrl: group, render, jumpTo, applyDeletions });
+    const typingOutput = document.querySelector('[data-chat-typing]');
+    const typingUser = { id: config.userId, name: config.userName };
+    let typing = typingIndicator(null, typingUser, typingOutput);
     let editing = null;
     let replying = null;
     let first = null;
@@ -89,6 +95,7 @@ export function chat() {
         editing = null;
         editState.hidden = true;
         text.value = '';
+        typing.stop();
     }
 
     editState.querySelector('button').addEventListener('click', cancelEdit);
@@ -126,6 +133,7 @@ export function chat() {
     function rememberDeletion(id, kind) {
         deletions.set(id, kind);
         social.remove(id);
+        power.remove(id);
         const message = messages.get(id);
         if (message) redact(message, kind);
         for (const reply of messages.values()) {
@@ -136,7 +144,11 @@ export function chat() {
     }
 
     function applyDeletion({ id, deletion_kind: kind }) {
-        rememberDeletion(id, kind);
+        applyDeletions([{ id, deletion_kind: kind }]);
+    }
+
+    function applyDeletions(items) {
+        for (const { id, deletion_kind: kind } of items) rememberDeletion(id, kind);
         const top = scroll.scrollTop;
         render();
         scroll.scrollTop = top;
@@ -158,6 +170,8 @@ export function chat() {
         scroll.scrollTop += row.getBoundingClientRect().top - scroll.getBoundingClientRect().top
             - (scroll.clientHeight - row.offsetHeight) / 2;
         row.focus({ preventScroll: true });
+        row.classList.add('chat-message-highlight');
+        setTimeout(() => row.classList.remove('chat-message-highlight'), 2500);
         return true;
     }
 
@@ -194,7 +208,7 @@ export function chat() {
             row.tabIndex = -1;
             const bubble = node('div', 'chat-bubble');
             if (message.is_deleted) {
-                const label = message.deletion_kind === 'manager' ? 'این پیام توسط مدیر حذف شد' : 'این پیام حذف شد';
+                const label = message.deletion_kind === 'manager' ? 'توسط مدیر حذف شد' : 'این پیام حذف شد';
                 bubble.append(node('p', 'chat-tombstone', label));
                 row.append(bubble);
                 list.append(row);
@@ -247,20 +261,17 @@ export function chat() {
                     text.value = message.text || '';
                     text.focus();
                 });
-                action('حذف', async () => {
-                    if (!await confirmAction('این پیام حذف شود؟')) return;
-                    const result = await request(group + '/' + message.message_id, { method: 'DELETE' });
-                    if (!result) return;
-                    if (String(result.status) === '403') toast(result.message, 'error');
-                    else applyDeletion(result.deletedMessage);
-                });
+                action('حذف', opener => power.deleteMessage(message, opener));
                 action('مشاهده کنندگان', opener => viewers(message.message_id, opener));
+            } else if (config.canPin) {
+                action('حذف توسط مدیر', opener => power.deleteMessage(message, opener));
             }
             action('واکنش', opener => social.pickReaction(message.message_id, opener));
             action('پاسخ', () => startReply(message));
             if (config.canPin) {
                 pinAction = action(social.pinLabel(message.message_id), () => social.togglePin(message.message_id));
             }
+            action('انتخاب', () => power.beginSelection(message));
             const quick = node('button', 'chat-social-button', '☺');
             quick.type = 'button';
             quick.dataset.quickReaction = '';
@@ -291,6 +302,7 @@ export function chat() {
             social.renderReactions(reactionRow, message.message_id);
             bubble.append(reactionRow);
             row.append(bubble);
+            power.selectionControl(row, message);
             list.append(row);
         }
         latest.hidden = entries.length === 0;
@@ -383,12 +395,13 @@ export function chat() {
         if (event.detail === 'chat') {
             void load();
             void social.loadPins();
-        }
+        } else typing.stop();
     });
 
     form.addEventListener('submit', async event => {
         event.preventDefault();
         if (pending || (!text.value.trim() && (!image.files.length || editing))) return;
+        typing.stop();
         const editedText = text.value.trim();
         if (editing && editedText === editing.text) {
             cancelEdit();
@@ -430,6 +443,11 @@ export function chat() {
             form.requestSubmit(send);
         }
     });
+    text.addEventListener('input', () => typing.input(text.value));
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) typing.stop();
+    });
+    window.addEventListener('pagehide', () => typing.stop());
     viewerDialog.querySelector('button').addEventListener('click', closeDialog);
 
     if (config.connection === 'pusher' && config.key) {
@@ -442,6 +460,7 @@ export function chat() {
             },
         });
         const channel = pusher.subscribe('private-group.' + config.complexId);
+        typing = typingIndicator(channel, typingUser, typingOutput);
         channel.bind('pusher:subscription_error', () => toast('اتصال گفت‌وگوی زنده برقرار نشد.', 'error'));
         channel.bind('NewChatMessage', ({ message }) => {
             if (document.querySelector('.chat-window').hidden) return;
@@ -461,6 +480,7 @@ export function chat() {
             }
         });
         channel.bind('DeleteChatMessage', ({ deletedMessage }) => applyDeletion(deletedMessage));
+        channel.bind('ChatMessagesDeleted', ({ messages: deletedMessages }) => applyDeletions(deletedMessages));
         channel.bind('ChatReactionsChanged', social.applyReactions);
         channel.bind('ChatPinChanged', social.applyPin);
     }

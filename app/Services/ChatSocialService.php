@@ -4,10 +4,15 @@ namespace App\Services;
 
 use App\Models\Group;
 use App\Models\Message;
+use App\Models\User;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class ChatSocialService
 {
+    public const BATCH_LIMIT = 50;
+
     public function __construct(private MessagePresenter $presenter, private AuditLogger $audit) {}
 
     public function toggleReaction(Message $message, int $userId, string $emoji): array
@@ -63,17 +68,29 @@ class ChatSocialService
             ->map(fn (Message $message) => $this->presenter->pin($message))->all();
     }
 
-    public function delete(Message $message, int $userId): ?Message
+    public function delete(Message $message, int $userId, ?string $reason = null): ?Message
     {
-        [$message, $wasPinned] = DB::transaction(function () use ($message) {
+        $actor = User::findOrFail($userId);
+        [$message, $wasPinned] = DB::transaction(function () use ($message, $actor, $reason) {
             $message = $this->lock($message);
+            $complex = $message->group->complex;
+            $moderated = $message->user_id !== $actor->id;
+            if (! $actor->can('view', $complex) || ($moderated && ! $actor->can('manage', $complex))) {
+                throw new AuthorizationException;
+            }
+            if ($moderated && (! is_string($reason) || trim($reason) === '' || mb_strlen($reason) > 240)) {
+                throw ValidationException::withMessages(['reason' => 'دلیل حذف پیام را حداکثر در ۲۴۰ نویسه وارد کنید.']);
+            }
             if ($message->deleted) {
                 return [null, false];
             }
             $wasPinned = $message->pinned_at !== null;
             $message->forceFill([
                 'deleted' => true,
-                'deletion_kind' => 'author',
+                'deletion_kind' => $moderated ? 'manager' : 'author',
+                'deleted_by' => $actor->id,
+                'deleted_at' => now(),
+                'deletion_reason' => $moderated ? trim($reason) : null,
                 'pinned_at' => null,
                 'pinned_by' => null,
             ])->save();
@@ -83,6 +100,10 @@ class ChatSocialService
 
         if ($wasPinned) {
             $this->recordPin($message, $userId, false, ['reason' => 'message_deleted']);
+        }
+        if ($message?->deletion_kind === 'manager') {
+            $this->audit->record('chat.message_moderated', $userId, $message->group->complex_id,
+                Message::class, $message->id, ['reason' => $message->deletion_reason]);
         }
 
         return $message;

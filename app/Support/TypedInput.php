@@ -10,8 +10,7 @@ final class TypedInput
             return $value;
         }
 
-        $digits = array_combine(mb_str_split('۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩'), str_split('01234567890123456789'));
-        $value = trim(strtr($value, $digits));
+        $value = trim(strtr($value, self::digitMap()));
 
         return $value === '' ? null : $value;
     }
@@ -38,5 +37,20 @@ final class TypedInput
         $value = self::normalize($value);
 
         return $value === null ? null : self::float($value);
+    }
+
+    public static function searchText(string $value): string
+    {
+        return trim(strtr($value, self::searchMap()));
+    }
+
+    public static function searchMap(): array
+    {
+        return self::digitMap() + ['ي' => 'ی', 'ى' => 'ی', 'ك' => 'ک'];
+    }
+
+    private static function digitMap(): array
+    {
+        return array_combine(mb_str_split('۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩'), str_split('01234567890123456789'));
     }
 }

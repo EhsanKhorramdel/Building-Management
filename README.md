@@ -10,7 +10,7 @@ Managers administer their own complexes, publish notices and set charges and inc
 - Building registration approvals and manager-controlled join links.
 - Monthly charges, incidental costs and a printable payment report.
 - Announcements, timed polls and vote results.
-- Per-complex group chat with image attachments and read receipts.
+- Per-complex group chat with private attachments, reactions, replies, pins, moderation, bulk deletion, search and read receipts.
 - Optional map locations for complexes, with a picker during registration and in manager settings.
 - Responsive pages with a light and dark theme.
 
@@ -86,6 +86,8 @@ These shared credentials are for local demos only. Never seed them into a deploy
 - **Maps.** The default tile URL and attribution use OpenStreetMap. Set `MAP_TILE_URL` and `MAP_TILE_ATTRIBUTION` together to use another tile source. Keep the source's attribution visible and follow its usage policy. See the [OpenStreetMap tile usage policy](https://operations.osmfoundation.org/policies/tiles/).
 - **Mail.** The template points SMTP to Mailpit on port 1025. The local setup above writes mail to the log. Configure a real mail transport for a deployment that sends password reset links.
 
+Typing names use throttled `client-typing` events on the authorized private complex channel. Enable Client Events in the broadcasting app's settings. These advisory client signals expire after five seconds, and the log broadcaster leaves the indicator inactive. [Client event settings](https://pusher.com/docs/channels/using_channels/events/#triggering-client-events)
+
 ## Online payments and SMS
 
 Both integrations are disabled by default. With `PAYMENTS_ENABLED=false`, charges and costs use the existing manual payment record. With `SMS_ENABLED=false`, actions enqueue no SMS.
@@ -109,6 +111,8 @@ php artisan test
 ```
 
 ### Browser suite
+
+Run the client typing checks with `node --test tests/JavaScript/chat-typing.test.js`.
 
 Install the Composer and npm dependencies first. Use Node.js 20 or later and PHP 8.3 with SQLite. Playwright needs Chromium. On Windows the default is installed Chrome. To use the managed browser, install it once with `npx playwright install chromium` and set `PLAYWRIGHT_CHANNEL=chromium`. Set `E2E_PHP` if PHP 8.3 is at a different path from the harness default (`D:/tools/php-8.3/php.exe` on Windows and `php` elsewhere).
 
