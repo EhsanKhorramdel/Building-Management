@@ -2,25 +2,32 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\ChatMessagesDeleted;
 use App\Events\ChatPinChanged;
 use App\Events\ChatReactionsChanged;
 use App\Events\DeleteChatMessage;
 use App\Events\EditChatMessage;
 use App\Events\NewChatMessage;
 use App\Http\Middleware\AccessMiddleware;
+use App\Http\Requests\ChatBulkDeleteRequest;
+use App\Http\Requests\ChatDeleteRequest;
 use App\Http\Requests\ChatEditRequest;
 use App\Http\Requests\ChatPinRequest;
 use App\Http\Requests\ChatReactionRequest;
+use App\Http\Requests\ChatSearchRequest;
 use App\Http\Requests\ChatSeenRequest;
 use App\Http\Requests\ChatStoreRequest;
 use App\Http\Requests\MessageViewersRequest;
 use App\Models\Complex;
 use App\Models\Group;
 use App\Models\Message;
+use App\Services\ChatSearchService;
 use App\Services\ChatService;
 use App\Services\ChatSocialService;
 use App\Services\MessagePresenter;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Validation\ValidationException;
 
 class GroupController extends Controller
 {
@@ -97,6 +104,47 @@ class GroupController extends Controller
         return response()->json($social->pins($this->group($complex)));
     }
 
+    public function search(ChatSearchRequest $request, Complex $complex, ChatSearchService $search): JsonResponse
+    {
+        $data = $request->validated();
+
+        return response()->json($search->search($this->group($complex), $data['q'], $data['before_id'] ?? null));
+    }
+
+    public function bulkDelete(ChatBulkDeleteRequest $request, Complex $complex, ChatSocialService $social, MessagePresenter $presenter): JsonResponse
+    {
+        $data = $request->validated();
+        $messages = $this->group($complex)->messages()->whereIn('id', $data['message_ids'])->get()->keyBy('id');
+        $results = [];
+        $deletedMessages = [];
+        foreach ($data['message_ids'] as $id) {
+            $message = $messages->get($id);
+            if (! $message) {
+                $results[] = ['message_id' => (int) $id, 'status' => 'denied'];
+
+                continue;
+            }
+            try {
+                $deleted = $social->delete($message, $request->user()->id, $data['reason'] ?? null);
+            } catch (AuthorizationException|ValidationException) {
+                $results[] = ['message_id' => (int) $id, 'status' => 'denied'];
+
+                continue;
+            }
+            $payload = $presenter->deletion($deleted ?? $message->refresh());
+            $results[] = ['message_id' => (int) $id, 'status' => $deleted ? 'deleted' : 'already_deleted', 'deletedMessage' => $payload];
+            if ($deleted) {
+                $deletedMessages[] = $payload;
+            }
+        }
+        if ($deletedMessages) {
+            event(new ChatMessagesDeleted($complex->id, $deletedMessages));
+        }
+        $denied = count(array_filter($results, fn ($result) => $result['status'] === 'denied'));
+
+        return response()->json(['results' => $results, 'success_count' => count($results) - $denied, 'denied_count' => $denied]);
+    }
+
     public function pin(ChatPinRequest $request, Message $Message, ChatSocialService $social): JsonResponse
     {
         $update = $social->setPin($Message, $request->user()->id, (bool) $request->validated('pinned'));
@@ -121,24 +169,20 @@ class GroupController extends Controller
     }
 
     /**
-     * @return JsonResponse Body is array{message: string, status: '200'|'403', deletedMessage?: array{id: int, deletion_kind: string}}.
+     * @return JsonResponse Body is array{message: string, status: '200', deletedMessage: array{id: int, deletion_kind: string}}.
      */
-    public function destroy(Message $Message, ChatSocialService $social, MessagePresenter $presenter)
+    public function destroy(ChatDeleteRequest $request, Message $Message, ChatSocialService $social, MessagePresenter $presenter)
     {
-        if ($Message->user_id == auth()->id()) {
-            $deleted = $social->delete($Message, auth()->id());
-            if ($deleted) {
-                event(new DeleteChatMessage($deleted));
-            }
-
-            return response()->json([
-                'status' => '200',
-                'message' => 'پیام با موفقیت حذف شد.',
-                'deletedMessage' => $presenter->deletion($deleted ?? $Message->refresh()),
-            ]);
+        $deleted = $social->delete($Message, auth()->id(), $request->validated('reason'));
+        if ($deleted) {
+            event(new DeleteChatMessage($deleted));
         }
 
-        return response()->json(['status' => '403', 'message' => 'نمی‌توان پیام کاربر دیگری را حذف کرد.']);
+        return response()->json([
+            'status' => '200',
+            'message' => 'پیام با موفقیت حذف شد.',
+            'deletedMessage' => $presenter->deletion($deleted ?? $Message->refresh()),
+        ]);
     }
 
     private function group(Complex $complex): Group

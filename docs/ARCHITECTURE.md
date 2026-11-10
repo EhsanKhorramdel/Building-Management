@@ -32,8 +32,10 @@ Admin is global. Manager and resident permissions require an active role in the 
 | Add a unit | No | Yes | Yes | No |
 | Edit a unit | No | Any unit in the complex | Unit tied to the resident's active role | No |
 | Record payments | No | Own unit | Own unit | No |
-| Use group chat and view read receipts | No | Yes | Yes | No |
-| Edit or delete a chat message | No | Own message | Own message | No |
+| Use group chat | No | Yes | Yes | No |
+| View named read receipts | No | Any message in the complex | Own message | No |
+| Edit a chat message | No | Own message | Own message | No |
+| Delete a chat message | No | Own message, or another author's message with a reason | Own message | No |
 
 Signed-in users can request a new complex or join an existing one with its current invite. Rotating an invite invalidates the old value. Web chat and the private broadcast channel share the complex membership policy.
 
@@ -56,8 +58,14 @@ A charge payment is unique by role, charge, Jalali year and Jalali month. The sa
 1. Each complex uses a private Laravel channel named `group.{complexId}`. The server derives the complex from the message's group.
 2. The web client subscribes to `private-group.{complexId}` when Pusher is configured. It uses the rendered public key and cluster.
 3. The client authorizes the subscription through `/broadcasting/auth` with its session and CSRF token. The callback in `routes/channels.php` permits active residents and managers of that complex.
-4. `NewChatMessage`, `EditChatMessage` and `DeleteChatMessage` deliver changes on that channel. The client applies them by message ID.
+4. Message, reaction, pin and deletion events deliver changes on that channel. A bulk deletion emits one `ChatMessagesDeleted` event containing IDs and tombstone kinds. The client applies them by message ID.
 5. The HTTP endpoints load message history around the last seen message or page forward and backward by ID.
+
+Managers can delete another author's message with a required reason of at most 240 characters. The message retains its body for storage, but history, quotes and events expose only a tombstone. The row records the deletion actor, reason and time. The scoped audit entry contains the reason and message subject, without copying the message body or attachment path. Bulk requests accept up to 50 distinct IDs from the route's group and return a result for each ID, including denials and previously deleted rows.
+
+Search uses the digit mapping from the typed input boundary plus Arabic/Persian letter variants. SQL applies the same replacements to the current stored body. Results exclude deleted messages, use an ID cursor with 20 matches per page, and link to the existing history paging route. Stored bodies retain their original spelling.
+
+Typing uses `client-typing` whispers on the private channel, throttled to one active signal per 1.5 seconds. Stops bypass that throttle. Peers expire five seconds after the latest signal. Client events require the broadcasting app's Client Events setting. Names are advisory client data rendered as text, and no typing state is stored by the server.
 
 ## Online payment lifecycle
 

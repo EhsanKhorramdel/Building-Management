@@ -105,7 +105,7 @@ for (const width of [390, 1440]) {
             const text = 'پیام منوی آزمون ' + state;
             const message = await latestOwnMessage(page, text);
             const trigger = message.locator('summary');
-            const actions = ['کپی', 'ویرایش', 'حذف', 'مشاهده کنندگان', 'واکنش', 'پاسخ', 'سنجاق کردن'];
+            const actions = ['کپی', 'ویرایش', 'حذف', 'مشاهده کنندگان', 'واکنش', 'پاسخ', 'سنجاق کردن', 'انتخاب'];
             const menu = message.locator('.chat-menu-actions');
             await trigger.click();
             await expect(menu.getByRole('button')).toHaveCount(actions.length);
@@ -149,6 +149,11 @@ for (const width of [390, 1440]) {
             await trigger.click();
             await menu.getByRole('button', { name: 'برداشتن سنجاق', exact: true }).click();
             await expect(page.locator('[data-chat-pins]')).toBeHidden();
+            await trigger.click();
+            await menu.getByRole('button', { name: actions[7], exact: true }).click();
+            await expect(message.getByRole('checkbox')).toBeChecked();
+            await page.locator('[data-selection-cancel]').click();
+            await expect(page.locator('[data-chat-selection]')).toBeHidden();
         });
     }
 }
@@ -288,7 +293,7 @@ test('viewer names are available to the author and complex manager only', async 
         const otherMessage = received.locator('xpath=ancestor::article');
         await otherMessage.locator('summary').click();
         const otherMenu = otherMessage.locator('.chat-menu-actions');
-        await expect(otherMenu.getByRole('button')).toHaveText(['کپی', 'واکنش', 'پاسخ']);
+        await expect(otherMenu.getByRole('button')).toHaveText(['کپی', 'واکنش', 'پاسخ', 'انتخاب']);
         await expect(otherMenu.getByRole('button', { name: /ویرایش|حذف|سنجاق|مشاهده کنندگان/ })).toHaveCount(0);
         await captureInteraction(neighbor.session, 'F11-07-non-author-menu-390');
     } finally {

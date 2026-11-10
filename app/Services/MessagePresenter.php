@@ -56,6 +56,7 @@ class MessagePresenter
             ? $this->deletion($message)
             : array_replace(Arr::except($message->attributesToArray(), [
                 'parent_id', 'pinned_at', 'pinned_by', 'deletion_kind', 'social_version',
+                'deleted_by', 'deleted_at', 'deletion_reason',
             ]), ['image_url' => $this->attachmentUrl($message)]);
     }
 

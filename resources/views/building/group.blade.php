@@ -5,15 +5,33 @@
     <div class="chat-shell">
         <div class="chat-heading">
             <strong class="flex-1">{{ $group->group_name }}</strong>
+            <button type="button" class="action" data-search-toggle aria-label="جستجوی پیام‌ها" aria-expanded="false">جستجو</button>
             <button type="button" class="action" data-older hidden>پیام‌های پیشین</button>
             <button type="button" class="action" data-newer hidden>پیام‌های بعدی</button>
             <button type="button" class="action" data-latest aria-label="رفتن به آخرین پیام" hidden>آخرین پیام</button>
         </div>
+        <section class="chat-search" data-chat-search hidden aria-label="جستجوی پیام‌ها">
+            <form class="flex gap-2" data-chat-search-form>
+                <label class="sr-only" for="chat-search-query">عبارت جستجو</label>
+                <input id="chat-search-query" name="q" type="search" maxlength="100" required placeholder="جستجو در پیام‌ها" class="min-w-0 flex-1">
+                <button type="submit" class="action">بیاب</button>
+                <button type="button" class="action" data-search-close aria-label="بستن جستجو">بستن</button>
+            </form>
+            <p class="text-sm" data-search-state role="status" hidden></p>
+            <div class="chat-search-results" data-search-results></div>
+            <button type="button" class="action" data-search-more hidden>نتایج بیشتر</button>
+        </section>
         <div class="chat-pins" data-chat-pins hidden aria-label="پیام‌های سنجاق‌شده"></div>
+        <div class="chat-selection" data-chat-selection hidden>
+            <p class="flex-1" data-selection-count role="status"></p>
+            <button type="button" class="action action-danger" data-selection-delete>حذف انتخاب‌شده‌ها</button>
+            <button type="button" class="action" data-selection-cancel>لغو انتخاب</button>
+        </div>
         <div class="chatContainer" tabindex="0" aria-label="پیام‌های گفتگو">
             <p class="empty-state" data-chat-state role="status" hidden></p>
             <div class="messagesContainer"></div>
         </div>
+        <p class="chat-typing" data-chat-typing role="status" hidden></p>
         <div class="chat-heading" data-chat-edit hidden>
             <span class="flex-1">در حال ویرایش پیام</span>
             <button type="button" class="action">لغو ویرایش</button>
@@ -52,5 +70,19 @@
         <h3 class="mb-4 text-lg font-bold" id="chat-social-title"></h3>
         <div data-chat-social-options></div>
         <button class="action mt-4" type="button" data-close-dialog>بستن</button>
+    </div>
+</div>
+
+<div class="dialog-shell hidden" data-chat-moderation role="dialog" aria-modal="true" aria-labelledby="chat-moderation-title">
+    <div>
+        <h3 class="mb-4 text-lg font-bold" id="chat-moderation-title">دلیل حذف توسط مدیر</h3>
+        <form class="grid gap-3" data-moderation-form>
+            <label for="chat-moderation-reason">دلیل حذف پیام‌های دیگران (حداکثر ۲۴۰ نویسه)</label>
+            <textarea id="chat-moderation-reason" name="reason" maxlength="240" required rows="3"></textarea>
+            <div class="flex flex-wrap gap-2">
+                <button class="action action-danger" type="submit">حذف با ثبت دلیل</button>
+                <button class="action" type="button" data-close-dialog>لغو</button>
+            </div>
+        </form>
     </div>
 </div>
