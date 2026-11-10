@@ -87,6 +87,11 @@
         background: rgb(5 15 20 / 65%);
     }
     .register-section:not(.settings-panel) > .dialog-panel { margin-block: max(0px, calc((100dvh - 48rem) / 2)); }
+    .register-dialog-tools {
+        @apply sticky z-10;
+        inset-block-start: 0;
+        background: var(--surface);
+    }
     .register-close { @apply inline-flex min-h-10 min-w-10 items-center justify-center rounded-lg; color: var(--muted); }
     .register-form { @apply grid min-w-0 gap-3; }
     .register-form :is(input, textarea):not([type=hidden], [type=radio], [type=checkbox]) { @apply w-full; }

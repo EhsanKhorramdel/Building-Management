@@ -199,3 +199,25 @@ test('phone landscape keeps the chat heading, thread and composer in view togeth
     await page.locator('.mode-switch').click();
     await captureInteraction(page, 'F11-04-chat-landscape-dark');
 });
+
+test('a tall dialog keeps Close available after scrolling to Submit', async ({ page }) => {
+    await page.setViewportSize({ width: 844, height: 390 });
+    await page.locator('[data-open-drawer]').click();
+    await page.locator('[data-tab=charge]').click();
+    const launch = page.locator('.register-btn');
+    const dialog = page.locator('.register-section[data-panel=charge]');
+    const close = dialog.locator('.register-close');
+    await launch.click();
+    const panel = dialog.locator('.dialog-panel');
+    await panel.evaluate(element => { element.scrollTop = element.scrollHeight; });
+    await expect.poll(() => panel.evaluate(element => element.scrollTop)).toBeGreaterThan(0);
+    await expect(dialog.locator('button[type=submit]')).toBeInViewport({ ratio: 1 });
+    await expect(close).toBeInViewport({ ratio: 1 });
+    await captureInteraction(page, 'F11-05-dialog-scrolled-landscape');
+    await close.click();
+    await expect(launch).toBeFocused();
+    await launch.click();
+    await page.keyboard.press('Escape');
+    await expect(dialog).toBeHidden();
+    await expect(launch).toBeFocused();
+});

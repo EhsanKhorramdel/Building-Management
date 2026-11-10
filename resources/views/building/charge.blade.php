@@ -73,7 +73,7 @@
 
 @if ($isManager)
     <div class="register-section hidden" data-panel="charge" @if ($errors->getBag('buildingCharge')->any()) data-reopen @endif role="dialog" aria-modal="true"><div class="dialog-panel">
-        <button type="button" class="register-close" aria-label="بستن"><x-icon name="close" /></button>
+        <div class="register-dialog-tools"><button type="button" class="register-close" aria-label="بستن"><x-icon name="close" /></button></div>
         <div class="buildings-section-header register-container">
             <p>ثبت شارژ ساختمان </p>
         </div>

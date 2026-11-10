@@ -1185,3 +1185,11 @@ Findings remain open unless a closing commit is recorded below. The named phases
 - **Files:** resources/css/panels.css, resources/css/chat.css, tests/e2e/chat.spec.js and the audit closure evidence.
 - **Verified by:** The landscape case checks the heading, paging, message list and composer in the same viewport and confirms that focusing the composer keeps the heading visible.
 - **Risk & rollback:** This breakpoint also changes navigation on short landscape screens outside chat. Revert the landscape media rules together to restore the earlier layout.
+
+### [Phase 11A, F11-05] Keep the close control in tall forms
+- **Before:** Scrolling the charge form to Submit moved its Close control out of reach.
+- **After:** A toolbar keeps Close at the top of the scrolling form panel, with the panel background behind the control.
+- **Why:** Close used to scroll with the long form fields.
+- **Files:** resources/css/panels.css, the four building creation views, tests/e2e/chat.spec.js and the audit closure evidence.
+- **Verified by:** The landscape charge case scrolls to Submit, checks Close is still visible, and verifies Close and Escape return focus.
+- **Risk & rollback:** The sticky toolbar takes one row of the dialog's visible height. Revert the toolbar markup and styling together to restore the previous layout.
