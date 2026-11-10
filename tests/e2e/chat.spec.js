@@ -154,3 +154,28 @@ test('only one chat menu opens and Escape and outside clicks return focus', asyn
     await expect(newest).toBeFocused();
     await captureInteraction(page, 'F11-02-dismissed-menu-390');
 });
+
+test('the dashboard drawer keeps keyboard focus inside and restores it on close', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/dashboard');
+    const opener = page.locator('[data-open-drawer]');
+    const drawer = page.locator('[data-drawer]');
+    const close = drawer.locator('[data-close-drawer]');
+    const logout = drawer.locator('button[type=submit]');
+    await opener.click();
+    await expect(close).toBeFocused();
+    await expect(page.locator('.app-header')).toHaveAttribute('inert', '');
+    await expect(page.locator('.home-window')).toHaveAttribute('inert', '');
+    await page.keyboard.press('Shift+Tab');
+    await expect(logout).toBeFocused();
+    await page.keyboard.press('Tab');
+    await expect(close).toBeFocused();
+    for (let step = 0; step < 10; step++) {
+        await page.keyboard.press('Tab');
+        await expect(drawer.locator(':focus')).toHaveCount(1);
+    }
+    await captureInteraction(page, 'F11-03-drawer-focus-390');
+    await page.keyboard.press('Escape');
+    await expect(opener).toBeFocused();
+    await expect(page.locator('.home-window')).not.toHaveAttribute('inert');
+});

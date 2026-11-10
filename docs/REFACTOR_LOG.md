@@ -1169,3 +1169,11 @@ Findings remain open unless a closing commit is recorded below. The named phases
 - **Files:** resources/js/building/chat.js, tests/e2e/chat.spec.js and the audit closure evidence.
 - **Verified by:** The browser opens two menus in sequence, then checks both dismissal methods and focus return.
 - **Risk & rollback:** Reverting this entry restores the old dismissal behavior. Menu placement is independent of the dismissal handlers.
+
+### [Phase 11A, F11-03] Keep keyboard focus in the open drawer
+- **Before:** Tab reached the dashboard join field while the drawer covered it.
+- **After:** The header and content behind the drawer become inert. Tab and Shift+Tab wrap inside the drawer. Closing clears inert state and restores the opener.
+- **Why:** Moving focus on open left the rest of the page in the tab order.
+- **Files:** resources/js/building/navigation.js, tests/e2e/chat.spec.js and the audit closure evidence.
+- **Verified by:** The 390px browser check verifies inert state, traversal in both directions and focus return.
+- **Risk & rollback:** Navigation and drawer share the handler. Reverting removes both inert state and the boundary.
