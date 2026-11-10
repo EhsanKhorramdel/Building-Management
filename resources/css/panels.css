@@ -67,7 +67,7 @@
     .box-content-header { @apply font-bold; }
     .box-content-subheader, .box-address-header { color: var(--muted); }
     .box-address-header { @apply p-0; }
-    .more-wrapper, .chat-menu { @apply relative; }
+    .more-wrapper { @apply relative; }
     .dropdownDots { @apply absolute end-0 top-full z-10 mt-1 w-40 rounded-lg border p-1 shadow-lg; background: var(--surface); border-color: var(--line); }
     .dropdownDots button { @apply block min-h-10 w-full rounded-lg px-2 text-start text-sm; }
     .dropdownDots button:hover { background: var(--accent-soft); }

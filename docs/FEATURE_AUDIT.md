@@ -82,6 +82,14 @@ The browser checks opened the controls and used the resulting state. The automat
 | F11-06 | Low | Chat image detail cannot be inspected through the app. Tapping the 192px inline image at 390 and clicking it at 1440 left zero visible dialogs. [Phone](audit-11/chat-inline-390-light.png) · [Desktop](audit-11/chat-inline-1440-dark.png) | The renderer inserts a plain image with a fixed display height cap and no viewer trigger. | Add a labeled image-open control if A16 is approved. Keep private attachment authorization. | S for the trigger, L for the full gallery |
 | F11-07 | Medium | Viewer names have different audiences in the UI and the endpoint. The browser shows Viewers only in the author's menu. `AccessMiddleware` checks complex membership, and [ChatTest](../tests/Feature/Building/ChatTest.php) explicitly expects a non-author resident to receive a named receipt for the manager's message. The foreign-complex boundary remains enforced. [Author dialog](audit-11/chat-named-viewer-390-light.png) · [Other-author menu](audit-11/chat-other-menu-390-light.png) | `GroupController::getMessageViewers` uses the shared member gate, while `chat.js` puts the action inside the author-only branch. | Decide the audience in A14, then align the route and the menu. | S for author-only enforcement, M if visibility or aggregation is configurable |
 
+### Phase 11A closure
+
+| ID | Result | Regression evidence |
+| --- | --- | --- |
+| F11-01 | Closed. The newest-message menu opens in the browser top layer and positions itself within the viewport. | Copy, Edit, Delete and Viewers passed hit testing and real clicks at 390 and 1440 in both themes. [390 light](audit-11a/F11-01-newest-menu-390-light.png) · [390 dark](audit-11a/F11-01-newest-menu-390-dark.png) · [1440 light](audit-11a/F11-01-newest-menu-1440-light.png) · [1440 dark](audit-11a/F11-01-newest-menu-1440-dark.png) |
+
+F11-06 remains open. The chat image still uses its inline presentation.
+
 ### Capture index
 
 The [capture directory](audit-11/) contains 106 PNGs: 68 at 390 × 844, 30 at 1440 × 900, seven at 844 × 390 and one at 390 × 450. Both themes are included for the open chat menus, images, edited state, viewer and confirmation at 390 and 1440. Both widths and themes also cover the unit menu, account settings, announcement image, poll results, payment report, online history, admin map and audit tables. The 390px captures cover the remaining open dialogs and both navigation drawers. Supplemental images show a changed vote, archived announcement, a named chat viewer, mock checkout, and short-height and landscape states. Captures use seeded data. The invite field is masked in manager audit captures.

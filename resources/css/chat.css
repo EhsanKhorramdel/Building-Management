@@ -33,11 +33,13 @@
     .chat-image { @apply mt-2 max-h-48 rounded-lg object-contain; }
     .chat-menu-toggle { @apply flex min-h-10 min-w-10 items-center justify-center rounded-lg; }
     .chat-menu-actions {
-        @apply absolute z-20 grid w-36 gap-1 rounded-lg border p-1 shadow-lg;
-        inset-inline-end: 0;
+        @apply fixed m-0 w-36 gap-1 overflow-y-auto rounded-lg border p-1 shadow-lg;
+        inset: auto;
         background: var(--surface);
         border-color: var(--line);
+        color: var(--ink);
     }
+    .chat-menu-actions:popover-open { display: grid; }
     .chat-action { @apply min-h-10 rounded-md px-2 text-start text-sm; }
     .chat-action:hover { background: var(--accent-soft); }
     .viewer-row { @apply rounded-lg p-2 text-sm; background: var(--muted-surface); }

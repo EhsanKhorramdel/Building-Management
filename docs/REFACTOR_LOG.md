@@ -1153,3 +1153,11 @@ Findings remain open unless a closing commit is recorded below. The named phases
 - **Files:** docs/FEATURE_AUDIT.md and 106 seeded browser captures under docs/audit-11.
 - **Verified by:** Chrome click-throughs in disposable SQLite sessions at 390px and 1440px in both themes, plus landscape and a shortened chat viewport. Route and test review confirmed the viewer audience and the three authorized attachment routes. The PHP suite passed 465 tests with 1,526 assertions. The build and default browser suite passed with 41 browser cases and one expected skip for the opt-in live check.
 - **Risk & rollback:** The audit changes documentation and evidence only. The shortened viewport does not establish physical keyboard or IME behavior. Revert the audit commit to remove the report and captures.
+
+### [Phase 11A, F11-01] Keep message actions reachable
+- **Before:** The chat list clipped the menu on the newest own message, hiding Edit, Delete and Viewers.
+- **After:** The menu opens in the browser top layer and uses the trigger and available viewport space for placement.
+- **Why:** Stacking the menu within the scroll box could not move it outside the clipping boundary.
+- **Files:** resources/js/building/chat.js, resources/css/chat.css, resources/css/panels.css, tests/e2e/chat.spec.js and the audit closure evidence.
+- **Verified by:** Four Playwright cases hit-test and click each action at 390 and 1440 in both themes.
+- **Risk & rollback:** Menu placement now uses the browser's Popover API. Revert the placement and interaction changes together if restoring the native-only disclosure.

@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { mkdir } from 'node:fs/promises';
 import { login, openBuilding, submitMessage, tab, uploadImage } from './ui.js';
 
 test.beforeEach(async ({ page }) => {
@@ -76,3 +77,60 @@ test('shows a chat upload to members and denies the attachment URL to outsiders'
         await Promise.all([foreignContext.close(), guestContext.close()]);
     }
 });
+
+async function captureInteraction(page, name) {
+    if (process.env.E2E_CAPTURE_11A !== '1') return;
+    const directory = 'storage/app/test-screenshots/phase-11a';
+    await mkdir(directory, { recursive: true });
+    await page.screenshot({ path: directory + '/' + name + '.png', animations: 'disabled' });
+}
+
+async function latestOwnMessage(page, text) {
+    await page.locator('#message-text').fill(text);
+    await submitMessage(page);
+    const message = page.locator('.own-message').filter({ hasText: text });
+    await expect(message).toBeVisible();
+    return message;
+}
+
+for (const width of [390, 1440]) {
+    for (const dark of [false, true]) {
+        const state = width + '-' + (dark ? 'dark' : 'light');
+        test('all newest-message actions are reachable at ' + state, async ({ page, context }) => {
+            await page.setViewportSize({ width, height: width === 390 ? 844 : 900 });
+            if (dark) await page.locator('.mode-switch').click();
+            await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+            const text = 'پیام منوی آزمون ' + state;
+            const message = await latestOwnMessage(page, text);
+            const trigger = message.locator('summary');
+            const actions = ['کپی', 'ویرایش', 'حذف', 'مشاهده کنندگان'];
+            await trigger.click();
+            await expect(message.getByRole('button')).toHaveCount(4);
+            for (const name of actions) {
+                const action = message.getByRole('button', { name, exact: true });
+                await expect(action).toBeInViewport({ ratio: 1 });
+                expect(await action.evaluate(button => {
+                    const rect = button.getBoundingClientRect();
+                    return button.contains(document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2));
+                })).toBe(true);
+            }
+            await captureInteraction(page, 'F11-01-newest-menu-' + state);
+
+            await message.getByRole('button', { name: actions[0], exact: true }).click();
+            await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toBe(text);
+            await trigger.click();
+            await message.getByRole('button', { name: actions[1], exact: true }).click();
+            await expect(page.locator('#message-text')).toHaveValue(text);
+            await page.locator('[data-chat-edit] button').click();
+            await trigger.click();
+            await message.getByRole('button', { name: actions[2], exact: true }).click();
+            const confirm = page.locator('[data-confirm-dialog]');
+            await expect(confirm).toBeVisible();
+            await confirm.locator('[value=cancel]').click();
+            await expect(message).toBeVisible();
+            await trigger.click();
+            await message.getByRole('button', { name: actions[3], exact: true }).click();
+            await expect(page.locator('.modal-message-viewer')).toBeVisible();
+        });
+    }
+}
