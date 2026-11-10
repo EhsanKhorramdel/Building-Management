@@ -7,13 +7,20 @@ import '../../css/map.css';
 import { toast } from '../ui';
 
 const tehran = [35.6892, 51.3890];
-const pin = L.icon({
+const pinOptions = {
     iconUrl: markerIcon,
     iconRetinaUrl: markerIconRetina,
     shadowUrl: markerShadow,
     iconSize: [25, 41],
     iconAnchor: [12, 41],
     shadowSize: [41, 41],
+};
+const pin = L.icon(pinOptions);
+const pickerPin = L.icon({
+    ...pinOptions,
+    className: 'map-picker-marker',
+    iconSize: [40, 41],
+    iconAnchor: [19.5, 41],
 });
 
 function coordinate(value, limit) {
@@ -52,7 +59,13 @@ function createMap(element) {
         if (marker) {
             marker.setLatLng(position);
         } else {
-            marker = L.marker(position, { icon: pin, draggable: Boolean(picker), alt: 'موقعیت ساختمان' }).addTo(map);
+            marker = L.marker(position, {
+                icon: picker ? pickerPin : pin,
+                draggable: Boolean(picker),
+                keyboard: Boolean(picker),
+                interactive: Boolean(picker),
+                alt: picker ? 'موقعیت انتخاب‌شده' : '',
+            }).addTo(map);
             if (picker) {
                 marker.on('dragend', () => {
                     const location = marker.getLatLng().wrap();

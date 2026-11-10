@@ -16,7 +16,7 @@ class MessagePresenter
             'user_name' => $message->user->name,
             'user_id' => $message->user_id,
             'text' => $message->text,
-            'image_url' => $message->image_url,
+            'image_url' => $this->attachmentUrl($message),
             'created_at' => $message->created_at->format('Y-m-d H:i:s'),
             'is_deleted' => $message->deleted,
             'is_edited' => $message->edited,
@@ -27,6 +27,11 @@ class MessagePresenter
     public function broadcastModel(Message $message): array
     {
         // Edit/delete clients consume the original model-shaped payload, including id.
-        return $message->attributesToArray();
+        return array_replace($message->attributesToArray(), ['image_url' => $this->attachmentUrl($message)]);
+    }
+
+    private function attachmentUrl(Message $message): ?string
+    {
+        return $message->image_url ? route('chat.attachments.show', $message, absolute: false) : null;
     }
 }

@@ -78,7 +78,9 @@ These shared credentials are for local demos only. Never seed them into a deploy
 ## Configuration
 
 - **Broadcasting.** The template uses `BROADCAST_CONNECTION=log`, which records chat events locally. Set it to `pusher` for live chat and configure `PUSHER_APP_ID`, `PUSHER_APP_KEY`, `PUSHER_APP_SECRET` and `PUSHER_APP_CLUSTER`. The template maps the public key and cluster to `VITE_PUSHER_APP_KEY` and `VITE_PUSHER_APP_CLUSTER`. The browser gets those public values from the rendered page. It authorizes each private complex channel through the signed-in session.
-- **Uploads.** Announcements, invoices and chat images live under `storage/app/public`, the root of the public disk. `php artisan storage:link` exposes them at `/storage`.
+- **Uploads.** Announcement and incidental-cost images use `storage/app/public` and the `public/storage` link. Chat images use `storage/app/private/chats` and are served only to authenticated complex members or global admins.
+
+  When upgrading an existing installation, run `php artisan chat:move-attachments` before serving chat traffic. It moves the legacy files out of `storage/app/public/chats` and keeps their filenames. Reruns process any remaining files. A nonzero exit reports files that could not be moved or that conflict with an existing private copy. Resolve those before reopening chat.
 - **Maps.** The default tile URL and attribution use OpenStreetMap. Set `MAP_TILE_URL` and `MAP_TILE_ATTRIBUTION` together to use another tile source. Keep the source's attribution visible and follow its usage policy. See the [OpenStreetMap tile usage policy](https://operations.osmfoundation.org/policies/tiles/).
 - **Mail.** The template points SMTP to Mailpit on port 1025. The local setup above writes mail to the log. Configure a real mail transport for a deployment that sends password reset links.
 

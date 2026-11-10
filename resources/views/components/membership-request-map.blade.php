@@ -4,7 +4,7 @@
     <details class="my-2">
         <summary class="action">نمایش موقعیت ثبت‌شده روی نقشه</summary>
         <div class="mt-2">
-            <x-complex-map :latitude="$membershipRequest->latitude" :longitude="$membershipRequest->longitude" />
+            <x-complex-map :latitude="$membershipRequest->latitude" :longitude="$membershipRequest->longitude" :address="$membershipRequest->address" />
         </div>
     </details>
 @endif

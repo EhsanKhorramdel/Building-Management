@@ -88,7 +88,7 @@ The action queues work after saving. A dedicated database worker processes the `
 
 ## Deployment
 
-Use PHP 8.3 or later and MySQL 8. Install the locked PHP dependencies, build assets with `npm run build`, run migrations and point the web root at `public`. Persist `storage/app/public` across releases and run `php artisan storage:link` to expose uploads. Keep the app key and production credentials in the deployment environment and leave demo seeding for local use.
+Use PHP 8.3 or later and MySQL 8. Install the locked PHP dependencies, build assets with `npm run build`, run migrations and point the web root at `public`. Persist `storage/app/public` and `storage/app/private/chats` across releases. Run `php artisan storage:link` for public announcement and cost images. Chat attachments are served through the complex membership check, with a global admin exception. Keep the app key and production credentials in the deployment environment and leave demo seeding for local use.
 
 The template runs queued work synchronously and logs broadcasts. Configure Pusher for live updates and run a queue worker if the selected queue connection is asynchronous. Serve production traffic over HTTPS.
 

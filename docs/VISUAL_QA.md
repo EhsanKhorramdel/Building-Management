@@ -101,3 +101,18 @@ npm run test:visual -- integrations.spec.js
 ```
 
 The spec writes payment attempts. Seed a fresh demo database before repeating it. Captures and guard JSON files are in `storage/app/test-screenshots/phase-8`.
+
+## Phase 8C findings retest
+
+The sweep repeated 25 states at 360, 390, 768, 1024 and 1440px in light and dark. All 250 captures passed the horizontal overflow, console, broken image, theme and touch checks. Touch measurements ran at 360, 390 and 768px. The axe-core scan found no violations in the 25 desktop light states, including no link-name violations on reset-password, confirm-password and verify-email.
+
+The touch guard measures a visible associated label when it handles activation for a visually hidden input, checkbox or radio. The chat attachment control is measured through its visible 40px label. The hidden input remains available to keyboard and assistive input.
+
+The findings browser spec covered an hours-only poll through creation, listing and voting, chat older paging followed by jump-to-latest, and the mobile report cue through scrolling and print media. It uses a seeded local server with both integration flags off.
+
+```powershell
+$env:VISUAL_FINDINGS = '1'
+npm run test:visual -- findings.spec.js
+```
+
+Captures and `guards.json` are in `storage/app/test-screenshots/phase-8c`.

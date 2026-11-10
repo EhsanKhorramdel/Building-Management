@@ -3,7 +3,7 @@
         <h2 class="text-xl font-bold">آدرس ساختمان</h2>
         <p>{{ $complex->address }}</p>
         @if ($complex->latitude !== null && $complex->longitude !== null)
-            <x-complex-map :latitude="$complex->latitude" :longitude="$complex->longitude" />
+            <x-complex-map :latitude="$complex->latitude" :longitude="$complex->longitude" :address="$complex->address" />
             <a class="action" href="https://www.openstreetmap.org/directions?to={{ $complex->latitude }}%2C{{ $complex->longitude }}#map=15/{{ $complex->latitude }}/{{ $complex->longitude }}"
                 target="_blank" rel="noopener noreferrer">مسیریابی روی نقشه</a>
         @elseif ($isManager)

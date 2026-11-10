@@ -26,7 +26,7 @@ test('demo data includes the local accounts and building scenarios', function ()
     expect(Poll::all()->filter->isExpired())->toHaveCount(1);
     expect(Jalalian::fromCarbon(ChargePayment::firstOrFail()->created_at)->format('Y-m'))->toBe(Jalalian::fromCarbon(now())->format('Y-m'));
     $image = Message::whereNotNull('image_url')->firstOrFail();
-    Storage::disk('local')->assertExists('public/chats/'.$image->image_url);
+    Storage::disk('local')->assertExists(Message::ATTACHMENT_DIRECTORY.'/'.$image->image_url);
 
     foreach (['admin', 'manager', 'resident1', 'resident2', 'resident3'] as $account) {
         expect(Hash::check('password', User::where('email', $account.'@example.test')->firstOrFail()->password))->toBeTrue();

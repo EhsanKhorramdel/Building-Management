@@ -24,11 +24,25 @@ export function payments() {
     const status = document.querySelector('[data-payments-state]');
     const table = document.querySelector('[data-payments-table]');
     const body = table.querySelector('tbody');
+    const cue = document.querySelector('[data-report-scroll-cue]');
+    const frame = document.querySelector('[data-report-scroll-frame]');
+
+    function updateReportOverflow() {
+        const overflow = table.scrollWidth - table.clientWidth;
+        cue.hidden = table.hidden || overflow <= 1;
+        frame.classList.toggle('report-has-more', !cue.hidden && Math.abs(table.scrollLeft) < overflow - 1);
+    }
+
+    const reportSize = new ResizeObserver(updateReportOverflow);
+    reportSize.observe(table);
+    reportSize.observe(table.querySelector('table'));
+    table.addEventListener('scroll', updateReportOverflow);
     const print = document.querySelector('[data-print]');
     print.addEventListener('click', () => window.print());
     document.addEventListener('panelchange', async event => {
         if (event.detail !== 'paymentInfo' || status.hasAttribute('data-loading')) return;
         table.hidden = true;
+        updateReportOverflow();
         print.disabled = true;
         status.hidden = false;
         status.dataset.loading = '';
@@ -54,6 +68,7 @@ export function payments() {
         }));
         status.hidden = true;
         table.hidden = false;
+        updateReportOverflow();
         print.disabled = false;
     });
 }

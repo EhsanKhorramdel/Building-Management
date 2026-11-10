@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { mkdir, writeFile } from 'node:fs/promises';
+import { smallTouchTargets } from './touch-targets.js';
 
 const mode = process.env.VISUAL_STAGE || 'after';
 const baseURL = process.env.VISUAL_BASE_URL || 'http://127.0.0.1:8155';
@@ -24,7 +25,7 @@ for (const width of [360, 390, 768, 1024, 1440]) {
         await mkdir(output, { recursive: true });
         const contexts = {};
         const guard = [];
-        const options = { baseURL, viewport: { width, height: width < 768 ? 820 : 900 } };
+        const options = { baseURL, viewport: { width, height: width < 768 ? 820 : 900 }, hasTouch: mode === 'after' && width <= 768 };
         for (const type of ['guest', 'manager', 'admin']) contexts[type] = await browser.newContext(options);
         await signIn(contexts.manager, process.env.DEMO_MANAGER_EMAIL, '/dashboard');
         await signIn(contexts.admin, process.env.DEMO_ADMIN_EMAIL, '/adminPanel');
@@ -70,7 +71,8 @@ for (const width of [360, 390, 768, 1024, 1440]) {
                     .map(control => control.name || control.id),
                 brokenImages: [...document.images].filter(image => image.getClientRects().length && image.complete && !image.naturalWidth).map(image => image.getAttribute('src')),
             }));
-            guard.push({ name, width, theme, ...metrics, errors });
+            const smallTargets = options.hasTouch ? await page.evaluate(smallTouchTargets) : [];
+            guard.push({ name, width, theme, ...metrics, errors, smallTargets });
             await page.close();
         }
 
@@ -92,7 +94,7 @@ for (const width of [360, 390, 768, 1024, 1440]) {
         }
         if (mode === 'after') {
             expect(guard).toHaveLength(26);
-            for (const { name, theme, scrollWidth, dark, errors, brokenImages, viewport, unlabelled } of guard) {
+            for (const { name, theme, scrollWidth, dark, errors, brokenImages, viewport, unlabelled, smallTargets } of guard) {
                 const screen = `${name} ${width} ${theme}`;
                 expect.soft(scrollWidth, screen + ' horizontal overflow').toBeLessThanOrEqual(width);
                 expect.soft(errors, screen + ' console errors').toEqual([]);
@@ -100,6 +102,7 @@ for (const width of [360, 390, 768, 1024, 1440]) {
                 expect.soft(dark, screen + ' theme').toBe(theme === 'dark');
                 expect.soft(viewport, screen + ' viewport metadata').toBe(true);
                 expect.soft(unlabelled, screen + ' unlabelled controls').toEqual([]);
+                expect.soft(smallTargets, screen + ' undersized touch targets').toEqual([]);
             }
         }
     });

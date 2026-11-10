@@ -79,7 +79,7 @@ class DemoSeeder extends Seeder
             $group = Group::factory()->create(['complex_id' => $complex->id, 'group_name' => $complex->name]);
             $welcome = Message::factory()->create(['group_id' => $group->id, 'user_id' => $manager->id, 'text' => 'به گروه ساختمان خوش آمدید.']);
             Message::factory()->create(['group_id' => $group->id, 'user_id' => $residents[0]->user_id, 'text' => 'سلام، وقت بخیر.']);
-            Storage::disk('local')->put('public/chats/demo-message.png', file_get_contents(base_path('storage/app/public/default.png')));
+            Storage::disk('local')->put(Message::ATTACHMENT_DIRECTORY.'/demo-message.png', file_get_contents(base_path('storage/app/public/default.png')));
             Message::factory()->create(['group_id' => $group->id, 'user_id' => $residents[1]->user_id, 'text' => 'تصویر نمونه', 'image_url' => 'demo-message.png']);
             SeenMessage::factory()->create(['message_id' => $welcome->id, 'group_id' => $group->id, 'user_id' => $residents[0]->user_id]);
 

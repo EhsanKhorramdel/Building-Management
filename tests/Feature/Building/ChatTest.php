@@ -34,7 +34,7 @@ test('a member can send an image message', function () {
 
     $message = Message::firstOrFail();
     expect($message->text)->toBeNull();
-    Storage::disk('local')->assertExists('public/chats/'.$message->image_url);
+    Storage::disk('local')->assertExists(Message::ATTACHMENT_DIRECTORY.'/'.$message->image_url);
 });
 
 test('a sender can edit their own message', function () {

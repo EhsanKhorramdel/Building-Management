@@ -14,8 +14,10 @@ class Message extends Model
 {
     use HasFactory;
 
+    public const ATTACHMENT_DIRECTORY = 'private/chats';
+
     protected $fillable = [
-        'group_id', 'user_id', 'text', 'image_url', 'deleted', 'edited'
+        'group_id', 'user_id', 'text', 'image_url', 'deleted', 'edited',
     ];
 
     protected $casts = [

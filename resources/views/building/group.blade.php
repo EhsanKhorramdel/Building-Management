@@ -7,6 +7,7 @@
             <strong class="flex-1">{{ $group->group_name }}</strong>
             <button type="button" class="action" data-older hidden>پیام‌های پیشین</button>
             <button type="button" class="action" data-newer hidden>پیام‌های بعدی</button>
+            <button type="button" class="action" data-latest aria-label="رفتن به آخرین پیام" hidden>آخرین پیام</button>
         </div>
         <div class="chatContainer" tabindex="0" aria-label="پیام‌های گفتگو">
             <p class="empty-state" data-chat-state role="status" hidden></p>

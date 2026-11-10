@@ -29,7 +29,10 @@ class PollService
         $poll = Poll::create([
             'complex_id' => $complexId, 'title' => $data['title'] ?? null, 'question' => $data['question'],
             'start_date' => $now,
-            'end_date' => $now->copy()->addMinutes($data['endMinutes'] ?? null)->addHours($data['endHours'] ?? null)->addDays($data['endDays'] ?? null),
+            'end_date' => $now->copy()
+                ->addMinutes((int) ($data['endMinutes'] ?? 0))
+                ->addHours((int) ($data['endHours'] ?? 0))
+                ->addDays((int) ($data['endDays'] ?? 0)),
         ]);
         foreach (array_values($options) as $index => $text) {
             $poll->pollOptions()->create(['option_number' => $index + 1, 'option' => $text]);

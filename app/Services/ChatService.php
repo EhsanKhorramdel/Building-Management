@@ -5,6 +5,8 @@ namespace App\Services;
 use App\Models\Group;
 use App\Models\Message;
 use App\Models\SeenMessage;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 
 class ChatService
 {
@@ -65,12 +67,12 @@ class ChatService
             'group_id' => $group->id,
             'user_id' => $userId,
             'text' => $data['messageText'] ?? null,
-            'image_url' => isset($data['messageImage']) ? $this->uploads->store($data['messageImage'], 'public/chats') : null,
+            'image_url' => isset($data['messageImage']) ? $this->uploads->store($data['messageImage'], Message::ATTACHMENT_DIRECTORY) : null,
         ]);
     }
 
     /**
-     * @return \Illuminate\Support\Collection<int, array{user_name: string, viewed_at: \Illuminate\Support\Carbon|null}>
+     * @return Collection<int, array{user_name: string, viewed_at: Carbon|null}>
      */
     public function viewers(int $messageId)
     {

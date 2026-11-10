@@ -95,6 +95,18 @@
     .setting-window .settings-card { @apply w-full max-w-xl rounded-xl border p-4; border-color: var(--line); background: var(--muted-surface); }
     .complex-group-link { @apply min-w-0; }
     .table-scroll { @apply max-w-full overflow-x-auto rounded-xl border; border-color: var(--line); }
+    .report-scroll-cue { @apply mb-2 text-sm; color: var(--muted); }
+    .report-scroll-frame { position: relative; }
+    .report-has-more::after {
+        content: '';
+        position: absolute;
+        inset-block: 1px;
+        inset-inline-end: 1px;
+        width: 1.75rem;
+        background: linear-gradient(to right, var(--surface), transparent);
+        border-radius: .75rem 0 0 .75rem;
+        pointer-events: none;
+    }
     .payments-table { @apply w-full min-w-[32rem] text-start text-sm; }
     .payments-table :is(th, td) { @apply border-b px-3 py-2 text-start; border-color: var(--line); }
     .payments-table th { background: var(--muted-surface); }
@@ -126,6 +138,7 @@
     :root, .dark { color-scheme: light; }
     body, .app-container, .app-content, .paymentInfo-window, .table-scroll { background: white !important; color: black !important; display: block; border: 0; box-shadow: none; padding: 0; margin: 0; }
     .app-header, .app-sidebar, .toast-stack, [data-print], [data-drawer-overlay], .buildings-section:not(.paymentInfo-window) { display: none !important; }
+    .report-scroll-cue, .report-has-more::after { display: none !important; }
     .table-scroll { overflow: visible; }
     .payments-table { min-width: 0; }
     .payments-table :is(th, td) { background: white !important; color: black; border-color: #666; }

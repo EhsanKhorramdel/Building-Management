@@ -23,7 +23,15 @@
 }
 
 .complex-map .leaflet-control-attribution a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 24px;
     color: var(--accent-ink);
+}
+
+.map-picker-marker {
+    object-fit: contain;
+    object-position: center bottom;
 }
 
 .dark .complex-map .leaflet-tile-pane {
@@ -52,6 +60,13 @@
 
 @media (max-width: 767px) {
     .complex-map { height: 260px; }
+}
+
+@media (max-width: 767px), (pointer: coarse) {
+    .complex-map .leaflet-control-attribution a {
+        min-height: 40px;
+        min-width: 40px;
+    }
 
     .complex-map .leaflet-control-zoom a {
         width: 40px;

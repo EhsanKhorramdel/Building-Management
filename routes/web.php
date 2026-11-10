@@ -4,6 +4,7 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\BuildingDashboardController;
 use App\Http\Controllers\ChargeController;
+use App\Http\Controllers\ChatAttachmentController;
 use App\Http\Controllers\ComplexLocationController;
 use App\Http\Controllers\GroupController;
 use App\Http\Controllers\IncidentalCostController;
@@ -31,6 +32,9 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return view('mainPage');
 });
+
+Route::get('/chat/attachments/{message}', [ChatAttachmentController::class, 'show'])
+    ->middleware('auth')->name('chat.attachments.show');
 
 Route::get('/dashboard/building/{complex}/group/{lastReceivedMessageId}', [GroupController::class, 'index']);
 Route::get('/dashboard/building/{complex}/lastMessageSeenId', [GroupController::class, 'lastMessageSeenId']);

@@ -25,6 +25,7 @@ export function chat() {
     const state = document.querySelector('[data-chat-state]');
     const older = document.querySelector('[data-older]');
     const newer = document.querySelector('[data-newer]');
+    const latest = document.querySelector('[data-latest]');
     const editState = document.querySelector('[data-chat-edit]');
     const viewerDialog = document.querySelector('.modal-message-viewer');
     const messages = new Map();
@@ -135,7 +136,7 @@ export function chat() {
             bubble.append(heading);
             if (message.image_url) {
                 const photo = node('img', 'chat-image');
-                photo.src = config.chatStorage + '/' + encodeURIComponent(message.image_url);
+                photo.src = message.image_url;
                 photo.alt = 'تصویر پیام ' + message.user_name;
                 bubble.append(photo);
             }
@@ -144,6 +145,7 @@ export function chat() {
             row.append(bubble);
             list.append(row);
         }
+        latest.hidden = entries.length === 0;
         state.hidden = entries.length > 0;
         if (!entries.length) state.textContent = 'هنوز پیامی وجود ندارد. گفت‌وگو را آغاز کنید.';
     }
@@ -155,13 +157,13 @@ export function chat() {
     async function load(direction = 'initial') {
         if (pagePending) return;
         pagePending = true;
-        older.disabled = newer.disabled = true;
+        older.disabled = newer.disabled = latest.disabled = true;
         try {
-            if (direction === 'initial') {
+            if (direction === 'initial' || direction === 'latest') {
                 state.textContent = 'در حال دریافت پیام‌ها…';
                 state.hidden = false;
                 state.dataset.loading = '';
-                const receipt = await request(root + '/' + config.complexId + '/lastMessageSeenId');
+                const receipt = direction === 'latest' ? {} : await request(root + '/' + config.complexId + '/lastMessageSeenId');
                 const result = receipt && await request(root + '/' + config.complexId + '/group/' + (receipt.last_message_seen_id ?? 0));
                 if (!result) {
                     state.textContent = 'پیام‌ها دریافت نشدند.';
@@ -174,6 +176,9 @@ export function chat() {
                 older.hidden = first === null;
                 newer.hidden = last === null;
                 render();
+                if (direction === 'latest') {
+                    await Promise.allSettled([...list.querySelectorAll('img')].map(image => image.decode()));
+                }
                 const anchor = document.getElementById('message-' + receipt.last_message_seen_id);
                 if (anchor) scroll.scrollTop = anchor.offsetTop - scroll.offsetTop;
                 else scroll.scrollTop = scroll.scrollHeight;
@@ -197,13 +202,14 @@ export function chat() {
             void markVisible();
         } finally {
             delete state.dataset.loading;
-            older.disabled = newer.disabled = false;
+            older.disabled = newer.disabled = latest.disabled = false;
             pagePending = false;
         }
     }
 
     older.addEventListener('click', () => load('before'));
     newer.addEventListener('click', () => load('after'));
+    latest.addEventListener('click', () => load('latest'));
     let scrollTimer;
     scroll.addEventListener('scroll', () => {
         clearTimeout(scrollTimer);

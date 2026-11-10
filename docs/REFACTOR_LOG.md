@@ -943,3 +943,107 @@ Findings remain open unless a closing commit is recorded below. The named phases
 - **Files:** docs/COMPARISON.md, docs/FINDINGS.md, docs/PROPOSALS.md and this entry.
 - **Verified by:** The current PHP suite passed 387 tests with 1,102 assertions. Both frontend builds completed. The authorization matrix passed 168 cases. The sweep produced 250 screenshots with 49 raw guard flags, including six measurements of the hidden file input whose visible proxy passed. Poll creation returned HTTP 500 from browser forms and voting passed on an existing poll. The audit recorded 13 findings.
 - **Risk & rollback:** Documentation only. The findings need separate approval before changes are made. Browser writes used isolated demo data and the audit captures are ignored by Git.
+
+### [Phase 8C] F01 Normalize browser poll durations
+- **Before:** Validated HTML form durations reached Carbon as strings or null.
+- **After:** PollService casts all three parts to integers and treats omitted parts as zero.
+- **Why:** Carbon 3 expects numeric PHP values when adding time.
+- **Files:** app/Services/PollService.php, BrowserPollDurationTest, findings.spec.js.
+- **Verified by:** Hours-only, all-parts and days-only requests stored the expected end times. The browser created, listed and voted on the same hours-only poll.
+- **Risk & rollback:** The duration rules and option handling are unchanged. Reverting the casts restores the browser type error.
+
+### [Phase 8C] F02 Restore jump-to-latest in chat
+- **Before:** The previous and next controls replaced the original jump-to-latest action.
+- **After:** A labelled button requests the latest page with the zero cursor, replaces the visible window and scrolls to the bottom. Explicit paging remains.
+- **Why:** Readers need a direct return to the current conversation after browsing older messages.
+- **Files:** building/group.blade.php, resources/js/building/chat.js, findings.spec.js.
+- **Verified by:** The browser loaded an older page, clicked the new control, observed the latest request and reached the bottom with the newest message visible.
+- **Risk & rollback:** The action replaces the visible window. A reader can load older messages again.
+
+### [Phase 8C] F03 Name the shared guest home link
+- **Before:** The linked logo did not have an accessible name.
+- **After:** The link has a Persian label and the nested SVG is hidden from assistive technology.
+- **Why:** The link's destination must be announced without relying on the logo graphic.
+- **Files:** resources/views/layouts/guest.blade.php.
+- **Verified by:** The axe rerun found zero link-name violations on reset, confirm and verify pages.
+- **Risk & rollback:** The home link and logo rendering are unchanged.
+
+### [Phase 8C] F04 Set the favicon in shared layouts
+- **Before:** The browser requested the missing default favicon from the guest layout. The shared app layout also had no icon link.
+- **After:** Both shared layouts reference the existing project favicon.
+- **Why:** The browser should use the same icon across the shared and standalone layouts.
+- **Files:** resources/views/layouts/guest.blade.php, resources/views/layouts/app.blade.php.
+- **Verified by:** The full sweep returned zero console errors, including all three shared guest pages.
+- **Risk & rollback:** Layout head only. Reverting the links restores the browser fallback.
+
+### [Phase 8C] F05 Size the remember-me hit area
+- **Before:** The visible login label was 20px high.
+- **After:** The label has a 40px minimum height.
+- **Why:** The associated label is the effective hit area for the checkbox.
+- **Files:** resources/views/auth/login.blade.php.
+- **Verified by:** The touch guard measured the visible label with no flags at 360, 390 or 768px.
+- **Risk & rollback:** The checkbox's value and submission are unchanged.
+
+### [Phase 8C] F06 Size the verify-email logout action
+- **Before:** The text logout action was about 31px wide.
+- **After:** The button has a 40px minimum width and remains in its POST form.
+- **Why:** The touch target needs usable width even with a short label.
+- **Files:** resources/views/auth/verify-email.blade.php.
+- **Verified by:** The verify-email captures passed the touch guard at all three widths.
+- **Risk & rollback:** The existing POST action and token remain in place.
+
+### [Phase 8C] F07 Increase map attribution hit areas
+- **Before:** Attribution links were about 14px high.
+- **After:** Links use inline flex and a 24px minimum height, increased to 40px on touch layouts.
+- **Why:** The attribution must remain visible and usable as a link.
+- **Files:** resources/css/map.css.
+- **Verified by:** The registration, home, settings and map captures passed the touch and overflow guards.
+- **Risk & rollback:** Long custom attributions may wrap within the map.
+
+### [Phase 8C] F08 Size zoom controls on coarse pointers
+- **Before:** The 40px rule stopped below 768px.
+- **After:** The rule also applies to coarse pointers, including the 768px tablet layout.
+- **Why:** A tablet can use touch even at the desktop layout breakpoint.
+- **Files:** resources/css/map.css.
+- **Verified by:** The 768px touch captures passed with both zoom controls.
+- **Risk & rollback:** Map height retains its existing width breakpoint.
+
+### [Phase 8C] F09 Expand the picker marker hit area
+- **Before:** The draggable icon was only 25px wide.
+- **After:** The picker uses a 40×41px image box. Object fit preserves the pin proportions and a 19.5px horizontal anchor accounts for the added side space.
+- **Why:** The draggable area can grow without moving the visible tip away from its coordinate.
+- **Files:** resources/js/building/map.js, resources/css/map.css.
+- **Verified by:** Picker captures passed the touch guard and retained the visible pin at the mapped point.
+- **Risk & rollback:** The larger hit area overlaps a few more pixels of map around the pin.
+
+### [Phase 8C] F10 Make display markers non-interactive
+- **Before:** The read-only pin used the default interactive marker options.
+- **After:** Display markers disable keyboard and pointer interaction. The map region announces the building or request address.
+- **Why:** A display pin has no action and should not be exposed as a button.
+- **Files:** resources/js/building/map.js and the complex map component and callers.
+- **Verified by:** Home and display captures passed touch checks. The display marker has no button role and the map keeps an accessible region name.
+- **Risk & rollback:** Zoom controls remain available on the read-only map.
+
+### [Phase 8C] F11 Measure labelled touch targets
+- **Before:** The guard flagged the clipped chat file input instead of the visible attachment control.
+- **After:** The shared browser guard uses a visible associated label for a visually hidden input, checkbox or radio when the label handles activation.
+- **Why:** The measurement should describe the area a user can tap.
+- **Files:** tests/Browser/touch-targets.js, visual.spec.js, docs/VISUAL_QA.md.
+- **Verified by:** The chat attachment label and remember-me row passed the touch guard.
+- **Risk & rollback:** Inputs without a visible label still use their own box.
+
+### [Phase 8C] F12 Show when the payments table can scroll
+- **Before:** The report clipped later columns inside its scroll container without a visible cue.
+- **After:** A localized hint appears when the table overflows. A non-interactive edge fade disappears at the far edge. Both are hidden in print.
+- **Why:** Users need a cue that more columns are available.
+- **Files:** building/payments.blade.php, resources/js/building/payments.js, resources/css/panels.css, findings.spec.js.
+- **Verified by:** The mobile browser checked the hint, fade and far-edge state. Print media kept the report rows and hid the cue.
+- **Risk & rollback:** The existing report table and print action remain in place.
+
+### [Phase 8C] F13 Serve chat images through complex authorization
+- **Before:** The public storage link served a copied chat attachment URL without a session.
+- **After:** Chat stores images under the private path and presents an authenticated URL keyed by message. Active members of the message's complex or global admins can read it. The move command preserves legacy filenames and reports conflicts.
+- **Why:** Chat files need the same membership boundary as the conversation. The response uses the detected image type and private cache headers.
+- **Files:** ChatAttachmentController, ComplexPolicy, ChatService, MessagePresenter, MoveChatAttachments, DemoSeeder, README and chat tests.
+- **Verified by:** The anonymous and foreign-complex tests received no attachment. Member and admin tests received the expected PNG bytes. The local move reported one found and moved, with zero duplicates, conflicts or failures. A repeat found zero files. Existing chat, seeder and presenter assertions now check private paths or scoped URLs.
+- **Risk & rollback:** Move legacy files before serving chat and resolve any reported conflicts. Announcement and incidental-cost images stay on their existing public path. Reverting code alone does not move private files back.

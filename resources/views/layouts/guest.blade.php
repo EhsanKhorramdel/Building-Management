@@ -6,6 +6,7 @@
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
         <title>{{ config('app.name', 'Laravel') }}</title>
+        <link rel="icon" href="{{ asset('assets/images/favIcon/apartment.ico') }}">
 
         <!-- Fonts -->
 
@@ -20,8 +21,8 @@
 <x-theme-button class="page-theme" />
         <div class="min-h-screen flex flex-col sm:justify-center items-center pt-6 sm:pt-0 bg-gray-100 dark:bg-gray-900">
             <div>
-                <a href="/">
-                    <x-application-logo class="w-20 h-20 fill-current text-gray-500" />
+                <a href="/" aria-label="صفحهٔ اصلی">
+                    <x-application-logo aria-hidden="true" class="w-20 h-20 fill-current text-gray-500" />
                 </a>
             </div>
 
