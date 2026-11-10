@@ -32,7 +32,7 @@ class IncidentalCostController extends Controller
         ];
 
         if ($data['cost_invoice'] ?? null) {
-            $incidentalCost['cost_invoice'] = $uploads->store($data['cost_invoice'], 'public/incidentalCostFiles');
+            $incidentalCost['cost_invoice'] = $uploads->store($data['cost_invoice'], IncidentalCost::ATTACHMENT_DIRECTORY);
         }
 
         IncidentalCost::create($incidentalCost);

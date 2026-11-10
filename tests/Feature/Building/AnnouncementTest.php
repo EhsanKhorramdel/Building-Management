@@ -16,7 +16,11 @@ test('a manager can publish an announcement with an image', function () {
     $announcement = Announcement::firstOrFail();
     expect($announcement->complex_id)->toBe($building->complex->id)
         ->and($announcement->manager_id)->toBe($building->manager->id)->and($announcement->text)->toBe('Building meeting');
-    Storage::disk('local')->assertExists('public/notificationFiles/'.$announcement->image_url);
+    Storage::disk('local')->assertExists(Announcement::ATTACHMENT_DIRECTORY.'/'.$announcement->image_url)
+        ->assertMissing('public/notificationFiles/'.$announcement->image_url);
+    $this->get(route('building', $building->complex))->assertOk()
+        ->assertSee('data-announcement-image="'.route('announcements.attachment', $announcement).'"', false)
+        ->assertDontSee('/storage/notificationFiles/', false);
 });
 
 test('an empty announcement is rejected', function () {

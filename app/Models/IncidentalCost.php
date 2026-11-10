@@ -11,8 +11,10 @@ class IncidentalCost extends Model
 {
     use HasFactory;
 
+    public const ATTACHMENT_DIRECTORY = 'private/incidentalCostFiles';
+
     protected $fillable = [
-        'complex_id', 'cost_invoice', 'cost_explanation', 'title', 'total_amount', 'share_amount'
+        'complex_id', 'cost_invoice', 'cost_explanation', 'title', 'total_amount', 'share_amount',
     ];
 
     public function complex(): BelongsTo

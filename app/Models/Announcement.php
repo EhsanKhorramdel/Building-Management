@@ -10,8 +10,10 @@ class Announcement extends Model
 {
     use HasFactory;
 
+    public const ATTACHMENT_DIRECTORY = 'private/notificationFiles';
+
     protected $fillable = [
-        'complex_id', 'manager_id', 'text', 'image_url', 'archive'
+        'complex_id', 'manager_id', 'text', 'image_url', 'archive',
     ];
 
     public function complex(): BelongsTo

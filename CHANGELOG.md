@@ -2,6 +2,12 @@
 
 See [REFACTOR_LOG.md](docs/REFACTOR_LOG.md) for the engineering record and verification details.
 
+## [Unreleased]
+
+### Security
+
+- Announcement images and incidental-cost invoices require building membership or global admin access, including when someone opens a copied image URL.
+
 ## [1.0.0] — post-refactor baseline (2026-11-10)
 
 ### Added
@@ -40,5 +46,5 @@ See [REFACTOR_LOG.md](docs/REFACTOR_LOG.md) for the engineering record and verif
 
 - Live Pusher delivery test is pending a configured broadcasting app.
 - Full MySQL test coverage remains open. MySQL 8.4.13 passed migration, one rollback step, fresh migration and demo seeding. The test harness requires in-memory SQLite and stopped all 437 feature cases during bootstrap.
-- Announcement and incidental-cost images still use public storage. This is accepted scope. Chat attachments require authorization.
+- Announcement and incidental-cost images used public storage at release. Attachment privacy is now closed under [Unreleased](#unreleased).
 - Post-refactor backlog is tracked in the items marked Later. [Proposals](docs/PROPOSALS.md)

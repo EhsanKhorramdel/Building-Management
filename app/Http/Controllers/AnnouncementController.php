@@ -31,7 +31,7 @@ class AnnouncementController extends Controller
         ];
 
         if ($data['notifPicture'] ?? null) {
-            $announcement['image_url'] = $uploads->store($data['notifPicture'], 'public/notificationFiles');
+            $announcement['image_url'] = $uploads->store($data['notifPicture'], Announcement::ATTACHMENT_DIRECTORY);
         }
 
         $created = Announcement::create($announcement);

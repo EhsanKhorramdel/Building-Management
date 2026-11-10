@@ -16,5 +16,9 @@ test('a manager can register an incidental cost with an invoice', function () {
 
     $cost = IncidentalCost::firstOrFail();
     expect($cost->complex_id)->toBe($building->complex->id)->and((float) $cost->share_amount)->toBe(100000.0);
-    Storage::disk('local')->assertExists('public/incidentalCostFiles/'.$cost->cost_invoice);
+    Storage::disk('local')->assertExists(IncidentalCost::ATTACHMENT_DIRECTORY.'/'.$cost->cost_invoice)
+        ->assertMissing('public/incidentalCostFiles/'.$cost->cost_invoice);
+    $this->get(route('building', $building->complex))->assertOk()
+        ->assertSee('data-invoice="'.route('incidental-costs.attachment', $cost).'"', false)
+        ->assertDontSee('/storage/incidentalCostFiles/', false);
 });
