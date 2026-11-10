@@ -2,10 +2,10 @@
 
 namespace App\Http\Requests;
 
-use Illuminate\Foundation\Http\FormRequest;
-
-class PollCreateRequest extends FormRequest
+class PollCreateRequest extends NumericFormRequest
 {
+    protected const INTEGERS = ['endMinutes', 'endHours', 'endDays'];
+
     protected $errorBag = 'pollCreate';
 
     public function rules(): array

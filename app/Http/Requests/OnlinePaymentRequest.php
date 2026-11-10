@@ -2,11 +2,12 @@
 
 namespace App\Http\Requests;
 
-use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-class OnlinePaymentRequest extends FormRequest
+class OnlinePaymentRequest extends NumericFormRequest
 {
+    protected const INTEGERS = ['payable_id', 'unitNumber'];
+
     protected function prepareForValidation(): void
     {
         abort_unless(config('payments.enabled'), 404);

@@ -10,6 +10,7 @@ use App\Models\MonthlyCharge;
 use App\Models\Poll;
 use App\Models\PollOption;
 use App\Models\Unit;
+use App\Support\TypedInput;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -33,7 +34,8 @@ class AccessMiddleware
 
         if ($request->route()->getActionMethod() === 'update'
             && $request->route()->getControllerClass() === UserController::class) {
-            $unit = Unit::where('complex_id', $complex->id)->where('unit_number', $request->currentUnitNumber)->first();
+            $unit = Unit::where('complex_id', $complex->id)
+                ->where('unit_number', TypedInput::nullableInt($request->input('currentUnitNumber')))->first();
             if ($unit) {
                 abort_unless(Gate::allows('manage', $complex) || $request->user()->userRoles()
                     ->where('complex_id', $complex->id)->where('unit_id', $unit->id)->where('active', true)->exists(), 403);
@@ -59,24 +61,25 @@ class AccessMiddleware
         }
 
         $action = $request->route()->getActionMethod();
+        $id = fn (string $field) => TypedInput::nullableInt($request->input($field));
         $resource = match ($action) {
-            'vote' => PollOption::findOrFail($request->voteRadio)->poll,
-            'voteResult' => Poll::findOrFail($request->poll_id),
-            'incidentalCostPayment' => IncidentalCost::findOrFail($request->incidentalCostId),
-            'buildingChargePayment' => MonthlyCharge::findOrFail($request->monthlyChargeId),
-            'getMessageViewers' => Message::findOrFail($request->message_id)->group,
-            'edit', 'seen' => Message::findOrFail($request->messageId)->group,
+            'vote' => PollOption::findOrFail($id('voteRadio'))->poll,
+            'voteResult' => Poll::findOrFail($id('poll_id')),
+            'incidentalCostPayment' => IncidentalCost::findOrFail($id('incidentalCostId')),
+            'buildingChargePayment' => MonthlyCharge::findOrFail($id('monthlyChargeId')),
+            'getMessageViewers' => Message::findOrFail($id('message_id'))->group,
+            'edit', 'seen' => Message::findOrFail($id('messageId'))->group,
             default => null,
         };
         if ($resource) {
             if (in_array($action, ['incidentalCostPayment', 'buildingChargePayment'], true)) {
                 // Unit lookup must use the same complex as the payable record.
-                abort_unless((int) $request->complexId === $resource->complex_id, 403);
+                abort_unless($id('complexId') === $resource->complex_id, 403);
             }
 
             return $resource->complex;
         }
 
-        return Complex::findOrFail($request->route('complexId') ?? $request->input('complexId') ?? $request->input('complex_id'));
+        return Complex::findOrFail($request->route('complexId') ?? $id('complexId') ?? $id('complex_id'));
     }
 }

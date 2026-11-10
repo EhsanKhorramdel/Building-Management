@@ -2,18 +2,18 @@
 
 namespace App\Http\Requests;
 
-use Illuminate\Foundation\Http\FormRequest;
-
-class ChargePaymentRequest extends FormRequest
+class ChargePaymentRequest extends NumericFormRequest
 {
+    protected const INTEGERS = ['unitNumber', 'complexId', 'monthlyChargeId'];
+
     protected $errorBag = 'buildingPayCharge';
 
     public function rules(): array
     {
         return [
             'unitNumber' => 'required|integer|min:1',
-            'complexId' => 'nullable',
-            'monthlyChargeId' => 'nullable',
+            'complexId' => 'nullable|integer',
+            'monthlyChargeId' => 'nullable|integer',
         ];
     }
 

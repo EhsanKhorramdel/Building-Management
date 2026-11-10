@@ -1047,3 +1047,35 @@ Findings remain open unless a closing commit is recorded below. The named phases
 - **Files:** ChatAttachmentController, ComplexPolicy, ChatService, MessagePresenter, MoveChatAttachments, DemoSeeder, README and chat tests.
 - **Verified by:** The anonymous and foreign-complex tests received no attachment. Member and admin tests received the expected PNG bytes. The local move reported one found and moved, with zero duplicates, conflicts or failures. A repeat found zero files. Existing chat, seeder and presenter assertions now check private paths or scoped URLs.
 - **Risk & rollback:** Move legacy files before serving chat and resolve any reported conflicts. Announcement and incidental-cost images stay on their existing public path. Reverting code alone does not move private files back.
+
+### [Phase 8D] P2 Normalize numeric form inputs
+- **Before:** Validated numbers from form submissions remained strings. Poll creation and coordinate handling converted their own inputs, and authorization looked up some resources using raw form IDs.
+- **After:** NumericFormRequest normalizes digit scripts and trims declared fields before validation. It returns typed quantities after validation without adding absent keys. TypedInput is also used by AccessMiddleware before resource lookup and by the mock callback before its existing amount verification.
+- **Why:** A FormRequest declaration keeps typing next to each endpoint's validation. The shared parser lets early authorization see the same ID without casting a malformed value to a valid resource ID.
+- **Inventory:** The numeric payload fields and empty-value rules are listed below. Required fields keep their validation. Missing optional keys stay absent and explicitly blank optional values become null.
+
+| Endpoint | Fields | Empty value |
+| --- | --- | --- |
+| Create charge | Float `chargeAmount`; integer `dayStart`, `monthStart`, `yearStart`, `dayEnd`, `monthEnd`, `yearEnd` | Required. The date parts still form Jalali date strings. |
+| Create incidental cost | Floats `total_amount`, `share_amount` | Required. |
+| Create poll | Integers `endMinutes`, `endHours`, `endDays` | Each omitted or blank part contributes zero. At least one part is still required. |
+| Add unit | Integers `complexId`, `unitNumber`, `floorNumber`; string identifier `zipCode` | Complex ID must resolve for authorization. Missing or blank unit details are null. |
+| Update unit | Integers `complexId`, `currentUnitNumber`, `newUnitNumber`, `floorNumber`; string identifier `zipCode` | Same as add. The current number uses the existing unit lookup. |
+| Register building | Integers `floors`, `units`; floats `latitude`, `longitude` | Counts are required. Omitted or blank coordinates leave a null pair on a new request. |
+| Update building location | Floats `latitude`, `longitude` | Omit both to keep the pair. A blank pair clears it. |
+| Update profile | String identifiers `ncode`, `phoneNumber` | Omit to keep the corresponding value. Blank clears it. |
+| Pay charge manually | Integers `unitNumber`, `complexId`, `monthlyChargeId` | Unit number is required. Payable and complex IDs must resolve and match for authorization. |
+| Pay cost manually | Integers `unitNumber`, `complexId`, `incidentalCostId` | Same as manual charge. Both actions use stored amounts. |
+| Initiate online payment | Integers `payable_id`, `unitNumber` | Required. |
+| Mock payment callback | Decimal `amount` | Missing or blank fails the existing amount check. The precision check still runs before conversion for comparison. |
+| Cast vote | Integer `voteRadio` | Missing or blank means no option selected. |
+| Read poll results | Integer `poll_id` | Must resolve for authorization. |
+| Read payments report | Integer `complex_id` | Must resolve for authorization. |
+| Send chat message | Integer `complexId` | Must resolve for authorization. |
+| Edit or mark chat message seen | Integer `messageId` | Must resolve for authorization. |
+| Read message viewers | Integer `message_id` | Must resolve for authorization. |
+
+- **Scope:** Numeric route parameters keep their existing bindings. Payment gateway tokens and statuses, signed verification links, and join tokens stay opaque. Postal, national and phone numbers are digit-normalized text so leading zeroes survive.
+- **Files:** TypedInput, NumericFormRequest and its endpoint requests, AccessMiddleware, PollService, MockGateway, TypedInputTest, ARCHITECTURE.md.
+- **Verified by:** TypedInputTest covers ASCII, whitespace, zero, negative, a large integer, both local digit scripts, blank and absent values, and a fractional float.
+- **Risk & rollback:** Nullable ID and unit fields now reject non-integers. The shared boundary replaces three poll duration casts, two coordinate casts and the payable complex check's integer cast. Coordinate rounding, opaque gateway verification and persisted field formats stay in place. Revert the request and authorization changes together.

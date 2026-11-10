@@ -93,3 +93,8 @@ Use PHP 8.3 or later and MySQL 8. Install the locked PHP dependencies, build ass
 The template runs queued work synchronously and logs broadcasts. Configure Pusher for live updates and run a queue worker if the selected queue connection is asynchronous. Serve production traffic over HTTPS.
 
 Live MySQL migration and rollback verification is pending a MySQL environment. The end-to-end live Pusher check is pending a configured Pusher environment.
+## Numeric form inputs
+
+Numeric form requests normalize Persian and Arabic-Indic digits to ASCII and trim whitespace before validation. Validated quantities and IDs become integers or floats before reaching controllers and services. Complex authorization uses the same integer parser for IDs it needs before validation.
+
+Blank optional values become null. Missing keys stay absent, so profile numbers and a saved coordinate pair are kept unless the form explicitly clears them. A missing or blank poll duration part contributes zero. Postal, national and phone numbers stay strings to retain leading zeroes.

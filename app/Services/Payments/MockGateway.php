@@ -4,6 +4,7 @@ namespace App\Services\Payments;
 
 use App\Contracts\PaymentGateway;
 use App\Models\Transaction;
+use App\Support\TypedInput;
 use Illuminate\Support\Str;
 
 class MockGateway implements PaymentGateway
@@ -18,7 +19,7 @@ class MockGateway implements PaymentGateway
         $transaction = $callbackParams['transaction'];
         $payload = $callbackParams['payload'];
 
-        if (! $transaction->matchesAmount($payload['amount'] ?? null)) {
+        if (! $transaction->matchesAmount(TypedInput::normalize($payload['amount'] ?? null))) {
             return new VerificationResult(false, failureReason: 'amount_mismatch');
         }
 

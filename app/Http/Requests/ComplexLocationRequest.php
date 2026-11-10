@@ -2,10 +2,10 @@
 
 namespace App\Http\Requests;
 
-use Illuminate\Foundation\Http\FormRequest;
-
-class ComplexLocationRequest extends FormRequest
+class ComplexLocationRequest extends NumericFormRequest
 {
+    protected const DECIMALS = ['latitude', 'longitude'];
+
     protected $errorBag = 'complexLocation';
 
     public function rules(): array
@@ -35,15 +35,15 @@ class ComplexLocationRequest extends FormRequest
      */
     public function coordinates(): array
     {
-        $data = $this->safe()->only(['latitude', 'longitude']);
+        $data = $this->validated();
 
-        if ($data === []) {
+        if (! array_key_exists('latitude', $data) && ! array_key_exists('longitude', $data)) {
             return [];
         }
 
         return [
-            'latitude' => isset($data['latitude']) ? round((float) $data['latitude'], 7) : null,
-            'longitude' => isset($data['longitude']) ? round((float) $data['longitude'], 7) : null,
+            'latitude' => isset($data['latitude']) ? round($data['latitude'], 7) : null,
+            'longitude' => isset($data['longitude']) ? round($data['longitude'], 7) : null,
         ];
     }
 }

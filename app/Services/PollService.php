@@ -30,9 +30,9 @@ class PollService
             'complex_id' => $complexId, 'title' => $data['title'] ?? null, 'question' => $data['question'],
             'start_date' => $now,
             'end_date' => $now->copy()
-                ->addMinutes((int) ($data['endMinutes'] ?? 0))
-                ->addHours((int) ($data['endHours'] ?? 0))
-                ->addDays((int) ($data['endDays'] ?? 0)),
+                ->addMinutes($data['endMinutes'] ?? 0)
+                ->addHours($data['endHours'] ?? 0)
+                ->addDays($data['endDays'] ?? 0),
         ]);
         foreach (array_values($options) as $index => $text) {
             $poll->pollOptions()->create(['option_number' => $index + 1, 'option' => $text]);

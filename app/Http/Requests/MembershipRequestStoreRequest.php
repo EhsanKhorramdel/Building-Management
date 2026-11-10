@@ -4,6 +4,8 @@ namespace App\Http\Requests;
 
 class MembershipRequestStoreRequest extends ComplexLocationRequest
 {
+    protected const INTEGERS = ['floors', 'units'];
+
     protected $errorBag = 'registerBuilding';
 
     public function rules(): array

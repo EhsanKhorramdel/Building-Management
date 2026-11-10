@@ -2,10 +2,12 @@
 
 namespace App\Http\Requests;
 
-use Illuminate\Foundation\Http\FormRequest;
-
-class ChargeRequest extends FormRequest
+class ChargeRequest extends NumericFormRequest
 {
+    protected const INTEGERS = ['dayStart', 'monthStart', 'yearStart', 'dayEnd', 'monthEnd', 'yearEnd'];
+
+    protected const DECIMALS = ['chargeAmount'];
+
     protected $errorBag = 'buildingCharge';
 
     public function rules(): array

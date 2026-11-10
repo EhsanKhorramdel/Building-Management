@@ -2,14 +2,14 @@
 
 namespace App\Http\Requests;
 
-use Illuminate\Foundation\Http\FormRequest;
-
-class PollResultsRequest extends FormRequest
+class PollResultsRequest extends NumericFormRequest
 {
+    protected const INTEGERS = ['poll_id'];
+
     public function rules(): array
     {
         return [
-            'poll_id' => 'nullable',
+            'poll_id' => 'nullable|integer',
         ];
     }
 }

@@ -2,14 +2,14 @@
 
 namespace App\Http\Requests;
 
-use Illuminate\Foundation\Http\FormRequest;
-
-class PaymentsReportRequest extends FormRequest
+class PaymentsReportRequest extends NumericFormRequest
 {
+    protected const INTEGERS = ['complex_id'];
+
     public function rules(): array
     {
         return [
-            'complex_id' => 'nullable',
+            'complex_id' => 'nullable|integer',
         ];
     }
 }

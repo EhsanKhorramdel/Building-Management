@@ -2,14 +2,14 @@
 
 namespace App\Http\Requests;
 
-use Illuminate\Foundation\Http\FormRequest;
-
-class ChatSeenRequest extends FormRequest
+class ChatSeenRequest extends NumericFormRequest
 {
+    protected const INTEGERS = ['messageId'];
+
     public function rules(): array
     {
         return [
-            'messageId' => 'nullable',
+            'messageId' => 'nullable|integer',
         ];
     }
 }

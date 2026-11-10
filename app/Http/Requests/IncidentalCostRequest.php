@@ -2,10 +2,10 @@
 
 namespace App\Http\Requests;
 
-use Illuminate\Foundation\Http\FormRequest;
-
-class IncidentalCostRequest extends FormRequest
+class IncidentalCostRequest extends NumericFormRequest
 {
+    protected const DECIMALS = ['total_amount', 'share_amount'];
+
     protected $errorBag = 'incidentalCost';
 
     public function rules(): array

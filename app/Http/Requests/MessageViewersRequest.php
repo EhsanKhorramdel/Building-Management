@@ -2,14 +2,14 @@
 
 namespace App\Http\Requests;
 
-use Illuminate\Foundation\Http\FormRequest;
-
-class MessageViewersRequest extends FormRequest
+class MessageViewersRequest extends NumericFormRequest
 {
+    protected const INTEGERS = ['message_id'];
+
     public function rules(): array
     {
         return [
-            'message_id' => 'nullable',
+            'message_id' => 'nullable|integer',
         ];
     }
 }

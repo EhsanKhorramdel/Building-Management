@@ -2,18 +2,20 @@
 
 namespace App\Http\Requests;
 
-use Illuminate\Foundation\Http\FormRequest;
-
-class UnitUpdateRequest extends FormRequest
+class UnitUpdateRequest extends NumericFormRequest
 {
+    protected const INTEGERS = ['complexId', 'currentUnitNumber', 'newUnitNumber', 'floorNumber'];
+
+    protected const IDENTIFIERS = ['zipCode'];
+
     public function rules(): array
     {
         return [
-            'complexId' => 'nullable',
-            'currentUnitNumber' => 'nullable',
-            'newUnitNumber' => 'nullable',
+            'complexId' => 'nullable|integer',
+            'currentUnitNumber' => 'nullable|integer',
+            'newUnitNumber' => 'nullable|integer',
             'zipCode' => 'nullable',
-            'floorNumber' => 'nullable',
+            'floorNumber' => 'nullable|integer',
         ];
     }
 }

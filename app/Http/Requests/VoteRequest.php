@@ -2,14 +2,14 @@
 
 namespace App\Http\Requests;
 
-use Illuminate\Foundation\Http\FormRequest;
-
-class VoteRequest extends FormRequest
+class VoteRequest extends NumericFormRequest
 {
+    protected const INTEGERS = ['voteRadio'];
+
     public function rules(): array
     {
         return [
-            'voteRadio' => 'nullable',
+            'voteRadio' => 'nullable|integer',
         ];
     }
 }
