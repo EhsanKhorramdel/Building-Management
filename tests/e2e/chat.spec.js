@@ -221,3 +221,57 @@ test('a tall dialog keeps Close available after scrolling to Submit', async ({ p
     await expect(dialog).toBeHidden();
     await expect(launch).toBeFocused();
 });
+
+test('viewer names are available to the author and complex manager only', async ({ page, browser, baseURL }) => {
+    const contexts = await Promise.all(['resident', 'neighbor', 'other-manager'].map(async account => {
+        const context = await browser.newContext({ baseURL, viewport: { width: 390, height: 844 } });
+        return { account, context, session: await context.newPage() };
+    }));
+    const [author, neighbor, foreign] = contexts;
+    try {
+        for (const { account, session } of contexts) await login(session, account);
+        await openBuilding(author.session);
+        await tab(author.session, 'chat');
+        const text = 'پیام خصوصی رسید مشاهده';
+        const message = await latestOwnMessage(author.session, text);
+        const messageId = Number(await message.getAttribute('data-message-id'));
+        await openBuilding(neighbor.session);
+        const seen = neighbor.session.waitForResponse(response =>
+            new URL(response.url()).pathname.endsWith('/group/seen')
+            && Number(response.request().postDataJSON()?.messageId) === messageId);
+        await tab(neighbor.session, 'chat');
+        const received = neighbor.session.getByText(text, { exact: true });
+        await received.scrollIntoViewIfNeeded();
+        expect((await seen).ok()).toBe(true);
+
+        async function viewers(session) {
+            return session.request.post('/dashboard/building/getMessageViewers', {
+                data: { message_id: messageId },
+                headers: {
+                    Accept: 'application/json',
+                    'X-CSRF-TOKEN': await session.locator('meta[name=csrf-token]').getAttribute('content'),
+                },
+            });
+        }
+
+        for (const session of [author.session, page]) {
+            const response = await viewers(session);
+            expect(response.status()).toBe(200);
+            expect(await response.json()).toEqual([
+                expect.objectContaining({ user_name: 'همسایه سرو' }),
+            ]);
+        }
+        expect((await viewers(neighbor.session)).status()).toBe(403);
+        expect((await viewers(foreign.session)).status()).toBe(403);
+        await message.locator('summary').click();
+        await message.getByRole('button', { name: 'مشاهده کنندگان' }).click();
+        await expect(author.session.locator('.modal-message-viewer')).toContainText('همسایه سرو');
+        await captureInteraction(author.session, 'F11-07-author-viewers-390');
+        const otherMessage = received.locator('xpath=ancestor::article');
+        await otherMessage.locator('summary').click();
+        await expect(otherMessage.getByRole('button')).toHaveText(['کپی']);
+        await captureInteraction(neighbor.session, 'F11-07-non-author-menu-390');
+    } finally {
+        await Promise.all(contexts.map(({ context }) => context.close()));
+    }
+});

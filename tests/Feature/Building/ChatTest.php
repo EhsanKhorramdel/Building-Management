@@ -98,10 +98,39 @@ test('marking a message seen twice keeps a single receipt and excludes its sende
     SeenMessage::factory()->create(['message_id' => $message->id, 'group_id' => $this->building->group->id, 'user_id' => $this->building->manager->id]);
 
     $this->postJson('/dashboard/building/getMessageViewers', ['message_id' => $message->id])
-        ->assertOk()->assertJsonCount(1)->assertJsonPath('0.user_name', $this->resident->user->name);
+        ->assertForbidden();
     $this->getJson('/dashboard/building/'.$this->building->complex->id.'/lastMessageSeenId')
         ->assertOk()->assertJsonPath('last_message_seen_id', $message->id);
 });
+
+test('only the author and a manager of the message complex can see viewer names', function (string $audience) {
+    $message = Message::factory()->create([
+        'group_id' => $this->building->group->id,
+        'user_id' => $this->resident->user_id,
+    ]);
+    $neighbor = $this->building->resident();
+    foreach ([$this->resident, $neighbor] as $role) {
+        SeenMessage::factory()->create([
+            'message_id' => $message->id,
+            'group_id' => $message->group_id,
+            'user_id' => $role->user_id,
+        ]);
+    }
+    $user = match ($audience) {
+        'author' => $this->resident->user,
+        'manager' => $this->building->manager,
+        'neighbor' => $neighbor->user,
+        'foreign manager' => (new BuildingContext)->manager,
+    };
+
+    $response = $this->actingAs($user)->postJson('/dashboard/building/getMessageViewers', ['message_id' => $message->id]);
+
+    if ($audience === 'author' || $audience === 'manager') {
+        $response->assertOk()->assertJsonCount(1)->assertJsonPath('0.user_name', $neighbor->user->name);
+    } else {
+        $response->assertForbidden();
+    }
+})->with(['author', 'manager', 'neighbor', 'foreign manager']);
 
 test('last seen is null when no receipt exists', function () {
     $message = Message::factory()->create(['group_id' => $this->building->group->id, 'user_id' => $this->building->manager->id]);

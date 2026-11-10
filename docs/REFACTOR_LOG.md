@@ -1193,3 +1193,11 @@ Findings remain open unless a closing commit is recorded below. The named phases
 - **Files:** resources/css/panels.css, the four building creation views, tests/e2e/chat.spec.js and the audit closure evidence.
 - **Verified by:** The landscape charge case scrolls to Submit, checks Close is still visible, and verifies Close and Escape return focus.
 - **Risk & rollback:** The sticky toolbar takes one row of the dialog's visible height. Revert the toolbar markup and styling together to restore the previous layout.
+
+### [Phase 11A, F11-07] Scope access to message viewer names
+- **Before:** The menu showed Viewers for the author's own messages, but the endpoint permitted any active member of the complex.
+- **After:** The endpoint allows the message author or an active manager of that complex. The route and author menu stay as before.
+- **Why:** The owner chose author and complex-manager access to named receipts.
+- **Files:** app/Http/Controllers/GroupController.php, tests/Feature/Building/ChatTest.php, tests/Feature/Backend/FormEncodingParityTest.php, tests/e2e/chat.spec.js and the audit closure evidence. Pint also normalized the controller's existing JSON response docblocks.
+- **Verified by:** PHP and browser cases cover the author, manager, non-author resident and foreign manager. The named ChatTest expectation now requires 403 for a non-author resident. The viewer parity case checks the same denial for JSON and form bodies and retains manager success.
+- **Risk & rollback:** Reverting reopens named receipts to all active complex members. Keep the policy and its test expectations together.

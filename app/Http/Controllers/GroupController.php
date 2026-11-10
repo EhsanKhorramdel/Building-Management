@@ -15,6 +15,7 @@ use App\Models\Group;
 use App\Models\Message;
 use App\Services\ChatService;
 use App\Services\MessagePresenter;
+use Illuminate\Http\JsonResponse;
 
 class GroupController extends Controller
 {
@@ -24,7 +25,7 @@ class GroupController extends Controller
     }
 
     /**
-     * @return \Illuminate\Http\JsonResponse Body is array{messages: list of MessagePresenter::present() payloads, first_message_id: int|null, last_message_id: int|null}.
+     * @return JsonResponse Body is array{messages: list of MessagePresenter::present() payloads, first_message_id: int|null, last_message_id: int|null}.
      */
     public function index(Complex $complex, int $lastReceivedMessageId)
     {
@@ -32,7 +33,7 @@ class GroupController extends Controller
     }
 
     /**
-     * @return \Illuminate\Http\JsonResponse Body is array{messages: list of MessagePresenter::present() payloads, first_message_id: int}.
+     * @return JsonResponse Body is array{messages: list of MessagePresenter::present() payloads, first_message_id: int}.
      */
     public function getMessagesBeforeFrom(Complex $complex, int $fromFirstMessageId)
     {
@@ -40,7 +41,7 @@ class GroupController extends Controller
     }
 
     /**
-     * @return \Illuminate\Http\JsonResponse Body is array{messages: list of MessagePresenter::present() payloads, last_message_id: int}.
+     * @return JsonResponse Body is array{messages: list of MessagePresenter::present() payloads, last_message_id: int}.
      */
     public function getMessagesAfterFrom(Complex $complex, int $fromLastMessageId)
     {
@@ -48,7 +49,7 @@ class GroupController extends Controller
     }
 
     /**
-     * @return \Illuminate\Http\JsonResponse Body is array{last_message_seen_id: int|null}.
+     * @return JsonResponse Body is array{last_message_seen_id: int|null}.
      */
     public function lastMessageSeenId(Complex $complex)
     {
@@ -56,11 +57,16 @@ class GroupController extends Controller
     }
 
     /**
-     * @return \Illuminate\Http\JsonResponse Body is list<array{user_name: string, viewed_at: string|null}>.
+     * @return JsonResponse Body is list<array{user_name: string, viewed_at: string|null}>.
      */
     public function getMessageViewers(MessageViewersRequest $request)
     {
-        return response()->json($this->chat->viewers($request->validated()['message_id']));
+        $message = Message::findOrFail($request->validated()['message_id']);
+        $user = $request->user();
+
+        abort_unless($message->user_id === $user->id || $user->can('manage', $message->group->complex), 403);
+
+        return response()->json($this->chat->viewers($message->id));
     }
 
     public function store(ChatStoreRequest $request, MessagePresenter $presenter)
@@ -90,7 +96,7 @@ class GroupController extends Controller
     }
 
     /**
-     * @return \Illuminate\Http\JsonResponse Body is array{message: string, status: '200'|'403'}.
+     * @return JsonResponse Body is array{message: string, status: '200'|'403'}.
      */
     public function destroy(Message $Message)
     {

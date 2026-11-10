@@ -91,6 +91,7 @@ The browser checks opened the controls and used the resulting state. The automat
 | F11-03 | Closed. The open dashboard drawer makes the page behind it inert and wraps keyboard focus. | The 390px check traverses both directions, tabs repeatedly and verifies that Escape restores the opener. [Open drawer](audit-11a/F11-03-drawer-focus-390.png) |
 | F11-04 | Closed. Short landscape uses the drawer and fits the chat heading, paging, thread and composer within the viewport. | The 844 × 390 check verifies visibility before and after focusing the composer. [Light](audit-11a/F11-04-chat-landscape-light.png) · [Dark](audit-11a/F11-04-chat-landscape-dark.png) |
 | F11-05 | Closed. The tall form keeps Close reachable while its content scrolls. | At 844 × 390, the charge form has both Close and Submit in view after scrolling to the end. Close and Escape restore focus. [Scrolled dialog](audit-11a/F11-05-dialog-scrolled-landscape.png) |
+| F11-07 | Closed. The endpoint permits the message author and active managers of the message's complex. The browser menu still exposes Viewers only for the author's messages. | The author and manager received the same named receipt, and a non-author resident and foreign manager received HTTP 403. The resident denial has JSON and form parity coverage. [Author dialog](audit-11a/F11-07-author-viewers-390.png) · [Non-author menu](audit-11a/F11-07-non-author-menu-390.png) |
 
 F11-06 remains open. The chat image still uses its inline presentation.
 
