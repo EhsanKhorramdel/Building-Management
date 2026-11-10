@@ -55,6 +55,10 @@ A charge payment is unique by role, charge, Jalali year and Jalali month. The sa
 
 ## Real-time chat
 
+Chat, announcement and invoice images share an accessible viewer. The chat gallery pages non-deleted attachments by message ID, ten at a time, within the authorized complex. Image and download requests use the existing private delivery routes; gallery metadata never grants access to file bytes. Keyboard, wheel and touch zoom share one transform, with panning, visible Close, Escape and touch swipe-down. Closing restores focus to the image control.
+
+Seen counts exclude the author, matching the viewer detail list. Authors see their own inline counts; active managers see counts across their complex. The scoped counts endpoint filters the audience on the server. A new receipt emits only message_id and count on the private complex channel, while names remain behind the existing author/manager detail endpoint. The client marks messages by viewport intersection as before. Counts update without rebuilding the thread, so keyboard focus is preserved.
+
 1. Each complex uses a private Laravel channel named `group.{complexId}`. The server derives the complex from the message's group.
 2. The web client subscribes to `private-group.{complexId}` when Pusher is configured. It uses the rendered public key and cluster.
 3. The client authorizes the subscription through `/broadcasting/auth` with its session and CSRF token. The callback in `routes/channels.php` permits active residents and managers of that complex.

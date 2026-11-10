@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Events\ChatSeenCountChanged;
 use App\Models\Group;
 use App\Models\Message;
 use App\Models\SeenMessage;
@@ -93,6 +94,19 @@ class ChatService
     public function seen(int $messageId, int $userId): void
     {
         $message = Message::findOrFail($messageId);
-        SeenMessage::firstOrCreate(['group_id' => $message->group_id, 'user_id' => $userId, 'message_id' => $message->id]);
+        $receipt = SeenMessage::firstOrCreate(['group_id' => $message->group_id, 'user_id' => $userId, 'message_id' => $message->id]);
+        if ($receipt->wasRecentlyCreated && $userId !== $message->user_id && ! $message->deleted) {
+            event(new ChatSeenCountChanged($message->group->complex_id, $message->id, $this->seenCounts([$message->id])[0]['count']));
+        }
+    }
+
+    /** @return list<array{message_id: int, count: int}> */
+    public function seenCounts(array $messageIds): array
+    {
+        $counts = SeenMessage::join('messages', 'messages.id', '=', 'seen_messages.message_id')
+            ->whereIn('messages.id', $messageIds)->whereColumn('seen_messages.user_id', '!=', 'messages.user_id')
+            ->selectRaw('messages.id, COUNT(*) AS receipt_count')->groupBy('messages.id')->pluck('receipt_count', 'id');
+
+        return array_map(fn ($id) => ['message_id' => (int) $id, 'count' => (int) ($counts[$id] ?? 0)], $messageIds);
     }
 }

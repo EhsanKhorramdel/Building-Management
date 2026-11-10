@@ -12,15 +12,18 @@ use App\Http\Middleware\AccessMiddleware;
 use App\Http\Requests\ChatBulkDeleteRequest;
 use App\Http\Requests\ChatDeleteRequest;
 use App\Http\Requests\ChatEditRequest;
+use App\Http\Requests\ChatMediaRequest;
 use App\Http\Requests\ChatPinRequest;
 use App\Http\Requests\ChatReactionRequest;
 use App\Http\Requests\ChatSearchRequest;
+use App\Http\Requests\ChatSeenCountsRequest;
 use App\Http\Requests\ChatSeenRequest;
 use App\Http\Requests\ChatStoreRequest;
 use App\Http\Requests\MessageViewersRequest;
 use App\Models\Complex;
 use App\Models\Group;
 use App\Models\Message;
+use App\Services\ChatMediaService;
 use App\Services\ChatSearchService;
 use App\Services\ChatService;
 use App\Services\ChatSocialService;
@@ -31,6 +34,25 @@ use Illuminate\Validation\ValidationException;
 
 class GroupController extends Controller
 {
+    /** @return JsonResponse Body is array{images: list<array{id: int, url: string, alt: string}>, next_cursor: int|null}. */
+    public function media(ChatMediaRequest $request, Complex $complex, ChatMediaService $media): JsonResponse
+    {
+        $data = $request->validated();
+
+        return response()->json($media->page($this->group($complex), $data['direction'], $data['cursor'] ?? null));
+    }
+
+    /** @return JsonResponse Body is array{counts: list<array{message_id: int, count: int}>}. */
+    public function seenCounts(ChatSeenCountsRequest $request, Complex $complex): JsonResponse
+    {
+        $query = $this->group($complex)->messages()->whereIn('id', $request->validated('message_ids'))->where('deleted', false);
+        if (! $request->user()->can('manage', $complex)) {
+            $query->where('user_id', $request->user()->id);
+        }
+
+        return response()->json(['counts' => $this->chat->seenCounts($query->pluck('id')->all())]);
+    }
+
     public function __construct(private ChatService $chat)
     {
         $this->middleware(['auth', AccessMiddleware::class.':member']);

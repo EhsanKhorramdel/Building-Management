@@ -1,5 +1,6 @@
 import { config, request } from './api';
 import { closeDialog, openDialog } from '../ui';
+import { mediaViewer } from '../media-viewer';
 
 export function payments() {
     for (const [kind, field] of [['cost', 'incidentalCostId'], ['charge', 'monthlyChargeId']]) {
@@ -14,12 +15,9 @@ export function payments() {
     document.querySelectorAll('[data-payment-tab]').forEach(button => button.addEventListener('click', () => {
         document.querySelector('[data-tab="' + button.dataset.paymentTab + '"]').click();
     }));
-    const invoice = document.querySelector('.cost-modal');
     document.querySelectorAll('[data-invoice]').forEach(button => button.addEventListener('click', () => {
-        invoice.querySelector('img').src = button.dataset.invoice;
-        openDialog(invoice, button);
+        mediaViewer().open({ id: 'cost', url: button.dataset.invoice, alt: 'تصویر فاکتور هزینه' }, button, 'cost');
     }));
-    invoice?.querySelector('.cost-close-Btn')?.addEventListener('click', closeDialog);
 
     const status = document.querySelector('[data-payments-state]');
     const table = document.querySelector('[data-payments-table]');

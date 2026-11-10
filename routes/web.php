@@ -51,6 +51,8 @@ Route::post('/dashboard/building/group/edit', [GroupController::class, 'edit']);
 Route::post('/dashboard/building/group/seen/', [GroupController::class, 'seen']);
 Route::get('/dashboard/building/{complex}/chat-pins', [GroupController::class, 'pins']);
 Route::get('/dashboard/building/{complex}/chat-search', [GroupController::class, 'search']);
+Route::get('/dashboard/building/{complex}/chat-media', [GroupController::class, 'media']);
+Route::get('/dashboard/building/{complex}/chat-seen-counts', [GroupController::class, 'seenCounts']);
 Route::post('/dashboard/building/{complex}/chat-bulk-delete', [GroupController::class, 'bulkDelete']);
 Route::post('/dashboard/building/group/{Message}/reactions', [GroupController::class, 'react']);
 Route::put('/dashboard/building/group/{Message}/pin', [GroupController::class, 'pin']);

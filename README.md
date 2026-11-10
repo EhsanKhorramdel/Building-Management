@@ -10,7 +10,8 @@ Managers administer their own complexes, publish notices and set charges and inc
 - Building registration approvals and manager-controlled join links.
 - Monthly charges, incidental costs and a printable payment report.
 - Announcements, timed polls and vote results.
-- Per-complex group chat with private attachments, reactions, replies, pins, moderation, bulk deletion, search and read receipts.
+- Per-complex group chat with private attachments, reactions, replies, pins, moderation, bulk deletion, search and live aggregate read receipts.
+- Shared image viewer for chat, announcements and invoices, with zoom, download and a paged chat gallery.
 - Optional map locations for complexes, with a picker during registration and in manager settings.
 - Responsive pages with a light and dark theme.
 
