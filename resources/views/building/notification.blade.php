@@ -2,45 +2,20 @@
     <div class="buildings-section-header justify-center">
         <p> اعلانات ساختمان </p>
     </div>
-    @php
-        $counter = 0;
-    @endphp
-    <div class="building-boxes jsListView">
-        @foreach ($announcements as $announcement)
-            @if ($announcement->archive == 0)
-                @php
-                    $counter++;
-                @endphp
-                <div class="building-box-wrapper">
-                    <div class="building-box" >
-                        <div class="building-box-content-header">
-                            <p class="box-content-header">{{ $announcement->managerName }} </p>
-                        </div>
-                        <div class="box-address-wrapper overflow-auto">
-                            <p class="box-address-header p-8">{{ $announcement->text }}</p>
-                        </div>
-
-                        <div class="building-box-footer flex justify-center gap-2.5">
-                            @if ($isManager)
-                                <form method="POST" action="{{ URL::route('building.cancelNotification', $announcement->id) }}" data-confirm="این اعلان لغو شود؟">
-                    @csrf
-                    <button type="submit" class="text-center"
-                                    >لغو
-                                    اعلان</button></form>
-                            @endif
-                            <button type="button" data-announcement-image="{{ $announcement->image_url ? route('announcements.attachment', $announcement) : asset('storage/default.png') }}">مشاهده تصویر</button>
-
-                        </div>
-                    </div>
-                </div>
-            @endif
-        @endforeach
-        @if (!$counter)
-            <p class="empty-state">اعلانی وجود ندارد. اعلان‌های تازه اینجا نمایش داده می‌شوند.</p>
-        @endif
+    @if ($isManager)
+        <form data-announcement-search class="announcement-search">
+            <label>جستجوی اعلان‌ها <input type="search" name="q" maxlength="200"></label>
+            <label>وضعیت <select name="state"><option value="active">فعال</option><option value="archived">بایگانی</option><option value="all">همه</option></select></label>
+            <button type="submit">جستجو</button>
+        </form>
+    @endif
+    <div class="building-boxes jsListView" data-announcement-list>
+        @include('building.announcement-cards')
     </div>
 </div>
-
+<div class="dialog-shell hidden" data-announcement-readers-dialog role="dialog" aria-modal="true" aria-label="خوانندگان اعلان">
+    <div class="dialog-panel"><div class="register-dialog-tools"><button type="button" class="register-close" data-close-dialog>بستن</button></div><h3>خوانندگان اعلان</h3><div data-announcement-readers-list></div></div>
+</div>
 @if ($isManager)
     <div class="register-section hidden" data-panel="notification" @if ($errors->getBag('notifRegister')->any()) data-reopen @endif role="dialog" aria-modal="true"><div class="dialog-panel">
         <div class="register-dialog-tools"><button type="button" class="register-close" aria-label="بستن"><x-icon name="close" /></button></div>

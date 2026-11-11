@@ -171,3 +171,9 @@ The shared viewer was checked at 390 and 1440 in light and dark. The captures ar
 A separate live run on the private complex channel verified an author's count increasing without reload, the manager's corresponding count, and no inline count for another resident. Captured event keys were exactly `message_id` and `count`. Names remain in the authorized detail endpoint. Evidence: `seen-live-author.png` and `seen-live-manager.png` in the same capture directory. The default run uses the log broadcaster; the live branch runs when `E2E_BROADCAST_CONNECTION=pusher`.
 
 Final default run: 63 passed, one existing live gate skipped, 12.4 minutes. All 250 sweep states passed. The separate live receipt case passed in 59.7 seconds. No existing browser spec changed.
+
+## Phase 11E: announcements and polls
+
+The new spec walks pinning, archive search and restore, viewport read marking, the reader list, pre-vote editing, current-choice preselection, irreversible early closure and named results at 390 and 1440 in light and dark. Captures are pinned-*, archive-*, unread-*, readers-* and closed-ballots-* under the ignored `storage/app/test-screenshots/phase-11e` directory. Visual review checked the phone dark results dialog and the desktop light archive; the controls, chart, reader names and state labels fit the panels. The existing preview and poll specs passed without edits. The full responsive sweep result is recorded with the phase verification in REFACTOR_LOG.md.
+
+Final verification: 67 browser cases passed with one existing live gate skipped; the 250-state sweep passed. The final focused four-case rerun passed after validation recovery and sticky Close checks were added. Twenty feature captures were refreshed, and the final phone unread and dark results states were viewed.

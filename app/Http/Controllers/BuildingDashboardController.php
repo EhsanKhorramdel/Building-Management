@@ -10,6 +10,8 @@ use App\Models\MonthlyCharge;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Models\UserRole;
+use App\Models\Vote;
+use App\Services\AnnouncementService;
 use Carbon\Carbon;
 use Morilog\Jalali\Jalalian;
 
@@ -52,12 +54,15 @@ class BuildingDashboardController extends Controller
 
         $userLogInId = auth()->id();
         $isManager = $userRole->contains(fn ($role) => $role->user_id === $userLogInId && $role->active && $role->role === 'manager');
-        $announcements = $complex->announcements()->with('manager')->get();
+        $announcements = app(AnnouncementService::class)->listing($complex, $userLogInId)->where('archive', false)->get();
         $incidentalCosts = $complex->incidentalCosts;
         foreach ($announcements as $announcement) {
             $announcement->managerName = $announcement->manager?->name ?? 'N/A';
         }
-        $polls = $complex->polls()->with('pollOptions')->get();
+        $polls = $complex->polls()->with('pollOptions')->withCount('votes')->addSelect([
+            'current_option_id' => Vote::select('poll_option_id')->whereColumn('poll_id', 'polls.id')
+                ->whereIn('role_id', $userRoles->pluck('id'))->orderByDesc('id')->limit(1),
+        ])->get();
         $polls = $polls->sortByDesc('end_date');
         $currentDate = Carbon::now();
         $expiredCount = 0;
@@ -68,9 +73,7 @@ class BuildingDashboardController extends Controller
             ->get();
 
         foreach ($polls as $poll) {
-            $endDate = Carbon::parse($poll['end_date']);
-
-            if ($endDate->isPast()) {
+            if ($poll->isExpired()) {
                 $expiredCount++;
             } else {
                 $notExpiredCount++;

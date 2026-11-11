@@ -36,9 +36,21 @@
 
                 <div class="building-box-footer flex justify-center gap-2.5">
                     @if (!$poll->isExpired())
-                        <button type="button" class="text-center open-Btn-vote">شرکت در رای گیری</button>
+                        <button type="button" class="text-center open-Btn-vote" data-current-choice="{{ $poll->current_option_id }}">شرکت در رای گیری</button>
+                    @else
+                        <span class="poll-closed">رای گیری بسته شده است</span>
                     @endif
-                    <button type="button" class="open-Btn-vote-result" data-poll-id="{{ $poll->id }}">مشاهده نتیجه</button>
+                    <button type="button" class="open-Btn-vote-result" data-poll-id="{{ $poll->id }}" @if ($isManager && $poll->isExpired()) data-named-ballots="{{ route('polls.ballots', [$complex, $poll]) }}" @endif>مشاهده نتیجه</button>
+                    @if ($isManager)
+                        @if (!$poll->isExpired())
+                            <form method="POST" action="{{ route('polls.close', [$complex, $poll]) }}" data-confirm="این رای گیری برای همیشه بسته شود؟">@csrf<button type="submit">بستن رای گیری</button></form>
+                        @endif
+                        @if (!$poll->votes_count)
+                            <button type="button" data-edit-poll data-action="{{ route('polls.update', [$complex, $poll]) }}" data-title="{{ $poll->title }}" data-question="{{ $poll->question }}" data-deadline="{{ $poll->end_date->format('Y-m-d\\TH:i:s') }}">ویرایش رای گیری</button>
+                        @else
+                            <span class="poll-edit-locked">پس از ثبت اولین رای، ویرایش ممکن نیست.</span>
+                        @endif
+                    @endif
                 </div>
             </x-building-card>
     @endforeach
@@ -133,10 +145,12 @@
 
 <div class="dialog-shell modal-vote-result hidden" role="dialog" aria-modal="true">
     <div class="bg-white p-6 rounded shadow-md w-3/4 rounded-xl">
+        <div class="register-dialog-tools"><button type="button" class="register-close" data-close-dialog aria-label="بستن نتیجه">بستن</button></div>
         <h3 class="text-xl font-semibold mb-4 text-center">
             نتیجه رای گیری
         </h3>
         <p role="status" data-chart-status></p><div class="chart-frame"><canvas id="voteChart" role="img" aria-label="نمودار نتیجه رأی‌گیری"></canvas></div>
+        <div data-named-ballots-list></div>
         <div class="flex flex-col mt-5">
             <button
                 class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline mr-2 close-Btn-vote-result"
@@ -146,3 +160,19 @@
         </div>
     </div>
 </div>
+@if ($isManager)
+@php($editingPoll = $polls->firstWhere('id', session('edit_poll_id')))
+<div class="dialog-shell hidden" data-poll-edit-dialog @if ($editingPoll && $errors->getBag('pollEdit')->any()) data-reopen @endif role="dialog" aria-modal="true" aria-label="ویرایش رای گیری">
+    <div class="dialog-panel"><div class="register-dialog-tools"><button type="button" class="register-close" data-close-dialog>بستن</button></div><h3>ویرایش رای گیری</h3>
+        <form method="POST" data-poll-edit-form action="{{ $editingPoll ? route('polls.update', [$complex, $editingPoll]) : '' }}">@csrf @method('PATCH')
+            <label>عنوان <input name="title" maxlength="255" value="{{ is_scalar(old('title')) ? old('title') : '' }}" @error('title', 'pollEdit') aria-invalid="true" @enderror></label>
+            @error('title', 'pollEdit')<p class="field-error">{{ $message }}</p>@enderror
+            <label>متن سوال <textarea name="question" required maxlength="2000" @error('question', 'pollEdit') aria-invalid="true" @enderror>{{ is_scalar(old('question')) ? old('question') : '' }}</textarea></label>
+            @error('question', 'pollEdit')<p class="field-error">{{ $message }}</p>@enderror
+            <label>زمان پایان (به وقت تهران) <input name="end_date" type="datetime-local" step="1" required value="{{ is_scalar(old('end_date')) ? old('end_date') : '' }}" @error('end_date', 'pollEdit') aria-invalid="true" @enderror></label>
+            @error('end_date', 'pollEdit')<p class="field-error">{{ $message }}</p>@enderror
+            <p>گزینه‌ها قابل ویرایش نیستند.</p><button type="submit">ذخیره ویرایش</button>
+        </form>
+    </div>
+</div>
+@endif

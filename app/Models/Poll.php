@@ -16,12 +16,13 @@ class Poll extends Model
     use HasFactory;
 
     protected $fillable = [
-        'complex_id', 'title', 'question', 'start_date', 'end_date'
+        'complex_id', 'title', 'question', 'start_date', 'end_date',
     ];
 
     protected $casts = [
         'start_date' => 'datetime',
         'end_date' => 'datetime',
+        'closed_at' => 'datetime',
     ];
 
     public function complex(): BelongsTo
@@ -38,8 +39,9 @@ class Poll extends Model
     {
         return $this->hasMany(Vote::class);
     }
+
     public function isExpired(): bool
     {
-        return Carbon::now()->isAfter($this->end_date);
+        return $this->closed_at !== null || Carbon::now()->isAfter($this->end_date);
     }
 }

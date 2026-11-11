@@ -30,6 +30,7 @@ export function polls() {
     const wrapper = vote.querySelector('.option-wrapper');
     const status = result.querySelector('[data-chart-status]');
     let chart;
+    let resultGeneration = 0;
 
     document.querySelectorAll('.open-Btn-vote').forEach(button => button.addEventListener('click', () => {
         wrapper.replaceChildren();
@@ -40,10 +41,20 @@ export function polls() {
             input.type = 'radio';
             input.name = 'voteRadio';
             input.value = option.dataset.optionId;
+            input.checked = input.value === button.dataset.currentChoice;
             label.append(input, option.textContent.trim());
             wrapper.append(label);
         });
         openDialog(vote, button);
+    }));
+    document.querySelectorAll('[data-edit-poll]').forEach(button => button.addEventListener('click', () => {
+        const dialog = document.querySelector('[data-poll-edit-dialog]');
+        const form = dialog.querySelector('form');
+        form.action = button.dataset.action;
+        form.elements.title.value = button.dataset.title;
+        form.elements.question.value = button.dataset.question;
+        form.elements.end_date.value = button.dataset.deadline;
+        openDialog(dialog, button);
     }));
 
     function themeChart() {
@@ -60,14 +71,27 @@ export function polls() {
     }
 
     document.querySelectorAll('.open-Btn-vote-result').forEach(button => button.addEventListener('click', async () => {
+        const generation = ++resultGeneration;
         chart?.destroy();
         chart = null;
         status.textContent = 'در حال دریافت نتیجه…';
+        const named = result.querySelector('[data-named-ballots-list]');
+        named.replaceChildren();
         openDialog(result, button);
         const rows = await request('/dashboard/building/vote/Result', { method: 'POST', data: { poll_id: button.dataset.pollId } });
+        if (generation !== resultGeneration) return;
         if (!rows) {
             status.textContent = 'نتیجه دریافت نشد.';
             return;
+        }
+        if (button.dataset.namedBallots) {
+            const ballots = await request(button.dataset.namedBallots);
+            if (generation !== resultGeneration) return;
+            if (ballots) for (const option of ballots.options) {
+                const row = document.createElement('p');
+                row.textContent = option.option + ' · ' + (option.voters.join('، ') || 'بدون رای');
+                named.append(row);
+            }
         }
         if (!rows.some(row => row.voteCount)) {
             status.textContent = 'هنوز رأیی ثبت نشده است.';

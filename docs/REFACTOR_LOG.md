@@ -1293,3 +1293,57 @@ The PHP suite passed 521 cases with 1,805 assertions, an increase of 23 cases ov
 #### Phase 11D verification
 
 The PHP suite passed 532 cases with 1,939 assertions, up from 521 and 1,805. All eleven new PHP cases are in ChatMediaSeenTest.php. The default browser suite passed 63 cases with its one existing opt-in live skip in 12.4 minutes, up from 58 passed. The five new cases in media-seen.spec.js cover the four width/theme combinations and the receipt audience. Downloads matched the source bytes, and loading and denied-image states passed. The separate live receipt case passed in 59.7 seconds, including author and manager updates without reload and exact event keys. No existing test file was edited. All 250 responsive sweep states passed. Fresh SQLite migration and DemoSeeder ran clean in a separate scratch database; no development data was replaced. The frontend build, Pint, JavaScript syntax and staged style and credential checks passed. Fifteen captures are retained in the ignored phase-11d directory. The only added routes are the two read-only, member-scoped media and count endpoints; existing URLs, verbs and names are unchanged. No migration or dependency change was needed.
+
+### [Phase 11E, B01] Pin announcements
+- **Before:** Announcements could be published or archived but not pinned.
+- **After:** Active local managers can pin several notices and unpin them explicitly. Active notices render pinned first in ascending pin time and then ID. Each transition records a scoped announcement audit event with the actor and subject. Repeating the same state does not reorder a pin or add another event.
+- **Why:** The pin belongs to the announcement and needs a stable order and accountable changes. Pin timestamps retain microseconds so two actions within one second keep their order. Archive/restore retains pin state; it does not silently unpin a notice.
+- **Files:** The new announcement/poll controls migration, Announcement, AnnouncementService, AnnouncementPinRequest, AnnouncementController, routes, card partial, audit translations, styles and the new pack tests.
+- **Verified by:** PHP covers resident, foreign and inactive manager denial, several pins within one second, ordering, preserved actor/time on retry and scoped pin/unpin events. Browser flows verify the highlighted card at both widths and themes.
+- **Risk & rollback:** Rollback removes pin metadata. Revert controls and migration together. Existing announcements begin unpinned.
+
+### [Phase 11E, B02 and B03] Search and restore the archive
+- **Before:** Cancellation set the archive flag and hid the row, with no way to browse or restore it.
+- **After:** Managers can search active, archived or all notices in their complex, with a result empty state and restore action. Members receive active notices only and no archive/search controls. Search normalizes Persian/Arabic letters and digits on both stored text and query. Blade renders and escapes the returned card fragment.
+- **Why:** Archived notices need a scoped recovery path. The owner-approved archive is manager-only. This closes the Later archive proposal under that scope; date filtering was not part of the approval.
+- **Files:** AnnouncementService, AnnouncementSearchRequest, AnnouncementController, BuildingDashboardController, routes, announcement views/module, styles, PROPOSALS.md and the new tests.
+- **Verified by:** PHP covers state filters, normalization in both directions, foreign rows, empty results, the archive/restore round trip and member invisibility. Browser flows archive with confirmation, search the archive and restore without losing the pin. Existing preview tests pass unchanged.
+- **Risk & rollback:** Restore makes the notice visible again. Reverting the new search/restore routes leaves the existing archive flag intact.
+
+### [Phase 11E, B04] Track announcement reads
+- **Before:** Only chat messages had per-user seen records.
+- **After:** The new announcement_reads table has a unique announcement/user pair and a creation timestamp. An observer marks a notice when it enters the visible announcement panel. Members see a quiet unread badge until acknowledgement. Managers see distinct-reader counts and can open names and reading times. Managers reading their own notices count as members too.
+- **Why:** Read tracking needs user-level idempotency rather than one row per unit role, and reader names must stay behind the complex manager policy.
+- **Files:** The new migration, AnnouncementRead, Announcement::reads, AnnouncementController, announcement card partial/module, routes, styles and tests.
+- **Verified by:** PHP checks duplicate marking, foreign/inactive/guest denial, archived marking rejection and resident denial on the names endpoint. Browser checks hold the read request to inspect the unread badge, then release it and open the manager's reader list. Initial counts and own read state use subqueries, preserving the dashboard query budget.
+- **Risk & rollback:** Rollback removes read history. Counts are snapshots, not live broadcasts. The archive remains manager-only.
+
+### [Phase 11E, B05] Close polls early
+- **Before:** A poll closed only when its deadline passed.
+- **After:** Local managers can confirm irreversible early closure. The poll records closer and time, renders closed with results and rejects subsequent form or direct votes. Repeated closure preserves the original metadata.
+- **Why:** Closure, voting and editing now lock the same poll row inside transactions so a concurrent vote cannot bypass closure or the edit lock. Manual closure stays set even if a poll without votes is edited to a later deadline.
+- **Files:** The new migration, Poll, PollService, PollController, BuildingDashboardController, poll view/module, routes and tests.
+- **Verified by:** PHP checks scoped manager permissions, actor/time, repeated closure, blocked votes and preserved closure after a permitted pre-vote deadline edit. Browser flows confirm closure, check the closed card and open results. Existing expiry and change-vote tests pass unchanged.
+- **Risk & rollback:** Dropping the closure columns loses manual closure history. Reverting the feature can reopen manually closed polls whose deadline is still in the future.
+
+### [Phase 11E, B07] Restrict named ballots
+- **Before:** Only aggregate option counts were available.
+- **After:** A separate manager-only endpoint returns voter names per option after deadline or manual closure. While open, it rejects managers too. The aggregate endpoint retains its original shape and counts. Names list each person once per option; underlying aggregates remain per-role. Mismatched poll/option rows and foreign-complex roles are excluded from named payloads.
+- **Why:** Naming ballots is a separate permission and timing decision, not an addition to member-visible aggregate results.
+- **Files:** PollService, PollController, routes, poll results view/module and tests.
+- **Verified by:** PHP checks open-poll denial, both closure modes, resident/foreign/inactive denial, aggregate payload shape and distinct/scoped names. The browser checks an empty named area while open and the named roster after closure in both themes and widths. Results discard stale responses when another poll opens, and the new reader/edit/result headers reuse the sticky close controls.
+- **Risk & rollback:** Managers can see historical choices once closed. Revert the named endpoint and roster controls together; aggregate results are independent.
+
+### [Phase 11E, B08 and B06] Edit before voting and preselect the current choice
+- **Before:** Poll text/deadline could not be edited, and the vote dialog always opened with no choice selected.
+- **After:** Local managers can change title, question and deadline before any vote, with options fixed. The UI explains the lock after a vote; the service enforces it under the row lock. The deadline input uses the application's Tehran time and retains seconds, so a text-only edit does not shorten the deadline. Invalid submissions reopen the correct dialog with field errors and entered values. A returning voter sees their current option selected.
+- **Why:** The first ballot fixes the question being answered. The current-choice subquery reuses already-loaded role IDs and adds no dashboard query. The dashboard action signature stays unchanged for existing callers.
+- **Files:** PollUpdateRequest, PollService, PollController, BuildingDashboardController, poll view/module, routes and tests.
+- **Verified by:** PHP checks successful edits, ignored option tampering, invalid dates, locked edits and current-choice markup. Browser flows edit the question before voting, verify the saved choice on reopen, then check the manager's lock explanation. No existing test file changed.
+- **Risk & rollback:** Reverting the edit route removes editing but keeps saved text/deadlines. Preselection uses the latest stored ballot among the member's roles; the existing vote action still applies the chosen option to those roles.
+
+#### Phase 11E verification
+
+The PHP suite passed 569 cases with 2,078 assertions, up from 532 and 1,939. The 37 new cases in AnnouncementPollPackTest.php include the management authorization matrix, pin order/audit, archive/search, read tracking, closure, ballot privacy and edit/current-choice rules. Existing query-budget tests passed unchanged. The full browser suite passed 67 cases with its one existing opt-in live skip in 13.0 minutes, up from 63 passed. The four new cases in announce-polls.spec.js cover all six items at 390 and 1440 in both themes. All 250 sweep states passed. A final focused rerun passed all four cases in 1.6 minutes after the dialog changes, including invalid-deadline recovery, retained values and the sticky results Close at 390px height. No existing test file was edited.
+
+Fresh SQLite migration and DemoSeeder, one rollback step and re-migration passed against a separate scratch database. The local environment was separately verified as local SQLite before applying its pending migrations: six older migrations (request coordinates, transaction authority index, queue jobs, audit events, chat social fields and deletion details) and the new announcement/poll migration were applied. No development database reset or demo reseed was used. Migration status is now fully applied. The frontend build, Pint, JavaScript syntax, whitespace and staged style/credential checks passed. Twenty feature captures are under the ignored storage/app/test-screenshots/phase-11e directory. Existing route names and verbs remain unchanged; eight scoped routes were added. Existing migration files were not changed.

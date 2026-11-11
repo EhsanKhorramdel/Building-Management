@@ -149,3 +149,13 @@
     .payments-table { min-width: 0; }
     .payments-table :is(th, td) { background: white !important; color: black; border-color: #666; }
 }
+.announcement-pinned { outline: 2px solid var(--accent); background: var(--accent-soft); }
+.announcement-unread, .announcement-pin-label { color: var(--accent-ink); font-size: .8rem; }
+.announcement-search { display: flex; flex-wrap: wrap; align-items: end; gap: .75rem; margin-block: 1rem; }
+.announcement-search label { display: grid; gap: .35rem; flex: 1 1 180px; min-width: 0; }
+.announcement-search button { min-height: 40px; padding: .5rem 1rem; background: var(--accent-soft); border-radius: .5rem; }
+.poll-window .building-box-footer { flex-wrap: wrap; }
+.poll-closed, .poll-edit-locked { flex-basis: 100%; color: var(--muted); font-size: .85rem; }
+[data-announcement-readers-list], [data-named-ballots-list] { max-height: 35vh; overflow-y: auto; }
+[data-poll-edit-form] { display: grid; gap: .75rem; }
+[data-poll-edit-form] label { display: grid; gap: .35rem; }
