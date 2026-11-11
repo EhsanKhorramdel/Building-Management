@@ -7,6 +7,7 @@ use App\Models\MonthlyCharge;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Models\UserRole;
+use App\Services\AccountNotifications;
 use App\Services\PaymentService;
 use App\Services\SmsService;
 use Illuminate\Database\UniqueConstraintViolationException;
@@ -146,6 +147,9 @@ class OnlinePaymentService
         });
 
         if ($completed) {
+            if ($transaction->user && $transaction->role) {
+                app(AccountNotifications::class)->record($transaction->user, 'payment_receipt', $transaction->role->complex_id, (string) $transaction->amount, 'paymentInfo');
+            }
             app(SmsService::class)->queue('payment_receipt', $transaction->id);
         }
 

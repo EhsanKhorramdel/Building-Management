@@ -2,6 +2,7 @@
     <section class="complex-location-card mb-3 space-y-2">
         <h2 class="text-xl font-bold">آدرس ساختمان</h2>
         <p>{{ $complex->address }}</p>
+        <a class="action" href="{{ route('building.calendar', $complex) }}">تقویم ساختمان</a>
         @if ($complex->latitude !== null && $complex->longitude !== null)
             <x-complex-map :latitude="$complex->latitude" :longitude="$complex->longitude" :address="$complex->address" />
             <a class="action" href="https://www.openstreetmap.org/directions?to={{ $complex->latitude }}%2C{{ $complex->longitude }}#map=15/{{ $complex->latitude }}/{{ $complex->longitude }}"
@@ -46,7 +47,7 @@
 
                 <div class="building-box-content-header">
 
-                    <p class="box-content-header">{{ $resident['name'] }}</p>
+                    <p class="box-content-header"><x-user-avatar :name="$resident['name']" :user="$resident['user']" /> {{ $resident['name'] }}</p>
                     <p class="box-content-subheader">
                         {{ $resident['unitNumber'] ?? 'N/A' }}
                     </p>

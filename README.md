@@ -7,7 +7,7 @@ Managers administer their own complexes, publish notices and set charges and inc
 ## Features
 
 - Complexes and units with global administrator and per-complex manager and resident roles.
-- Building registration approvals and manager-controlled join links.
+- Building registration approvals and reusable, expiring or single-use join links.
 - Monthly charges, incidental costs, filtered payment reports with CSV and print, and printable payment receipts.
 - Paged online payment history and staff reconciliation with redacted references and transaction timelines.
 - Pinned announcements, a manager archive with search and restore, and announcement read tracking.
@@ -15,11 +15,14 @@ Managers administer their own complexes, publish notices and set charges and inc
 - Per-complex group chat with private attachments, reactions, replies, pins, moderation, bulk deletion, search and live aggregate read receipts.
 - Shared image viewer for chat, announcements and invoices, with zoom, download and a paged chat gallery.
 - Optional map locations for complexes, with a picker during registration and in manager settings.
+- Private avatars, per-channel notification choices and account-synced building tabs and unit layouts.
+- A Jalali building calendar for charges, poll deadlines and incidental costs.
+- Scoped audit details with filters and pagination for global admins.
 - Responsive pages with a light and dark theme.
 
 ## Requirements
 
-- PHP 8.3 or a newer PHP 8.x release, and Composer 2.
+- PHP 8.3 or a newer PHP 8.x release with GD for avatar thumbnails, and Composer 2.
 - Node.js 20 or later with npm. The project was built with Node.js 22.
 - SQLite with the PHP PDO SQLite extension for development and tests. Use MySQL 8 with PDO MySQL in production.
 
@@ -86,10 +89,13 @@ These shared credentials are for local demos only. Never seed them into a deploy
 - **Uploads.** Announcement, incidental-cost and chat images are stored under `storage/app/private`. The attachment routes require an active role in the owning complex or a global admin role. The `public/storage` link still serves the bundled placeholder image.
 
   When upgrading an existing installation, run `php artisan chat:move-attachments` and `php artisan attachments:move-building-images` before reopening web traffic. The commands move legacy uploads to private storage and keep their filenames. Reruns process any remaining files. Resolve reported conflicts or failures before reopening traffic so the legacy public copies are gone.
+- **Avatars.** The application stores cropped thumbnails in `storage/app/avatars` and serves them through an authenticated route. The owner, active shared-complex members and global admins can open them.
 - **Maps.** The default tile URL and attribution use OpenStreetMap. Set `MAP_TILE_URL` and `MAP_TILE_ATTRIBUTION` together to use another tile source. Keep the source's attribution visible and follow its usage policy. See the [OpenStreetMap tile usage policy](https://operations.osmfoundation.org/policies/tiles/).
 - **Mail.** The template points SMTP to Mailpit on port 1025. The local setup above writes mail to the log. Configure a real mail transport for a deployment that sends password reset links.
 
 Typing names use throttled `client-typing` events on the authorized private complex channel. Enable Client Events in the broadcasting app's settings. These advisory client signals expire after five seconds, and the log broadcaster leaves the indicator inactive. [Client event settings](https://pusher.com/docs/channels/using_channels/events/#triggering-client-events)
+
+The Laravel scheduler records invite expiry for audit. In production, run `php artisan schedule:run` every minute. An expired link is rejected at redemption even if the scheduler is offline.
 
 ## Online payments and SMS
 

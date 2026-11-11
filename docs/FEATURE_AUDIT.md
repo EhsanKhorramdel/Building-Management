@@ -133,3 +133,56 @@ The unchanged PHP suite passed 465 tests with 1,526 assertions. The production b
 B01–B08 completed in Phase 11E: multiple manual pins with scoped audit entries; manager-only archive search and restore; viewport read tracking and manager reader lists; irreversible early closure; manager-only named ballots after closure; pre-vote text/deadline edits with fixed options; and current-choice preselection. The original table records discovery-time behavior. Verification and capture locations are in REFACTOR_LOG.md.
 
 B09–B11 and the related Later rows are complete in Phase 11F. The completed-payment report has scoped filters, CSV and print. Authorized users can print individual receipts. Staff can review redacted attempts and their recorded transitions. Payer history uses cursor pagination. The discovery table records the prior state.
+
+## Phase 11 closure
+
+The discovery tables above record the original findings. The following table records the final disposition of each item.
+
+| Item | Status | Result |
+| --- | --- | --- |
+| A01 | Done | Authors can edit and the edited label remains visible. |
+| A02 | Done | Own-message deletion leaves a tombstone. |
+| A03 | Done | Removing another member's message is manager-only, with a reason. Ordinary members retain their original permissions. |
+| A04 | Done | Scoped moderation records the actor and reason. |
+| A05 | Done | Reaction picker, counts, reactor names and live updates. |
+| A06 | Done | Same-complex replies, quote jumps and deleted-parent placeholders. |
+| A07 | Done | Manager pins, audit entries and a live pin strip. |
+| A08 | Open | The ellipsis menu stays reachable and dismissible. A long press starts selection. Desktop right-click and opening the full action menu by long press remain open. |
+| A09 | Done | Multi-select and partial-success bulk deletion. |
+| A10 | Done | Normalized text search with scoped results and jump links. |
+| A11 | Done | Ephemeral typing on the configured private channel. |
+| A12 | Dropped | Online presence and last-active indicators. |
+| A13 | Dropped | Per-device delivery, failed-send rows and retry indicators. |
+| A14 | Done | Live aggregate seen counts with scoped viewer details. |
+| A15 | Done | Compact inline images open the authorized viewer. |
+| A16 | Done | Accessible image viewer with gallery, zoom and download. |
+| B01 | Done | Multiple announcement pins with manual unpin and audit records. |
+| B02 | Done | Manager archive and restore. |
+| B03 | Done | Normalized announcement search with active/archive filters. |
+| B04 | Done | Viewport read tracking and manager reader details. |
+| B05 | Done | Irreversible manager closure. |
+| B06 | Done | Current ballot preselection and changes while open. |
+| B07 | Done | Managers see named ballots after closure. |
+| B08 | Done | Managers can edit text and deadline before the first vote. |
+| B09 | Done | Scoped payment filters in the report and print view. |
+| B10 | Done | Filtered UTF-8 CSV and print. |
+| B11 | Done | Scoped printable receipts for manual and online payments. |
+| B12 | Done | Private cropped avatars with replace, removal and initials fallback. |
+| B13 | Done | Per-event in-app and SMS choices with independent dispatch checks. |
+| B14 | Done | Account-synced tab and unit layout for each complex. |
+| B15 | Done | Global audit detail with submitted names, filters and pagination. |
+| B16 | Done | Scoped manager audit detail with affected users and role changes. |
+
+F11-01 through F11-05 and F11-07 closed in 11A. F11-06 closed with the touch image viewer in 11D.
+
+| Later proposal | Status | Phase |
+| --- | --- | --- |
+| Remember the building tab and unit view per complex | Done | 11G |
+| Payment date and unit filters and filtered printing | Done | 11F |
+| Reconciliation for conflicts and expired attempts | Done | 11F |
+| Coordinate pair and range checks | Done | 11G |
+| Append-only transaction transitions | Done | 11F |
+| Expiring and one-use join links | Done | 11G |
+| Cursor pagination for online payment history | Done | 11F |
+| Searchable announcement archive | Done | 11E |
+| Building calendar | Done | 11G |

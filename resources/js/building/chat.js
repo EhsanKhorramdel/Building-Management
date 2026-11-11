@@ -1,3 +1,4 @@
+import { avatar } from '../avatar';
 import Pusher from 'pusher-js';
 import { config, csrf, request } from './api';
 import { closeDialog, openDialog, toast } from '../ui';
@@ -241,7 +242,9 @@ export function chat() {
                 continue;
             }
             const heading = node('div', 'chat-message-heading');
-            heading.append(node('strong', 'chat-author', message.user_name));
+            const author = node('strong', 'chat-author', message.user_name);
+            author.prepend(avatar(message.user_name, message.avatar_url));
+            heading.append(author);
             const menu = node('details', 'chat-menu');
             const trigger = node('summary', 'chat-menu-toggle', '⋯');
             trigger.setAttribute('aria-label', 'گزینه‌های پیام');

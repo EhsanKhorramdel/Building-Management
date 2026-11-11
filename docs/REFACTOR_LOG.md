@@ -1405,3 +1405,73 @@ The final browser run passed 71 cases with the existing opt-in live skip in 15.5
 Scratch SQLite and MySQL 8.4.13 both passed fresh migration and DemoSeeder. SQLite rollback and re-migration passed. MySQL reused the history index for the existing payer foreign key, so rollback now restores the supporting index before dropping the history index. Corrected rollback and re-migration passed. Both engines rejected direct updates and deletes of transition rows. The new migration is applied to the local SQLite checkout. The temporary MySQL server was shut down.
 
 The production build, Pint, JavaScript syntax, whitespace and staged style and credential checks passed. Twelve captures are under the ignored storage/app/test-screenshots/phase-11f directory. Seven read-only routes were added. Existing migrations were untouched.
+
+### [Phase 11G, B12] Add private account avatars
+- **Before** Chat, member, poll and audit views had no account thumbnail.
+- **After** The profile accepts a GIF, JPG, WebP or PNG up to 5 MB and stores one centered 192-pixel PNG thumbnail privately. The owner, users with a shared active complex role, and global admins can open its authenticated URL. The views use initials when no thumbnail is available.
+- **Why** Lists need small images while the user's upload remains outside public storage. Replacing the database path before deleting the previous file keeps the current thumbnail available if the write fails.
+- **Files** AvatarController, User, the account migration, routes, profile and member views, MessagePresenter, ChatService, poll results, audit components and avatar styling.
+- **Verified by** The PHP crop, removal, replacement and authorization cases. The browser checked the uploaded thumbnail at 390 and 1440 pixels.
+- **Risk and rollback** Rolling back the account migration removes thumbnail pointers. Keep the private files until deciding whether to restore or remove them.
+
+### [Phase 11G, B13] Add notification channel preferences
+- **Before** Announcement, charge and online receipt SMS had a global switch. There was no account choice or in-app inbox.
+- **After** Each account can independently switch the in-app record and SMS on or off for announcements, charges, opened polls and payment receipts. All eight choices start on. The SMS flag still gates both queueing and delivery. The worker checks the saved choice when sending.
+- **Why** The profile stores consent separately from infrastructure switches. Announcements and polls use active complex members. Charge notices use members with assigned units. The payer receives a receipt notice.
+- **Files** AccountNotifications, AccountPreferenceController, User, the account migration, profile inbox and settings, announcement and charge controllers, PollService, payment services and SMS worker.
+- **Verified by** All-on defaults, independent toggles, a disabled global flag, and the enabled log driver with one muted and one allowed member. The browser toggled only the in-app channel and reloaded the saved state at both widths.
+- **Risk and rollback** Dropping the inbox table removes notification history. Unset channel choices resolve to the original defaults.
+
+### [Phase 11G, B14] Remember building panels and unit layout per account
+- **Before** A browser cookie shared the unit layout across buildings and the current panel was lost on reload.
+- **After** A pair of account and complex IDs stores the last selected panel and grid/list layout. Flash-driven or explicit navigation takes precedence. A role change falls back to Home if it removes access to the saved panel. Theme and dashboard complex-list preferences use their original cookie.
+- **Why** The building preference needs to follow the account. Its autosave and the background chat, report and announcement requests triggered by a restored panel read the authenticated session without saving it, so they cannot consume a form redirect's flash message.
+- **Files** AccountPreferenceController, BuildingDashboardController, the account migration, session middleware, Blade config and building navigation/settings modules.
+- **Verified by** Scoped preference writes, account and complex isolation, downgrade fallback, flash preservation and browser reload after changing the unit layout. Existing query budgets stayed green.
+- **Risk and rollback** Dropping the table resets remembered panel and layout. The existing dashboard layout cookie still works for the dashboard.
+
+### [Phase 11G, B15 and B16] Add separate staff audit detail
+- **Before** Both dashboards showed a summary of the most recent 100 events.
+- **After** The global admin detail page filters by complex and event and pages through older rows. It identifies subjects and shows the submitted name for membership decisions. A manager detail page shows affected users, role transitions and the previous and next invite lifecycle for its own complex.
+- **Why** Separate authorized pages let staff read the detail without sharing membership submissions or invite values with a different audience. The manager audit page contains no invite controls or values.
+- **Files** AdminController, RoleController, routes, AuditEvents and the shared audit table and page layout.
+- **Verified by** Staff and resident access cases, filters, page two, old/new link scans of rendered output, and browser role-upgrade detail at both widths.
+- **Risk and rollback** Removing the detail routes leaves the dashboard summaries and event records intact.
+
+### [Phase 11G, Later] Enforce join-link lifecycle
+- **Before** Every invite could be reused until a manager rotated it.
+- **After** A manager can issue reusable, 1–365-day or single-use invites. Settings show expiry or remaining uses. Redemption and membership creation share a transaction. The rotation event records issuance. The scheduler or first expired redemption attempt records expiry once. Redemption records the new member.
+- **Why** A single-use claim must commit with membership creation. Conditional writes prevent two claims or two expiry events for one link. The audit logger allows only the previous and next lifecycle names for rotation and discards other invite metadata.
+- **Files** JoinLinks, RoleController, UserController, the account migration, console scheduler, Complex, AuditLogger, audit labels and building settings.
+- **Verified by** Spent and expired denial, remaining-use display, expiry recording, successful redemption and scans for raw invite values.
+- **Risk and rollback** Dropping lifecycle columns makes outstanding invites reusable again. Rotate outstanding restricted invites before rolling back.
+
+### [Phase 11G, Later] Check coordinate pairs and ranges
+- **Before** Both location forms validated coordinates, but direct database writes could bypass their rules.
+- **After** Both tables allow two nulls or a complete point with latitude within −90 to 90 and longitude within −180 to 180. A preflight scan rejects a migration over invalid rows. SQLite attaches the check to a virtual column to keep the existing table and indexes. MySQL uses a named table check.
+- **Why** Imports and other direct writes need the same boundary as the forms. The local scan found zero violations in one complex and one membership request. Both stored pairs were null.
+- **Files** The coordinate-check migration and coordinate and legacy rollback tests.
+- **Verified by** Both tables accept nulls and boundary values, reject half pairs and out-of-range writes, and accept reapplying the check after rollback. The existing migration test includes the new check in reverse order before dropping its source columns.
+- **Risk and rollback** Dropping the checks restores the old write behavior. The migration does not change coordinate values.
+
+### [Phase 11G, Later] Show the building calendar
+- **Before** Building dates were available only in their separate panels.
+- **After** An authorized read-only Jalali month view shows charge periods, poll deadlines and incidental cost creation dates. Each entry opens its source panel.
+- **Why** The calendar projects existing records and uses the complex's normal view permission. Charge strings stay Jalali. Poll and cost timestamps use local month boundaries.
+- **Files** BuildingCalendarController, routes, Home link and calendar view.
+- **Verified by** A seeded month with a cross-month charge, current and next-month polls, a local cost and a foreign cost. The browser opened the calendar and followed its charge link at both widths.
+- **Risk and rollback** Removing the view and its links leaves the source records in place.
+
+### Phase 11 programme closure
+
+Phases 11A–11G delivered the interaction fixes, scoped chat social and moderation features, the shared viewer and seen receipts, announcement and poll tools, money reports and receipts, and account and admin settings. FEATURE_AUDIT.md records each item's final disposition. All nine Later proposals in its section D are done. A12 online presence and A13 per-device delivery state were dropped. A08 remains open for desktop right-click and for opening the full chat action menu by long press.
+
+#### Phase 11G verification
+
+The PHP suite passed 610 tests and 2,547 assertions, up from 599 tests and 2,392 assertions. The 11 added cases are in AccountAdminPackTest.php and CoordinateChecksTest.php. The older migration test now drops the coordinate checks before dropping the columns they reference.
+
+Playwright passed 73 cases in 15.3 minutes, with one opt-in live-broadcast skip. The two new cases cover 390 and 1440 pixels. All 250 sweep states passed. The baseline, map, settings and sweep cases now select Home explicitly where they inspect that panel. The restored panel exposed a map redirect that lost its success message to background chat requests. The corrected full run passed that flow. Ten captures are under storage/app/test-screenshots/phase-11g.
+
+Fresh migration and DemoSeeder passed on scratch SQLite and MySQL 8.4.13. Both engines rejected invalid coordinates. The coordinate checks rolled back and reapplied on both engines, and the account migration also rolled back and reapplied on SQLite. The two migrations applied to the local SQLite database with one complex and one membership request before and after.
+
+The Vite build, Pint, JavaScript syntax, whitespace and staged style and credential checks passed.

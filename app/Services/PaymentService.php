@@ -58,6 +58,12 @@ class PaymentService
         ]);
     }
 
+    private function manualReceipt(UserRole $role, ChargePayment|PaymentAdditionalCost $payment): void
+    {
+        app(AccountNotifications::class)->record($role->user, 'payment_receipt', $role->complex_id, (string) $payment->amount, 'paymentInfo');
+        app(SmsService::class)->queue($payment instanceof ChargePayment ? 'manual_charge_receipt' : 'manual_cost_receipt', $payment->id);
+    }
+
     /**
      * @return array{message: string, status: 'success'|'error', page: 'cost'}
      */
@@ -89,7 +95,8 @@ class PaymentService
 
         if ($role) {
             if (! $this->alreadyPaid($payable, $role)) {
-                $this->recordPayment($payable, $role);
+                $payment = $this->recordPayment($payable, $role);
+                $this->manualReceipt($role, $payment);
 
                 $status = 'success';
                 $message = 'پرداخت با موفقیت انجام شد.';
@@ -150,7 +157,8 @@ class PaymentService
         if ($role) {
 
             if (! $this->alreadyPaid($payable, $role, $currentJalaliDate)) {
-                $this->recordPayment($payable, $role, $currentJalaliDate);
+                $payment = $this->recordPayment($payable, $role, $currentJalaliDate);
+                $this->manualReceipt($role, $payment);
 
                 $status = 'success';
                 $message = 'پرداخت با موفقیت انجام شد.';

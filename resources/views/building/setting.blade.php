@@ -128,8 +128,28 @@
             </div>
         </div>
     </div>
-<form method="POST" action="{{ route('building.regenerateJoinLink', $complex) }}">
-                    @csrf
-                    <button type="submit">تولید لینک عضویت جدید</button></form>
+<p data-join-link-state>
+    @if ($complex->join_link_expires_at)
+        {{ $complex->join_link_expires_at->lte(now()) ? 'منقضی شده' : 'مهلت استفاده تا' }}
+        {{ \Morilog\Jalali\Jalalian::fromCarbon($complex->join_link_expires_at)->format('Y/m/d H:i') }}
+    @elseif ($complex->join_link_uses_left !== null)
+        تعداد استفاده باقی‌مانده: {{ $complex->join_link_uses_left }}
+    @else
+        قابل استفاده تا زمان تعویض
+    @endif
+</p>
+<form method="POST" action="{{ route('building.regenerateJoinLink', $complex) }}" class="space-y-2">
+    <label class="block" for="join-lifecycle">مدت اعتبار لینک</label>
+    <select id="join-lifecycle" name="lifecycle" class="min-h-10">
+        <option value="reusable">تا زمان تعویض</option>
+        <option value="expiring">مهلت محدود</option>
+        <option value="single">یک‌بار مصرف</option>
+    </select>
+    <label class="block" for="join-expiry-days">تعداد روز برای مهلت محدود</label>
+    <input id="join-expiry-days" type="number" min="1" max="365" name="days" class="min-h-10">
+    @csrf
+    <button class="action" type="submit">تولید لینک عضویت جدید</button>
+</form>
+    <a class="action" href="{{ route('building.audit', $complex) }}">جزئیات رویدادهای ساختمان</a>
     <x-audit-events :complex="$complex" />
 </div>

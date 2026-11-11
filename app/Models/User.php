@@ -34,6 +34,8 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
+        'avatar_path',
+        'notification_preferences',
     ];
 
     /**
@@ -44,7 +46,13 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
+        'notification_preferences' => 'array',
     ];
+
+    public function avatarUrl(): ?string
+    {
+        return $this->avatar_path ? route('profile.avatar.show', [$this, 'v' => sha1($this->avatar_path)], absolute: false) : null;
+    }
 
     public function userRoles(): HasMany
     {

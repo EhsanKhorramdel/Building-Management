@@ -44,7 +44,10 @@ for (const [state, width, dark] of [['dashboard', 1440, false], ['dashboard', 14
                 await expect(page.getByText('پیام نمونه 36', { exact: true })).toBeInViewport();
                 await expect.poll(() => page.locator('.chatContainer').evaluate(box => box.scrollHeight - box.clientHeight - box.scrollTop)).toBeLessThanOrEqual(1);
             }
-            if (state === 'home') await expect(page.locator('.home-window .leaflet-marker-icon')).toBeVisible();
+            if (state === 'home') {
+                await tab(page, 'home');
+                await expect(page.locator('.home-window .leaflet-marker-icon')).toBeVisible();
+            }
             await readyForCapture(page);
             const actual = await page.screenshot({ animations: 'disabled', caret: 'hide' });
             const baseline = join(baselineDir, name + '.png');

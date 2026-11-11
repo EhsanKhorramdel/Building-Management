@@ -39,6 +39,9 @@ class PollService
             $poll->pollOptions()->create(['option_number' => $index + 1, 'option' => $text]);
         }
 
+        app(AccountNotifications::class)->building('poll_opened', $complexId, $poll->title ?: $poll->question, 'poll');
+        app(SmsService::class)->queue('poll_opened', $poll->id);
+
         return ['status' => 'success', 'message' => 'رای گیری با موفقیت ایجاد شد', 'page' => 'poll'];
     }
 
@@ -98,11 +101,17 @@ class PollService
     {
         abort_unless($poll->isExpired(), 403);
 
-        return $poll->pollOptions()->with(['votes' => fn ($query) => $query->where('poll_id', $poll->id)->with('role.user')])->orderBy('id')->get()->map(fn ($option) => [
-            'option' => $option->option,
-            'voters' => $option->votes->filter(fn ($vote) => $vote->role?->complex_id === $poll->complex_id && $vote->role->user !== null)
-                ->unique(fn ($vote) => $vote->role->user_id)->map(fn ($vote) => $vote->role->user->name)->values()->all(),
-        ])->all();
+        return $poll->pollOptions()->with(['votes' => fn ($query) => $query->where('poll_id', $poll->id)->with('role.user')])->orderBy('id')->get()->map(function ($option) use ($poll) {
+            $votes = $option->votes->filter(fn ($vote) => $vote->role?->complex_id === $poll->complex_id && $vote->role->user !== null)
+                ->unique(fn ($vote) => $vote->role->user_id)->values();
+            $result = ['option' => $option->option, 'voters' => $votes->map(fn ($vote) => $vote->role->user->name)->all()];
+            $avatars = $votes->map(fn ($vote) => $vote->role->active ? $vote->role->user->avatarUrl() : null);
+            if ($avatars->filter()->isNotEmpty()) {
+                $result['avatars'] = $avatars->all();
+            }
+
+            return $result;
+        })->all();
     }
 
     /**

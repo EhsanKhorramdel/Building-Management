@@ -6,6 +6,7 @@ use App\Events\ChatSeenCountChanged;
 use App\Models\Group;
 use App\Models\Message;
 use App\Models\SeenMessage;
+use App\Models\UserRole;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
@@ -47,8 +48,13 @@ class ChatService
             $messages = $messages->reverse()->values();
         }
 
+        $avatarOwners = $messages->filter(fn (Message $message) => ! $message->deleted && $message->user->avatar_path)->pluck('user_id')->unique();
+        $visibleAvatars = $avatarOwners->isEmpty() ? collect() : UserRole::where('complex_id', $group->complex_id)
+            ->whereIn('user_id', $avatarOwners)->where('active', true)->whereIn('role', ['resident', 'manager'])
+            ->pluck('user_id')->flip();
+
         return [
-            'messages' => $messages->map(fn ($message) => $this->presenter->present($message, $viewerId))->all(),
+            'messages' => $messages->map(fn ($message) => $this->presenter->present($message, $viewerId, $visibleAvatars->has($message->user_id)))->all(),
             $before ? 'first_message_id' : 'last_message_id' => ($before ? $messages->first()?->id : $messages->last()?->id) ?? $cursorId,
         ];
     }

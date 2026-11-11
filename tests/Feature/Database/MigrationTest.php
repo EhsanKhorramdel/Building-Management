@@ -70,7 +70,7 @@ test('legacy duplicates are merged before constraints and Jalali backfill preser
 });
 
 test('all new migrations reverse and can be reapplied', function () {
-    $files = glob(database_path('migrations/2026_11_09_*.php'));
+    $files = [...glob(database_path('migrations/2026_11_09_*.php')), database_path('migrations/2026_11_11_000002_check_coordinate_pairs.php')];
     foreach (array_reverse($files) as $file) {
         (require $file)->down();
     }

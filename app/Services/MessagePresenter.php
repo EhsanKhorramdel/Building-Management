@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Message;
+use App\Models\UserRole;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 
@@ -16,7 +17,7 @@ class MessagePresenter
      *     deletion_kind?: string, quote?: array{message_id: int, deleted?: bool, user_name?: string, snippet?: string},
      *     reaction_version?: int, reactions?: list<array{emoji: string, count: int, reactors: list<array{id: int, name: string}>, reacted?: bool}>}
      */
-    public function present(Message $message, ?int $viewerId = null): array
+    public function present(Message $message, ?int $viewerId = null, ?bool $showAvatar = null): array
     {
         $payload = [
             'message_id' => $message->id,
@@ -32,6 +33,14 @@ class MessagePresenter
 
         if ($message->deleted) {
             return $payload + ['deletion_kind' => $this->deletionKind($message)];
+        }
+
+        if ($message->user->avatar_path) {
+            $showAvatar ??= UserRole::where('complex_id', $message->group->complex_id)->where('user_id', $message->user_id)
+                ->where('active', true)->whereIn('role', ['resident', 'manager'])->exists();
+            if ($showAvatar) {
+                $payload['avatar_url'] = $message->user->avatarUrl();
+            }
         }
 
         $message->loadMissing(['parent.user', 'reactions.user']);

@@ -135,7 +135,7 @@ for (const width of [360, 390, 768, 1024, 1440]) {
                     const ready = panel === 'chat' ? '.chat-message' : panel === 'paymentInfo' ? '[data-payments-table] tbody tr' : undefined;
                     await check('manager', 'building-' + name, building, { panel, ready });
                 }
-                await check('manager', 'map-display', building, { ready: '.home-window .leaflet-marker-icon', scroll: '.home-window [data-complex-map]' });
+                await check('manager', 'map-display', building, { panel: 'home', ready: '.home-window .leaflet-marker-icon', scroll: '.home-window [data-complex-map]' });
                 await check('manager', 'map-picker', building, { panel: 'setting', ready: '.setting-window .leaflet-marker-icon', scroll: '.setting-window [data-complex-map]' });
                 for (const admin of ['pending', 'accepted', 'rejected']) await check('admin', 'admin-' + admin, '/adminPanel', { admin });
                 await check('online', 'mock-checkout', checkout, { ready: '[data-mock-outcome=pay]' });

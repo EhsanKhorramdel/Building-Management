@@ -8,10 +8,12 @@ use App\Http\Requests\AnnouncementRequest;
 use App\Http\Requests\AnnouncementSearchRequest;
 use App\Models\Announcement;
 use App\Models\Complex;
+use App\Services\AccountNotifications;
 use App\Services\AnnouncementService;
 use App\Services\FileUploadService;
 use App\Services\SmsService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Str;
 
 class AnnouncementController extends Controller
 {
@@ -77,6 +79,7 @@ class AnnouncementController extends Controller
         }
 
         $created = Announcement::create($announcement);
+        app(AccountNotifications::class)->building('announcement', $complex->id, Str::limit(is_string($created->text) ? $created->text : 'اعلان ساختمان', 120), 'notification');
         $sms->queue('announcement', $created->id);
 
         $status = 'success';

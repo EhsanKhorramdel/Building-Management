@@ -21,6 +21,7 @@ test('manager saves a map point, resident sees the read-only map, and clearing r
         const resident = await residentContext.newPage();
         await login(resident, 'resident');
         await openBuilding(resident);
+        await tab(resident, 'home');
         await expect(resident.locator('.home-window .leaflet-marker-icon')).toBeVisible();
         await expect(resident.locator('[data-tab=setting]')).toHaveCount(0);
         await expect(resident.locator('input[name=latitude]')).toHaveCount(0);

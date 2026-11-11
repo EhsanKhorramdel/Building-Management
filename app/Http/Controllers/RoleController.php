@@ -7,8 +7,10 @@ use App\Models\Complex;
 use App\Models\User;
 use App\Models\UserRole;
 use App\Services\AuditLogger;
+use App\Services\JoinLinks;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class RoleController extends Controller
 {
@@ -78,12 +80,18 @@ class RoleController extends Controller
         return redirect()->back()->with(compact('message', 'status', 'page'));
     }
 
-    public function regenerateJoinLink(Complex $complex, AuditLogger $audit)
+    public function audit(Complex $complex)
     {
-        $complex->update(['join_link' => Str::random(32)]);
-        if ($complex->wasChanged('join_link')) {
-            $audit->record('join_link.rotated', auth()->id(), $complex->id, Complex::class, $complex->id);
-        }
+        return view('building.audit', compact('complex'));
+    }
+
+    public function regenerateJoinLink(Request $request, Complex $complex, JoinLinks $links)
+    {
+        $data = $request->validate([
+            'lifecycle' => ['sometimes', Rule::in(JoinLinks::LIFECYCLES)],
+            'days' => 'exclude_unless:lifecycle,expiring|required|integer|min:1|max:365',
+        ]);
+        $links->rotate($complex, $request->user(), $data['lifecycle'] ?? null, isset($data['days']) ? (int) $data['days'] : null);
 
         return redirect()->back()->with(['status' => 'success', 'message' => 'لینک عضویت بروزرسانی شد.', 'page' => 'setting']);
     }
