@@ -1475,3 +1475,13 @@ Playwright passed 73 cases in 15.3 minutes, with one opt-in live-broadcast skip.
 Fresh migration and DemoSeeder passed on scratch SQLite and MySQL 8.4.13. Both engines rejected invalid coordinates. The coordinate checks rolled back and reapplied on both engines, and the account migration also rolled back and reapplied on SQLite. The two migrations applied to the local SQLite database with one complex and one membership request before and after.
 
 The Vite build, Pint, JavaScript syntax, whitespace and staged style and credential checks passed.
+
+### [Phase 11H, A08] Open the chat menu with desktop and touch gestures
+- **Before** The ellipsis opened the chat menu. Desktop right-click used the native menu, and holding a message on touch started selection directly.
+- **After** Desktop right-click and a stationary 500 ms touch hold open the same chat menu near the pointer. Placement flips or clamps within the viewport. The browser handles right-click outside chat bubbles. A pending hold shows a quiet outline and cancels on movement, scrolling or release. Select in the menu starts multi-select.
+- **Why** All three openers share one menu, including its existing role actions, dismissal and focus return. Only a secondary press on a chat bubble prevents the default focus change, so a selection in the composer or another message survives a right-click.
+- **Files** chat.js, chat-power.js, chat.css, chat-gestures.spec.js, chat-power.spec.js, FEATURE_AUDIT.md and CHANGELOG.md.
+- **Verified by** At 1440 pixels, browser right-click opened the newest and a middle bubble with all eight own-message actions reachable. Trusted context-menu events were canceled on bubbles and uncanceled outside. The checks cover preserved text selection, Escape, outside dismissal, keyboard opening and the resident action set. At 390 pixels, touch hold opened the menu and all eight actions were reachable. A tap and a scrolling gesture left the menu closed, and Select started multi-select. The two touch cases in chat-power.spec.js now choose Select after the hold.
+- **Risk and rollback** Reverting the phase removes the two menu openers and restores touch hold as a direct shortcut to selection. No data or migration changes are involved. A08 was the last open discovery item.
+
+The PHP suite passed 610 tests with 2,547 assertions before and after. The full browser run passed 76 tests in 16.1 minutes, including three new gesture cases and all 250 sweep states. The opt-in live broadcast case skipped. Browser captures are under storage/app/test-screenshots/phase-11h. A fresh SQLite migration with DemoSeeder, the production build, JavaScript syntax, Pint and staged checks passed.

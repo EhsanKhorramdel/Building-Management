@@ -16,6 +16,7 @@ See [REFACTOR_LOG.md](docs/REFACTOR_LOG.md) for the engineering record and verif
 ### Fixed
 
 - Chat menus stay reachable on phones and desktops, close on outside interaction or Escape, and return keyboard focus. The mobile drawer traps focus and short screens keep the chat composer and dialog controls reachable.
+- Right-click a chat bubble on desktop or press and hold on touch to open its action menu. Choose Select from the menu to start multi-select.
 - Both location tables reject unpaired or out-of-range coordinates.
 
 ### Security

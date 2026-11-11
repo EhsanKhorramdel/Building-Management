@@ -48,30 +48,6 @@ export function chatPower({ groupUrl, render, jumpTo, applyDeletions }) {
     }
 
     function selectionControl(row, message) {
-        let held;
-        let start;
-        let longPressed = false;
-        const bubble = row.querySelector('.chat-bubble');
-        bubble.addEventListener('pointerdown', event => {
-            if (event.pointerType !== 'touch' || event.target.closest('button, input, summary, label')) return;
-            start = { x: event.clientX, y: event.clientY };
-            held = setTimeout(() => {
-                longPressed = true;
-                beginSelection(message);
-            }, 600);
-        });
-        bubble.addEventListener('pointermove', event => {
-            if (start && Math.hypot(event.clientX - start.x, event.clientY - start.y) > 8) clearTimeout(held);
-        });
-        for (const name of ['pointerup', 'pointercancel', 'pointerleave']) {
-            bubble.addEventListener(name, () => { clearTimeout(held); start = null; });
-        }
-        bubble.addEventListener('contextmenu', event => {
-            if (longPressed || start) {
-                event.preventDefault();
-                if (!longPressed) beginSelection(message);
-            }
-        });
         if (!selecting) return;
         const label = document.createElement('label');
         label.className = 'chat-select-label';
