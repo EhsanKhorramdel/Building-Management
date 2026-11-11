@@ -147,7 +147,7 @@ The discovery tables above record the original findings. The following table rec
 | A05 | Done | Reaction picker, counts, reactor names and live updates. |
 | A06 | Done | Same-complex replies, quote jumps and deleted-parent placeholders. |
 | A07 | Done | Manager pins, audit entries and a live pin strip. |
-| A08 | Open | The ellipsis menu stays reachable and dismissible. A long press starts selection. Desktop right-click and opening the full action menu by long press remain open. |
+| A08 | Done | Right-click and touch long-press open the same viewport-aware menu as the ellipsis. Select in that menu starts multi-select. |
 | A09 | Done | Multi-select and partial-success bulk deletion. |
 | A10 | Done | Normalized text search with scoped results and jump links. |
 | A11 | Done | Ephemeral typing on the configured private channel. |

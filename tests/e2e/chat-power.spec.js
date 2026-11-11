@@ -130,6 +130,9 @@ for (const width of [390, 1440]) for (const dark of [false, true]) {
                 await page.waitForTimeout(700);
                 await client.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
                 await client.detach();
+                await expect(own.locator('.chat-menu-actions')).toBeVisible();
+                await expect(page.locator('[data-chat-selection]')).toBeHidden();
+                await own.getByRole('button', { name: 'انتخاب', exact: true }).click();
             } else await choose(own, 'انتخاب');
             await expect(page.locator('[data-chat-selection]')).toBeVisible();
             await expect(own.getByRole('checkbox')).toBeChecked();

@@ -51,6 +51,7 @@ export function chat() {
     let pending = false;
     let pagePending = false;
     let openMenu = null;
+    let press = null;
 
     function closeMenu(restore = true) {
         if (!openMenu) return;
@@ -63,28 +64,96 @@ export function chat() {
 
     function placeMenu() {
         if (!openMenu) return;
-        const { trigger, actions } = openMenu;
-        const anchor = trigger.getBoundingClientRect();
+        const { trigger, actions, point } = openMenu;
+        const bounds = (point?.bubble ?? trigger).getBoundingClientRect();
         const listBounds = scroll.getBoundingClientRect();
-        if (anchor.bottom <= listBounds.top || anchor.top >= listBounds.bottom) {
+        const viewport = document.documentElement;
+        const visibleTop = Math.max(0, listBounds.top);
+        const visibleBottom = Math.min(viewport.clientHeight, listBounds.bottom);
+        if (bounds.bottom <= visibleTop || bounds.top >= visibleBottom) {
             closeMenu(false);
             return;
         }
 
         const gap = 6;
-        const viewport = document.documentElement;
-        const below = viewport.clientHeight - anchor.bottom - gap * 2;
-        const above = anchor.top - gap * 2;
-        const flip = actions.scrollHeight > below && above > below;
-        actions.style.maxHeight = Math.max(0, flip ? above : below) + 'px';
+        const clamp = (value, limit) => Math.max(gap, Math.min(value, limit - gap));
+        const rtl = getComputedStyle(trigger).direction === 'rtl';
+        const y = point ? Math.max(visibleTop, Math.min(bounds.top + point.y, visibleBottom)) : null;
+        const top = y ?? bounds.top;
+        const bottom = y ?? bounds.bottom;
+        const below = viewport.clientHeight - bottom;
+        const flip = actions.scrollHeight + gap * 2 > below && top > below;
+        actions.style.maxHeight = Math.max(0, viewport.clientHeight - gap * 2) + 'px';
         const width = actions.offsetWidth;
-        const left = getComputedStyle(trigger).direction === 'rtl' ? anchor.left : anchor.right - width;
-        actions.style.left = Math.max(gap, Math.min(left, viewport.clientWidth - width - gap)) + 'px';
-        actions.style.top = (flip ? anchor.top - actions.offsetHeight - gap : anchor.bottom + gap) + 'px';
+        const x = point ? bounds.left + point.x : (rtl ? bounds.left : bounds.right);
+        const left = (point ? rtl : !rtl) ? x - width : x;
+        actions.style.left = clamp(left, viewport.clientWidth - width) + 'px';
+        const height = actions.offsetHeight;
+        actions.style.top = clamp(flip ? top - height - gap : bottom + gap, viewport.clientHeight - height) + 'px';
+    }
+
+    function cancelPress() {
+        if (!press) return;
+        clearTimeout(press.timer);
+        press.bubble.classList.remove('chat-bubble-holding');
+        press = null;
+    }
+
+    function bindMenuGestures(bubble, show) {
+        let suppressClick = false;
+
+        function openAt({ clientX, clientY }) {
+            const bounds = bubble.getBoundingClientRect();
+            show({ bubble, x: clientX - bounds.left, y: clientY - bounds.top });
+        }
+
+        bubble.addEventListener('contextmenu', event => {
+            if (event.pointerType !== 'touch' && !event.sourceCapabilities?.firesTouchEvents
+                && !event.target.closest('.chat-menu-actions')) openAt(event);
+        });
+        bubble.addEventListener('pointerdown', event => {
+            suppressClick = false;
+            if (event.pointerType !== 'touch') return;
+            cancelPress();
+            if (!event.isPrimary || event.target.closest('.chat-menu')) return;
+            const { pointerId, clientX, clientY } = event;
+            bubble.classList.add('chat-bubble-holding');
+            const timer = setTimeout(() => {
+                cancelPress();
+                suppressClick = true;
+                openAt({ clientX, clientY });
+            }, 500);
+            press = { bubble, pointerId, clientX, clientY, timer };
+        });
+        bubble.addEventListener('click', event => {
+            if (!suppressClick || !event.detail) return;
+            suppressClick = false;
+            event.preventDefault();
+            event.stopPropagation();
+        }, { capture: true });
+    }
+
+    list.addEventListener('contextmenu', event => {
+        if (event.target.closest('.chat-bubble')) event.preventDefault();
+    });
+    list.addEventListener('mousedown', event => {
+        // Secondary-button focus can clear an existing selection before contextmenu fires.
+        if (event.button === 2 && event.target.closest('.chat-bubble')) event.preventDefault();
+    });
+    document.addEventListener('pointermove', event => {
+        if (press?.pointerId === event.pointerId && Math.hypot(event.clientX - press.clientX, event.clientY - press.clientY) > 8) cancelPress();
+    });
+    for (const name of ['pointerup', 'pointercancel']) {
+        document.addEventListener(name, event => {
+            if (press?.pointerId === event.pointerId) cancelPress();
+        });
     }
 
     document.addEventListener('click', event => {
         if (openMenu && !openMenu.menu.contains(event.target)) closeMenu();
+    });
+    document.addEventListener('contextmenu', event => {
+        if (openMenu && !event.target.closest('.chat-bubble')) closeMenu();
     });
     document.addEventListener('keydown', event => {
         if (event.key === 'Escape' && openMenu) {
@@ -93,7 +162,10 @@ export function chat() {
         }
     });
     window.addEventListener('resize', placeMenu);
-    window.addEventListener('scroll', placeMenu, { capture: true });
+    window.addEventListener('scroll', () => {
+        cancelPress();
+        placeMenu();
+    }, { capture: true });
 
     function cancelEdit() {
         editing = null;
@@ -221,6 +293,7 @@ export function chat() {
     function render() {
         const entries = [...messages.values()].sort((left, right) => left.message_id - right.message_id);
         let day;
+        cancelPress();
         closeMenu(false);
         list.replaceChildren();
         for (const message of entries) {
@@ -251,19 +324,22 @@ export function chat() {
             const actions = node('div', 'chat-menu-actions');
             actions.setAttribute('popover', 'manual');
             let pinAction;
+            function showMenu(point = null) {
+                if (openMenu?.menu !== menu) {
+                    closeMenu(false);
+                    if (pinAction) pinAction.textContent = social.pinLabel(message.message_id);
+                    menu.open = true;
+                    actions.showPopover();
+                }
+                openMenu = { menu, trigger, actions, point };
+                placeMenu();
+            }
             trigger.addEventListener('click', event => {
                 event.preventDefault();
-                if (openMenu?.menu === menu) {
-                    closeMenu();
-                    return;
-                }
-                closeMenu(false);
-                if (pinAction) pinAction.textContent = social.pinLabel(message.message_id);
-                menu.open = true;
-                actions.showPopover();
-                openMenu = { menu, trigger, actions };
-                placeMenu();
+                if (openMenu?.menu === menu) closeMenu();
+                else showMenu();
             });
+            bindMenuGestures(bubble, showMenu);
             function action(label, run) {
                 const button = node('button', 'chat-action', label);
                 button.type = 'button';
