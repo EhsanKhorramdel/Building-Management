@@ -37,22 +37,60 @@ export function payments() {
     table.addEventListener('scroll', updateReportOverflow);
     const print = document.querySelector('[data-print]');
     print.addEventListener('click', () => window.print());
-    document.addEventListener('panelchange', async event => {
-        if (event.detail !== 'paymentInfo' || status.hasAttribute('data-loading')) return;
+    const filters = document.querySelector('[data-report-filters]');
+    const scope = document.querySelector('[data-report-scope]');
+    const download = document.querySelector('[data-report-export]');
+    let exportUrl;
+    download.addEventListener('click', () => { if (exportUrl) window.location.assign(exportUrl); });
+
+    function describeScope(parameters) {
+        const labels = [scope.dataset.complexName, 'وضعیت: پرداخت‌شده'];
+        const unit = parameters.get('unit_number');
+        labels.push(unit ? 'واحد ' + unit : 'همه واحدها');
+        const type = parameters.get('type');
+        if (type) labels.push(type === 'charge' ? 'شارژ' : 'جانبی');
+        const year = parameters.get('period_year');
+        if (year) labels.push('دوره ' + year + '/' + parameters.get('period_month'));
+        const from = parameters.get('paid_from');
+        const to = parameters.get('paid_to');
+        if (from) labels.push('از ' + from);
+        if (to) labels.push('تا ' + to);
+        scope.textContent = labels.join(' · ');
+    }
+
+    async function loadReport() {
+        if (status.hasAttribute('data-loading')) return;
+        const parameters = new URLSearchParams(new FormData(filters));
+        for (const key of [...parameters.keys()]) {
+            const value = parameters.get(key).trim();
+            if (value) parameters.set(key, value);
+            else parameters.delete(key);
+        }
+        parameters.set('complex_id', config.complexId);
+        parameters.set('status', 'paid');
+        const controls = [...filters.querySelectorAll('button')];
+        controls.forEach(button => { button.disabled = true; });
         table.hidden = true;
         updateReportOverflow();
         print.disabled = true;
+        download.disabled = true;
+        exportUrl = null;
         status.hidden = false;
         status.dataset.loading = '';
         status.textContent = 'در حال دریافت پرداخت‌ها…';
-        const rows = await request('/dashboard/building/payments', { method: 'POST', data: { complex_id: config.complexId } });
+        const rows = await request('/dashboard/building/payments', { method: 'POST', data: Object.fromEntries(parameters) });
         delete status.dataset.loading;
+        controls.forEach(button => { button.disabled = false; });
         if (!rows) {
             status.textContent = 'پرداخت‌ها دریافت نشدند.';
             return;
         }
+        describeScope(parameters);
+        exportUrl = filters.dataset.exportUrl + '?' + parameters;
+        download.disabled = false;
         if (!rows.length) {
-            status.textContent = 'پرداختی ثبت نشده است.';
+            body.replaceChildren();
+            status.textContent = 'پرداختی در این محدوده ثبت نشده است.';
             return;
         }
         body.replaceChildren(...rows.map(payment => {
@@ -62,11 +100,48 @@ export function payments() {
                 cell.textContent = payment[field];
                 row.append(cell);
             }
+            const actions = document.createElement('td');
+            actions.className = 'print:hidden';
+            if (payment.receipt_url) {
+                const receipt = document.createElement('a');
+                receipt.className = 'action';
+                receipt.href = payment.receipt_url;
+                receipt.textContent = 'رسید';
+                actions.append(receipt);
+            }
+            row.append(actions);
             return row;
         }));
         status.hidden = true;
         table.hidden = false;
         updateReportOverflow();
         print.disabled = false;
+    }
+
+    filters.addEventListener('submit', event => {
+        event.preventDefault();
+        void loadReport();
+    });
+    filters.querySelector('[data-report-reset]').addEventListener('click', () => {
+        filters.reset();
+        void loadReport();
+    });
+    document.addEventListener('panelchange', event => {
+        if (event.detail === 'paymentInfo') void loadReport();
+    });
+
+    const more = document.querySelector('[data-more-payments]');
+    more?.addEventListener('click', async () => {
+        more.disabled = true;
+        const history = await request(more.dataset.historyUrl + '?' + new URLSearchParams({ before_id: more.dataset.beforeId }));
+        if (history) {
+            const rows = document.querySelector('[data-online-payments] tbody');
+            const range = document.createRange();
+            range.selectNodeContents(rows);
+            rows.append(range.createContextualFragment(history.html));
+            if (history.cursor) more.dataset.beforeId = history.cursor;
+            else more.hidden = true;
+        }
+        more.disabled = false;
     });
 }

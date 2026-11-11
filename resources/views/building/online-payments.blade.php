@@ -17,16 +17,12 @@
                     <th scope="col">شماره پیگیری</th>
                 </tr></thead>
                 <tbody>
-                    @foreach ($onlineTransactions as $transaction)
-                        <tr>
-                            <td>{{ $transaction->itemLabel() }}</td>
-                            <td>{{ $transaction->amount }}</td>
-                            <td>{{ __('integrations::payments.status.'.$transaction->status) }}</td>
-                            <td class="break-all"><bdi dir="ltr">{{ $transaction->reference_id ?? '—' }}</bdi></td>
-                        </tr>
-                    @endforeach
+                    @include('building.online-payment-rows')
                 </tbody>
             </table>
         </div>
+        @if ($nextHistoryId)
+            <button type="button" class="action" data-more-payments data-before-id="{{ $nextHistoryId }}" data-history-url="{{ route('payments.history', $complex) }}">نمایش بیشتر</button>
+        @endif
     @endif
 </section>

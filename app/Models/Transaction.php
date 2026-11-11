@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class Transaction extends Model
@@ -20,7 +21,7 @@ class Transaction extends Model
 
     protected $fillable = [
         'payable_type', 'payable_id', 'user_id', 'role_id', 'amount', 'gateway',
-        'authority', 'reference_id', 'status', 'meta',
+        'authority', 'reference_id', 'status', 'meta', 'payment_id',
     ];
 
     protected $casts = [
@@ -41,6 +42,29 @@ class Transaction extends Model
     public function role(): BelongsTo
     {
         return $this->belongsTo(UserRole::class);
+    }
+
+    public function transitions(): HasMany
+    {
+        return $this->hasMany(TransactionTransition::class)->orderBy('id');
+    }
+
+    public function callbackIssues(): HasMany
+    {
+        return $this->hasMany(TransactionCallbackIssue::class)->orderBy('id');
+    }
+
+    public function receiptUrl(): ?string
+    {
+        if ($this->status !== self::PAID || $this->payment_id === null) {
+            return null;
+        }
+
+        return match ($this->payable_type) {
+            MonthlyCharge::class => route('payments.receipt', ['charge', $this->payment_id]),
+            IncidentalCost::class => route('payments.receipt', ['cost', $this->payment_id]),
+            default => null,
+        };
     }
 
     public function matchesAmount(mixed $amount): bool

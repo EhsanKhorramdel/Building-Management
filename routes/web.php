@@ -10,6 +10,8 @@ use App\Http\Controllers\ComplexLocationController;
 use App\Http\Controllers\GroupController;
 use App\Http\Controllers\IncidentalCostController;
 use App\Http\Controllers\OnlinePaymentController;
+use App\Http\Controllers\PaymentReceiptController;
+use App\Http\Controllers\PaymentReconciliationController;
 use App\Http\Controllers\PaymentsReportController;
 use App\Http\Controllers\PollController;
 use App\Http\Controllers\ProfileController;
@@ -79,6 +81,16 @@ Route::post('/dashboard/building/incidentalCost/payment', [IncidentalCostControl
 Route::post('/dashboard/building/{complex}/buildingCharge', [ChargeController::class, 'buildingCharge'])->name('building.buildingCharge');
 Route::post('/dashboard/building/buildingCharge/payment', [ChargeController::class, 'buildingChargePayment'])->name('building.buildingChargePayment');
 Route::post('/dashboard/building/payments', [PaymentsReportController::class, 'payments'])->name('building.payments');
+Route::get('/dashboard/building/payments/export', [PaymentsReportController::class, 'export'])->name('building.payments.export');
+Route::middleware('auth')->group(function () {
+    Route::get('/payments/receipt/{type}/{payment}', [PaymentReceiptController::class, 'show'])
+        ->whereIn('type', ['charge', 'cost'])->whereNumber('payment')->name('payments.receipt');
+    Route::get('/adminPanel/payment-receipts', [PaymentReceiptController::class, 'index'])->name('payments.receipts.admin');
+    Route::get('/dashboard/building/{complex}/payment-receipts', [PaymentReceiptController::class, 'index'])->name('payments.receipts.complex');
+    Route::get('/adminPanel/payment-reconciliation', [PaymentReconciliationController::class, 'index'])->name('payments.reconciliation.admin');
+    Route::get('/dashboard/building/{complex}/payment-reconciliation', [PaymentReconciliationController::class, 'index'])->name('payments.reconciliation.complex');
+    Route::get('/dashboard/building/{complex}/payment-history', [OnlinePaymentController::class, 'history'])->name('payments.history');
+});
 
 Route::get('/dashboard', [UserController::class, 'index'])->name('dashboard');
 Route::post('/dashboard/joinBuilding', [UserController::class, 'store'])->name('dashboard.store');

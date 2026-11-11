@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Http\Controllers\PaymentsReportController;
 use App\Http\Controllers\UserController;
 use App\Models\Complex;
 use App\Models\IncidentalCost;
@@ -47,6 +48,10 @@ class AccessMiddleware
 
     private function complex(Request $request): Complex
     {
+        if ($request->route()->getControllerClass() === PaymentsReportController::class) {
+            return Complex::findOrFail(TypedInput::nullableInt($request->input('complex_id')));
+        }
+
         foreach (['complex', 'userRole', 'announcement', 'Message'] as $key) {
             $resource = $request->route($key);
             if ($resource instanceof Complex) {
