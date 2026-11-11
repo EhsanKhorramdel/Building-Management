@@ -9,7 +9,7 @@ The application uses Laravel 12, Blade, and Vite. The Laravel 11 and 12 upgrades
 | Complex | Owns units, user roles, announcements, monthly charges, incidental costs, polls and chat groups. |
 | User and user role | A user can hold roles in multiple complexes. Each scoped role belongs to a complex and can point to a unit. Votes and both kinds of payment point to a role. A site administrator holds a global role. |
 | Membership request | Belongs to the applicant. Approval of a pending request creates the complex, its initial manager role and its chat group in one transaction. Any submitted coordinates are copied to the complex at approval. |
-| Announcement | Belongs to a complex and its authoring manager. Cancellation archives it. |
+| Announcement and read | Belongs to a complex and its authoring manager. Cancellation archives it. Pins retain their actor and time; reads link one user to one announcement. |
 | Monthly charge and charge payment | A charge belongs to a complex and its author. A payment links the charge to the paying role and a Jalali month. |
 | Transaction | An online attempt belongs to a payer and role and links to a charge or incidental cost. |
 | SMS log | Records the recipient, template, driver and delivery outcome of an SMS attempt. |
@@ -29,6 +29,9 @@ Admin is global. Manager and resident permissions require an active role in the 
 | Set or clear the saved map location | No | Yes | No | No |
 | Publish or archive announcements, create charges or incidental costs | No | Yes | No | No |
 | Create polls, vote while open and view results | No | Yes | Yes | No |
+| Pin announcements, search/restore the archive and view reader names | No | Yes | No | No |
+| Close or edit a poll | No | Yes; edits lock after the first vote | No | No |
+| View named ballots | No | Only after deadline or manual closure | No | No |
 | Add a unit | No | Yes | Yes | No |
 | Edit a unit | No | Any unit in the complex | Unit tied to the resident's active role | No |
 | Record payments | No | Own unit | Own unit | No |
@@ -53,6 +56,13 @@ A charge payment is unique by role, charge, Jalali year and Jalali month. The sa
 
 `transactions` and `sms_logs` store the two optional integrations. Both integrations are disabled by default.
 
+## Announcements and polls
+
+Active announcements render pinned first in ascending pin time, then by ID. Pin times retain microseconds, repeated pin requests do not reorder them, and unpinning is explicit. Archiving retains a pin but removes the notice from member panels; managers can search active, archived or all notices and restore them. Text search uses the shared Persian/Arabic letter and digit substitutions on both query and stored text. Only managers receive the archive and its search controls.
+
+A read is recorded when a notice enters the member's visible panel. The unique announcement/user pair makes repeated requests idempotent. Counts are distinct people and include managers reading their own notices. Manager-only endpoints return reader names; members receive only acknowledgement of their own read.
+
+Poll closure records the manager and time and cannot be reversed. Vote, edit and close operations lock the poll row in a transaction. Editing changes title, question and deadline only, before the first vote; options remain unchanged. A member's current option is selected when the vote dialog opens. Aggregate results retain their previous shape and per-role counts. A separate endpoint authorizes managers and requires a closed poll before loading named ballots. Names are listed once per person per option, while ballots belonging to a different poll or complex are excluded from that payload.
 ## Real-time chat
 
 Chat, announcement and invoice images share an accessible viewer. The chat gallery pages non-deleted attachments by message ID, ten at a time, within the authorized complex. Image and download requests use the existing private delivery routes; gallery metadata never grants access to file bytes. Keyboard, wheel and touch zoom share one transform, with panning, visible Close, Escape and touch swipe-down. Closing restores focus to the image control.

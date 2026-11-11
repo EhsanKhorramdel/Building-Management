@@ -63,6 +63,14 @@ Route::post('/dashboard/building/upgradeRole/{userRole}', [RoleController::class
 Route::post('/dashboard/building/downgradeRole/{complex}', [RoleController::class, 'downgradeRole'])->name('building.downgradeRole');
 Route::post('/dashboard/building/{complex}/NotificationRegistration', [AnnouncementController::class, 'NotificationRegistration'])->name('building.NotificationRegistration');
 Route::post('/dashboard/building/cancelNotification/{announcement}', [AnnouncementController::class, 'cancelNotification'])->name('building.cancelNotification');
+Route::get('/dashboard/building/{complex}/announcements/search', [AnnouncementController::class, 'search'])->name('announcements.search');
+Route::post('/dashboard/announcements/{announcement}/pin', [AnnouncementController::class, 'pin'])->name('announcements.pin');
+Route::post('/dashboard/announcements/{announcement}/restore', [AnnouncementController::class, 'restore'])->name('announcements.restore');
+Route::post('/dashboard/announcements/{announcement}/read', [AnnouncementController::class, 'markRead'])->name('announcements.read');
+Route::get('/dashboard/announcements/{announcement}/readers', [AnnouncementController::class, 'readers'])->name('announcements.readers');
+Route::post('/dashboard/building/{complex}/polls/{poll}/close', [PollController::class, 'close'])->name('polls.close');
+Route::patch('/dashboard/building/{complex}/polls/{poll}', [PollController::class, 'update'])->name('polls.update');
+Route::get('/dashboard/building/{complex}/polls/{poll}/ballots', [PollController::class, 'ballots'])->name('polls.ballots');
 Route::post('/dashboard/building/poll/{complexId}', [PollController::class, 'pollCreate'])->name('building.poll');
 Route::post('/dashboard/building/vote', [PollController::class, 'vote'])->name('building.vote');
 Route::post('/dashboard/building/vote/Result', [PollController::class, 'voteResult'])->name('building.voteResult');

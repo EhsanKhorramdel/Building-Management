@@ -129,3 +129,5 @@ The Later backlog did not cover chat moderation, reactions, replies, pins, gestu
 Seven numbered findings, four medium and three low. The nine Later proposals have three direct overlaps and six distinct entries. Six have partial groundwork and three are missing. Policy options and sizes are in the tables. No option has been selected.
 
 The unchanged PHP suite passed 465 tests with 1,526 assertions. The production build passed. The default Playwright suite passed 41 cases with zero failures and one skip for the opt-in live broadcaster. Its regular 250-state capture sweep passed alongside the opened-state audit.
+
+B01–B08 completed in Phase 11E: multiple manual pins with scoped audit entries; manager-only archive search and restore; viewport read tracking and manager reader lists; irreversible early closure; manager-only named ballots after closure; pre-vote text/deadline edits with fixed options; and current-choice preselection. The original table records discovery-time behavior. Verification and capture locations are in REFACTOR_LOG.md.

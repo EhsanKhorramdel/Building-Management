@@ -7,6 +7,7 @@ use App\Models\PollOption;
 use App\Models\UserRole;
 use App\Models\Vote;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class PollService
 {
@@ -46,21 +47,62 @@ class PollService
      */
     public function vote($optionId, int $userId): array
     {
-        if (! $optionId) {
-            return ['status' => 'error', 'message' => 'کاربر محترم، شما گزینه ای انتخاب نکرده اید.', 'page' => 'poll'];
-        }
-        $option = PollOption::with('poll')->findOrFail($optionId);
-        if ($option->poll->isExpired()) {
-            return ['status' => 'error', 'message' => 'مهلت شرکت در این رای گیری به پایان رسیده است.', 'page' => 'poll'];
-        }
-        $roles = UserRole::where('complex_id', $option->poll->complex_id)->where('user_id', $userId)->get();
-        $message = 'رای شما ثبت شد';
-        foreach ($roles as $role) {
-            $vote = Vote::updateOrCreate(['poll_id' => $option->poll_id, 'role_id' => $role->id], ['poll_option_id' => $option->id]);
-            $message = $vote->wasRecentlyCreated ? 'رای شما ثبت شد' : 'رای شما بروزرسانی شد';
-        }
+        return DB::transaction(function () use ($optionId, $userId) {
+            if (! $optionId) {
+                return ['status' => 'error', 'message' => 'کاربر محترم، شما گزینه ای انتخاب نکرده اید.', 'page' => 'poll'];
+            }
+            $option = PollOption::with('poll')->findOrFail($optionId);
+            $option->setRelation('poll', Poll::lockForUpdate()->findOrFail($option->poll_id));
+            if ($option->poll->isExpired()) {
+                return ['status' => 'error', 'message' => 'مهلت شرکت در این رای گیری به پایان رسیده است.', 'page' => 'poll'];
+            }
+            $roles = UserRole::where('complex_id', $option->poll->complex_id)->where('user_id', $userId)->get();
+            $message = 'رای شما ثبت شد';
+            foreach ($roles as $role) {
+                $vote = Vote::updateOrCreate(['poll_id' => $option->poll_id, 'role_id' => $role->id], ['poll_option_id' => $option->id]);
+                $message = $vote->wasRecentlyCreated ? 'رای شما ثبت شد' : 'رای شما بروزرسانی شد';
+            }
 
-        return ['status' => 'success', 'message' => $message, 'page' => 'poll'];
+            return ['status' => 'success', 'message' => $message, 'page' => 'poll'];
+        });
+    }
+
+    public function close(Poll $poll, int $actorId): array
+    {
+        return DB::transaction(function () use ($poll, $actorId) {
+            $poll = Poll::lockForUpdate()->findOrFail($poll->id);
+            if ($poll->isExpired()) {
+                return ['status' => 'error', 'message' => 'این رای گیری بسته شده است.', 'page' => 'poll'];
+            }
+            $poll->forceFill(['closed_at' => now(), 'closed_by' => $actorId])->save();
+
+            return ['status' => 'success', 'message' => 'رای گیری بسته شد.', 'page' => 'poll'];
+        });
+    }
+
+    public function update(Poll $poll, array $data): array
+    {
+        return DB::transaction(function () use ($poll, $data) {
+            $poll = Poll::lockForUpdate()->findOrFail($poll->id);
+            if ($poll->votes()->exists()) {
+                return ['status' => 'error', 'message' => 'پس از ثبت اولین رای، ویرایش ممکن نیست.', 'page' => 'poll'];
+            }
+            $poll->update(['title' => $data['title'] ?? null, 'question' => $data['question'], 'end_date' => $data['end_date']]);
+
+            return ['status' => 'success', 'message' => 'رای گیری ویرایش شد.', 'page' => 'poll'];
+        });
+    }
+
+    /** @return list<array{option: string, voters: list<string>}> */
+    public function ballots(Poll $poll): array
+    {
+        abort_unless($poll->isExpired(), 403);
+
+        return $poll->pollOptions()->with(['votes' => fn ($query) => $query->where('poll_id', $poll->id)->with('role.user')])->orderBy('id')->get()->map(fn ($option) => [
+            'option' => $option->option,
+            'voters' => $option->votes->filter(fn ($vote) => $vote->role?->complex_id === $poll->complex_id && $vote->role->user !== null)
+                ->unique(fn ($vote) => $vote->role->user_id)->map(fn ($vote) => $vote->role->user->name)->values()->all(),
+        ])->all();
     }
 
     /**

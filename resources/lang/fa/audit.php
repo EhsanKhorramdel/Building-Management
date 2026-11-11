@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'announcement' => ['pinned' => 'سنجاق کردن اعلان', 'unpinned' => 'برداشتن سنجاق اعلان'],
     'role' => [
         'upgraded' => 'ارتقا به مدیر',
         'downgraded' => 'انصراف از مدیریت',

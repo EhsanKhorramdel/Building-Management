@@ -9,7 +9,8 @@ Managers administer their own complexes, publish notices and set charges and inc
 - Complexes and units with global administrator and per-complex manager and resident roles.
 - Building registration approvals and manager-controlled join links.
 - Monthly charges, incidental costs and a printable payment report.
-- Announcements, timed polls and vote results.
+- Pinned announcements, a manager archive with search and restore, and announcement read tracking.
+- Timed polls with early closure, editing before the first vote, current-choice preselection and manager-only named ballots after closure.
 - Per-complex group chat with private attachments, reactions, replies, pins, moderation, bulk deletion, search and live aggregate read receipts.
 - Shared image viewer for chat, announcements and invoices, with zoom, download and a paged chat gallery.
 - Optional map locations for complexes, with a picker during registration and in manager settings.
