@@ -33,6 +33,11 @@ class SmsService
             return;
         }
 
+        $event = in_array($template, ['manual_charge_receipt', 'manual_cost_receipt'], true) ? 'payment_receipt' : $template;
+        if (! AccountNotifications::allows($user, $event, 'sms')) {
+            return;
+        }
+
         if (blank($user->phone_number)) {
             Log::info('SMS skipped because the user has no phone number.', ['template' => $template, 'user_id' => $user->id]);
 

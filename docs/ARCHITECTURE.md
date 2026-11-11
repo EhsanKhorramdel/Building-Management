@@ -108,10 +108,17 @@ Online forms and payer-scoped history appear only when payments are enabled. In 
 | --- | --- |
 | Announcement published | Active residents and managers in the complex |
 | Monthly charge created | Active members assigned to units in that complex. The message includes the amount and Jalali start month. |
-| Online payment verified | The payer. Replaying a callback does not enqueue a second receipt. |
+| Poll opened | Active residents and managers in the complex. |
+| Payment recorded or verified | The payer. Replaying an online callback does not enqueue a second receipt. |
 | Membership request approved | The new manager |
 
-The action queues work after saving. A dedicated database worker processes the `sms` queue even when the rest of the app uses the synchronous queue connection. Users without phone numbers are skipped and logged without creating an SMS row. The log driver records the message locally. The HTTP driver records the response status in `sms_logs.meta` and marks non-2xx responses as failed. The worker checks the flag before processing.
+The action queues work after saving. A dedicated database worker processes the `sms` queue even when the rest of the app uses the synchronous queue connection. Users without phone numbers are skipped and logged without creating an SMS row. The log driver records the message locally. The HTTP driver records the response status in `sms_logs.meta` and marks non-2xx responses as failed. The worker checks the flag before processing. The existing membership approval SMS uses the global flag and is separate from the four profile categories.
+
+## Account and building preferences
+
+Avatar thumbnails are stored on the private disk under storage/app/avatars. The authenticated avatar route checks the owner, an active shared-complex role or global admin access before streaming a thumbnail. The preference matrix is per account and defaults each channel to on. An account can turn off the in-app record and SMS independently. The SMS flag gates queueing and delivery globally, and the worker checks the recipient's preference at delivery. Tab and unit layout preferences are keyed by account and complex. A panel unavailable to the current role falls back to Home.
+
+Join links may be reusable, time-limited or single-use. A transaction ties single-use redemption to membership creation. The scheduler or the first expired redemption attempt records expiry once. Audit views allow-list detail fields and never render invite values. Membership submissions are visible in the global audit detail view only.
 
 ## Testing
 

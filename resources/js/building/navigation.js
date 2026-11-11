@@ -19,7 +19,7 @@ export function navigation(initial = 'home') {
         if (restore) opener.focus();
     }
 
-    function select(tab) {
+    function select(tab, persist = false) {
         const link = links.find(item => item.dataset.tab === tab);
         if (!link) return;
         document.querySelectorAll('.buildings-section[data-panel]').forEach(panel => {
@@ -39,6 +39,7 @@ export function navigation(initial = 'home') {
         const wasOpen = drawer.classList.contains('drawer-open');
         closeDrawer(wasOpen);
         document.dispatchEvent(new CustomEvent('panelchange', { detail: tab }));
+        if (persist) document.dispatchEvent(new CustomEvent('building-panel-selected', { detail: tab }));
     }
 
     opener.addEventListener('click', () => {
@@ -51,7 +52,7 @@ export function navigation(initial = 'home') {
     });
     overlay.addEventListener('click', () => closeDrawer());
     drawer.querySelector('[data-close-drawer]').addEventListener('click', () => closeDrawer());
-    links.forEach(link => link.addEventListener('click', () => select(link.dataset.tab)));
+    links.forEach(link => link.addEventListener('click', () => select(link.dataset.tab, true)));
     window.addEventListener('resize', () => {
         if (drawer.classList.contains('drawer-open') && !opener.getClientRects().length) closeDrawer(false);
     });

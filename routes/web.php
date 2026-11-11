@@ -1,8 +1,11 @@
 <?php
 
+use App\Http\Controllers\AccountPreferenceController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AnnouncementController;
+use App\Http\Controllers\AvatarController;
 use App\Http\Controllers\BuildingAttachmentController;
+use App\Http\Controllers\BuildingCalendarController;
 use App\Http\Controllers\BuildingDashboardController;
 use App\Http\Controllers\ChargeController;
 use App\Http\Controllers\ChatAttachmentController;
@@ -98,11 +101,20 @@ Route::post('/dashboard/registerBuilding', [UserController::class, 'register'])-
 Route::post('/dashboard/unit', [UserController::class, 'update'])->name('dashboard.unit');
 Route::post('/dashboard/addUnit', [UserController::class, 'addUnit'])->name('dashboard.addUnit');
 
+Route::get('/adminPanel/audit', [AdminController::class, 'audit'])->name('adminPanel.audit');
 Route::get('/adminPanel', [AdminController::class, 'index'])->name('adminPanel.index');
 Route::post('/adminPanel/accept/{MembershipRequest}', [AdminController::class, 'accept'])->name('adminPanel.accept');
 Route::post('/adminPanel/reject/{MembershipRequest}', [AdminController::class, 'reject'])->name('adminPanel.reject');
 
 Route::middleware('auth')->group(function () {
+    Route::get('/users/{user}/avatar', [AvatarController::class, 'show'])->name('profile.avatar.show');
+    Route::post('/dashboard/avatar', [AvatarController::class, 'update'])->name('profile.avatar.update');
+    Route::delete('/dashboard/avatar', [AvatarController::class, 'destroy'])->name('profile.avatar.destroy');
+    Route::patch('/dashboard/notifications', [AccountPreferenceController::class, 'notifications'])->name('profile.notifications.update');
+    Route::get('/dashboard/notifications', [AccountPreferenceController::class, 'inbox'])->name('profile.notifications.index');
+    Route::patch('/dashboard/building/{complex}/preferences', [AccountPreferenceController::class, 'building'])->name('building.preferences');
+    Route::get('/dashboard/building/{complex}/audit', [RoleController::class, 'audit'])->name('building.audit');
+    Route::get('/dashboard/building/{complex}/calendar', BuildingCalendarController::class)->name('building.calendar');
     Route::patch('/dashboard/update', [ProfileController::class, 'update'])->name('profile.update');
 });
 

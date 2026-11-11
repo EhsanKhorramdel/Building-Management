@@ -40,12 +40,16 @@
     </div>
     @php
         $initialPanel = ['home' => 'home', 'setting' => 'setting', 'notification' => 'notification', 'poll' => 'poll', 'cost' => 'cost', 'charge' => 'charge', 'paymentInfo' => 'paymentInfo'][session('page') ?? 'home'] ?? 'home';
-        if ($isManager && request()->query('tab') === 'setting') $initialPanel = 'setting';
+        $availablePanels = \App\Http\Controllers\AccountPreferenceController::panels($isManager);
+        $requestedPanel = request()->query('tab');
+        if (in_array($requestedPanel, $availablePanels, true)) $initialPanel = $requestedPanel;
+        elseif (!session()->has('page') && in_array($savedPanel, $availablePanels, true)) $initialPanel = $savedPanel;
         if ($errors->hasBag('complexLocation')) $initialPanel = 'setting';
         elseif ($errors->hasBag('notifRegister')) $initialPanel = 'notification';
         elseif ($errors->hasBag('pollCreate')) $initialPanel = 'poll';
         elseif ($errors->hasBag('incidentalCost') || $errors->hasBag('incidentalPayCost')) $initialPanel = 'cost';
         elseif ($errors->hasBag('buildingCharge') || $errors->hasBag('buildingPayCharge')) $initialPanel = 'charge';
+        if (!in_array($initialPanel, $availablePanels, true)) $initialPanel = 'home';
     @endphp
     <script id="building-config" type="application/json">{!! json_encode([
         'connection' => config('broadcasting.default'),
@@ -58,6 +62,9 @@
         'canPin' => $isManager,
         'reactionPalette' => \App\Models\MessageReaction::PALETTE,
         'initialPanel' => $initialPanel,
+        'initialLayout' => $savedLayout ?? 'gridView',
+        'persistInitialPanel' => $initialPanel === $requestedPanel && in_array($requestedPanel, $availablePanels, true),
+        'preferencesUrl' => route('building.preferences', $complex),
     ], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) !!}</script>
 </body>
 </html>

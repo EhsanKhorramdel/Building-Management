@@ -12,11 +12,15 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Complex extends Model
 {
     use HasFactory;
+
     protected $fillable = [
-        'name', 'address', 'location', 'number_of_floors', 'number_of_units', 'join_link', 'latitude', 'longitude'
+        'name', 'address', 'location', 'number_of_floors', 'number_of_units', 'join_link', 'latitude', 'longitude',
     ];
 
-    protected $casts = ['latitude' => 'float', 'longitude' => 'float'];
+    protected $casts = [
+        'latitude' => 'float', 'longitude' => 'float',
+        'join_link_expires_at' => 'datetime', 'join_link_uses_left' => 'integer',
+    ];
 
     public function units(): HasMany
     {

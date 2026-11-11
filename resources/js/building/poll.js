@@ -1,4 +1,5 @@
 import { ArcElement, Chart, DoughnutController, Legend, Tooltip } from 'chart.js';
+import { avatar } from '../avatar';
 import { request } from './api';
 import { closeDialog, openDialog } from '../ui';
 
@@ -89,7 +90,12 @@ export function polls() {
             if (generation !== resultGeneration) return;
             if (ballots) for (const option of ballots.options) {
                 const row = document.createElement('p');
-                row.textContent = option.option + ' · ' + (option.voters.join('، ') || 'بدون رای');
+                row.append(option.option + ' · ');
+                if (!option.voters.length) row.append('بدون رای');
+                option.voters.forEach((name, index) => {
+                    if (index) row.append('، ');
+                    row.append(avatar(name, option.avatars?.[index]), name);
+                });
                 named.append(row);
             }
         }

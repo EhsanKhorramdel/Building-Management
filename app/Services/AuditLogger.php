@@ -17,7 +17,7 @@ class AuditLogger
                 'complex_id' => $complexId,
                 'subject_type' => $subjectType,
                 'subject_id' => $subjectId,
-                'meta' => $event === 'join_link.rotated' ? null : ($meta ?: null),
+                'meta' => $this->safeMetadata($event, $meta),
             ]);
         } catch (Throwable $failure) {
             rescue(fn () => Log::warning('Audit event could not be recorded.', [
@@ -27,6 +27,19 @@ class AuditLogger
                 'error' => $failure::class,
             ]), report: false);
         }
+    }
+
+    private function safeMetadata(string $event, array $meta): ?array
+    {
+        if (! str_starts_with($event, 'join_link.')) {
+            return $meta ?: null;
+        }
+        $from = $meta['from'] ?? null;
+        $to = $meta['to'] ?? null;
+
+        return $event === 'join_link.rotated' && in_array($from, JoinLinks::LIFECYCLES, true) && in_array($to, JoinLinks::LIFECYCLES, true)
+            ? compact('from', 'to')
+            : null;
     }
 
     protected function write(array $attributes): void

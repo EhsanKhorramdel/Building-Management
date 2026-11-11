@@ -7,6 +7,7 @@ use App\Http\Requests\ChargePaymentRequest;
 use App\Http\Requests\ChargeRequest;
 use App\Models\Complex;
 use App\Models\MonthlyCharge;
+use App\Services\AccountNotifications;
 use App\Services\PaymentService;
 use App\Services\SmsService;
 
@@ -42,6 +43,7 @@ class ChargeController extends Controller
         ];
 
         $charge = MonthlyCharge::create($monthlyCharges);
+        app(AccountNotifications::class)->building('monthly_charge', $complex->id, (string) $charge->amount, 'charge', assigned: true);
         $sms->queue('monthly_charge', $charge->id);
 
         $status = 'success';

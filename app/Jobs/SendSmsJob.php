@@ -3,7 +3,10 @@
 namespace App\Jobs;
 
 use App\Models\Announcement;
+use App\Models\ChargePayment;
 use App\Models\MonthlyCharge;
+use App\Models\PaymentAdditionalCost;
+use App\Models\Poll;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Services\SmsService;
@@ -28,6 +31,9 @@ class SendSmsJob implements ShouldQueue
             'announcement' => $this->announcement($sms),
             'monthly_charge' => $this->monthlyCharge($sms),
             'payment_receipt' => $this->receipt($sms),
+            'manual_charge_receipt' => $this->manualReceipt($sms, ChargePayment::find($this->subjectId)),
+            'manual_cost_receipt' => $this->manualReceipt($sms, PaymentAdditionalCost::find($this->subjectId)),
+            'poll_opened' => $this->poll($sms),
             'membership_approved' => $this->welcome($sms),
             default => null,
         };
@@ -54,6 +60,14 @@ class SendSmsJob implements ShouldQueue
         }
     }
 
+    private function poll(SmsService $sms): void
+    {
+        $poll = Poll::find($this->subjectId);
+        if ($poll) {
+            $this->members($sms, $poll->complex_id, ['title' => $poll->title ?: $poll->question]);
+        }
+    }
+
     private function receipt(SmsService $sms): void
     {
         $transaction = Transaction::find($this->subjectId);
@@ -62,6 +76,13 @@ class SendSmsJob implements ShouldQueue
                 'amount' => $transaction->amount,
                 'reference' => $transaction->reference_id,
             ]);
+        }
+    }
+
+    private function manualReceipt(SmsService $sms, ChargePayment|PaymentAdditionalCost|null $payment): void
+    {
+        if ($payment?->role?->user) {
+            $sms->send($payment->role->user, $this->template, ['amount' => $payment->amount]);
         }
     }
 

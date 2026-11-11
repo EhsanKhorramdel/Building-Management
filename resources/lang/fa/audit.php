@@ -12,6 +12,9 @@ return [
     ],
     'join_link' => [
         'rotated' => 'بروزرسانی لینک عضویت',
+        'redeemed' => 'استفاده از لینک عضویت',
+        'expired' => 'پایان مهلت لینک عضویت',
+        'lifecycle' => ['reusable' => 'قابل استفاده تا تعویض', 'expiring' => 'مهلت محدود', 'single' => 'یک‌بار مصرف'],
     ],
     'chat' => [
         'message_pinned' => 'سنجاق کردن پیام',

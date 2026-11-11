@@ -11,6 +11,7 @@ use App\Models\Complex;
 use App\Models\MembershipRequest;
 use App\Models\Unit;
 use App\Models\UserRole;
+use App\Services\JoinLinks;
 
 class UserController extends Controller
 {
@@ -49,48 +50,14 @@ class UserController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(JoinBuildingRequest $request)
+    public function store(JoinBuildingRequest $request, JoinLinks $links)
     {
         $data = $request->validated();
-        if (filled($data['link'] ?? null)) {
+        $result = filled($data['link'] ?? null)
+            ? $links->redeem($data['link'], $request->user())
+            : ['status' => 'error', 'message' => 'خطا! لینک وارد نشده است.'];
 
-            $userId = auth()->id();
-            $link = $data['link'];
-
-            $complex = Complex::where('join_link', $link)->first();
-
-            if ($complex) {
-                $isUserAdded = UserRole::where('complex_id', $complex->id)
-                    ->where('user_id', $userId)
-                    ->where('active', '1')
-                    ->where('role', 'resident')
-                    ->exists();
-
-                if ($isUserAdded) {
-                    $message = 'خطا! شما قبلاً این ساختمان را اضافه کرده‌اید.';
-                    $status = 'error';
-                } else {
-                    $userRole = [
-                        'complex_id' => $complex->id,
-                        'user_id' => $userId,
-                        'role' => 'resident',
-                    ];
-                    UserRole::create($userRole);
-
-                    $message = 'عملیات با موفقیت انجام شد.';
-                    $status = 'success';
-                }
-            } else {
-                $message = 'خطا! لینک وارد شده نامعتبر است.';
-                $status = 'error';
-            }
-        } else {
-            $message = 'خطا! لینک وارد نشده است.';
-            $status = 'error';
-        }
-        $page = 'home';
-
-        return redirect()->back()->with(compact('message', 'status', 'page'));
+        return back()->with($result + ['page' => 'home']);
     }
 
     public function register(MembershipRequestStoreRequest $request)

@@ -26,12 +26,20 @@ function applySettings(settings) {
     document.dispatchEvent(new Event('themechange'));
 }
 
+const building = JSON.parse(document.querySelector('#building-config')?.textContent || 'null');
 const settings = readSettings();
+if (building) settings.viewMode = building.initialLayout;
 applySettings(settings);
 
 function changeSetting(key, value) {
     settings[key] = value;
-    document.cookie = 'userSettings=' + encodeURIComponent(JSON.stringify(settings)) + '; path=/; SameSite=Lax';
+    if (building && key === 'viewMode') {
+        document.dispatchEvent(new CustomEvent('building-layout-selected', { detail: value }));
+        applySettings(settings);
+        return;
+    }
+    const cookieSettings = building ? { ...readSettings(), darkMode: settings.darkMode } : settings;
+    document.cookie = 'userSettings=' + encodeURIComponent(JSON.stringify(cookieSettings)) + '; path=/; SameSite=Lax';
     // Older building pages wrote this cookie at the default building path.
     document.cookie = 'userSettings=; Max-Age=0; path=/dashboard/building; SameSite=Lax';
     applySettings(settings);

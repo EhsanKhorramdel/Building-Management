@@ -12,6 +12,7 @@ use App\Models\Vote;
 use App\Services\AnnouncementService;
 use App\Services\Payments\OnlineHistory;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 use Morilog\Jalali\Jalalian;
 
 class BuildingDashboardController extends Controller
@@ -25,7 +26,10 @@ class BuildingDashboardController extends Controller
     {
         $userRoles = UserRole::where('complex_id', $complex->id)
             ->where('user_id', auth()->id())
-            ->get();
+            ->addSelect(['user_roles.*',
+                'saved_panel' => DB::table('building_preferences')->select('panel')->whereColumn('complex_id', 'user_roles.complex_id')->whereColumn('user_id', 'user_roles.user_id'),
+                'saved_layout' => DB::table('building_preferences')->select('layout')->whereColumn('complex_id', 'user_roles.complex_id')->whereColumn('user_id', 'user_roles.user_id'),
+            ])->get();
 
         $hasNullUnit = $userRoles->contains(function ($userRole) {
             return $userRole->unit_id === null;
@@ -86,12 +90,14 @@ class BuildingDashboardController extends Controller
         $group = Group::where('complex_id', $complex->id)->firstOrFail();
 
         $rolesByUser = $userRole->groupBy('user_id');
+        $activeMembers = $userRole->where('active', true)->whereIn('role', ['manager', 'resident'])->pluck('user_id')->flip();
         $residents = [];
         foreach ($users as $user) {
             foreach ($rolesByUser->get($user->id, collect()) as $role) {
                 $residents[] = [
                     'role' => $role->role ?? 'N/A',
                     'roleId' => $role->id,
+                    'user' => $activeMembers->has($user->id) ? $user : null,
                     'name' => $users->get($role->user_id)?->name ?? 'N/A',
                     'unitNumber' => $units->get($role->unit_id)?->unit_number ?? 'N/A',
                 ];
@@ -112,6 +118,8 @@ class BuildingDashboardController extends Controller
             'group' => $group,
             'residents' => $residents,
             'userLogInId' => $userLogInId,
+            'savedPanel' => $userRoles->first()?->saved_panel,
+            'savedLayout' => $userRoles->first()?->saved_layout,
         ]);
 
         if (config('payments.enabled')) {

@@ -6,3 +6,25 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+.user-avatar {
+    position: relative;
+    display: inline-grid;
+    width: 1.75rem;
+    height: 1.75rem;
+    place-items: center;
+    overflow: hidden;
+    border-radius: 50%;
+    background: var(--surface-muted, var(--line));
+    color: var(--text);
+    vertical-align: middle;
+    margin-inline-end: 0.25rem;
+}
+
+.user-avatar img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}

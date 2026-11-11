@@ -7,9 +7,20 @@ See [REFACTOR_LOG.md](docs/REFACTOR_LOG.md) for the engineering record and verif
 ### Added
 
 - Live building chat delivery without a reload is verified with two signed-in browser sessions. The live check can be run on demand.
+- Chat has reactions, replies, manager pins and moderation, bulk deletion, normalized text search, typing indicators and live seen counts. Deleted rows keep a marker in the thread.
+- Chat, announcement and invoice images open in the same accessible viewer. Chat images support gallery navigation across message pages.
+- Managers can pin, archive, restore and search announcements and see who read them. Polls support early closure, pre-vote edits, current-choice preselection and manager-only named results after closure.
+- Completed payment reports can be filtered, printed and exported as CSV. Authorized users can open printable receipts. Staff can review redacted payment attempts and their timelines, and payers can page through online history.
+- Profiles support private avatars and notification choices. Buildings remember each account's tab and unit layout. Staff have scoped audit details, managers can issue expiring or single-use invites, and buildings have a read-only Jalali calendar.
+
+### Fixed
+
+- Chat menus stay reachable on phones and desktops, close on outside interaction or Escape, and return keyboard focus. The mobile drawer traps focus and short screens keep the chat composer and dialog controls reachable.
+- Both location tables reject unpaired or out-of-range coordinates.
 
 ### Security
 
+- Chat viewer names are limited to the author and the complex's managers.
 - Announcement images and incidental-cost invoices require building membership or global admin access, including when someone opens a copied image URL.
 
 ## [1.0.0] — post-refactor baseline (2026-11-10)

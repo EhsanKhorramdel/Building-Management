@@ -175,6 +175,7 @@
 @endforelse
             </ul>
         </div>
+        <a class="action" href="{{ route('adminPanel.audit') }}">جزئیات و فیلتر رویدادها</a>
         <x-audit-events />
     </main>
 </body>

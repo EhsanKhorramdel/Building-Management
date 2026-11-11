@@ -244,6 +244,7 @@
                 </div>
                 <div class="register">
 
+                    @include('profile.account-preferences')
                     <form class="register-form" method="POST" action="{{ route('profile.update') }}">
                         @csrf
                         @method('patch')

@@ -31,6 +31,11 @@ class AdminController extends Controller
         return view('adminPanel', ['allMembershipRequests' => $allMembershipRequests]);
     }
 
+    public function audit()
+    {
+        return view('admin-audit');
+    }
+
     public function accept(MembershipRequest $MembershipRequest, SmsService $sms, AuditLogger $audit)
     {
         $complex = DB::transaction(function () use ($MembershipRequest) {

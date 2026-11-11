@@ -34,6 +34,7 @@ test('role upgrade appears in the complex audit list and the global admin list',
     try {
         await login(page, 'manager');
         await openBuilding(page);
+        await tab(page, 'home');
         const resident = page.locator('.home-window .building-box').filter({ hasText: 'ساکن سرو' });
         await resident.getByRole('button', { name: 'ارتقاء به مدیر' }).click();
         await toast(page);
