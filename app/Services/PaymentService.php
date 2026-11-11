@@ -40,17 +40,16 @@ class PaymentService
             });
     }
 
-    public function recordPayment(MonthlyCharge|IncidentalCost $payable, UserRole $role, ?Jalalian $period = null): void
+    public function recordPayment(MonthlyCharge|IncidentalCost $payable, UserRole $role, ?Jalalian $period = null): ChargePayment|PaymentAdditionalCost
     {
         $amount = $this->payableAmount($payable);
         if ($payable instanceof IncidentalCost) {
-            PaymentAdditionalCost::create(['role_id' => $role->id, 'incidental_costs_id' => $payable->id, 'amount' => $amount]);
-
-            return;
+            return PaymentAdditionalCost::create(['role_id' => $role->id, 'incidental_costs_id' => $payable->id, 'amount' => $amount]);
         }
 
         $period ??= Jalalian::fromCarbon(now());
-        ChargePayment::create([
+
+        return ChargePayment::create([
             'role_id' => $role->id,
             'monthly_charge_id' => $payable->id,
             'amount' => $amount,

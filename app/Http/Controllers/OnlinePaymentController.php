@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\OnlinePaymentRequest;
+use App\Models\Complex;
 use App\Models\Transaction;
 use App\Services\Payments\GatewayManager;
+use App\Services\Payments\OnlineHistory;
 use App\Services\Payments\OnlinePaymentService;
 use App\Services\Payments\PaymentException;
 use Illuminate\Http\RedirectResponse;
@@ -13,6 +15,19 @@ use Illuminate\View\View;
 
 class OnlinePaymentController extends Controller
 {
+    public function history(Request $request, Complex $complex, OnlineHistory $history)
+    {
+        abort_unless(config('payments.enabled'), 404);
+        $this->authorize('view', $complex);
+        $beforeId = $request->validate(['before_id' => 'nullable|integer|min:1'])['before_id'] ?? null;
+        $page = $history->page($complex->id, $request->user()->id, $beforeId);
+
+        return response()->json([
+            'html' => view('building.online-payment-rows', $page)->render(),
+            'cursor' => $page['nextHistoryId'],
+        ])->header('Cache-Control', 'private, no-store');
+    }
+
     public function initiate(OnlinePaymentRequest $request, OnlinePaymentService $payments): RedirectResponse
     {
         try {

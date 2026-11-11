@@ -11,7 +11,7 @@ The application uses Laravel 12, Blade, and Vite. The Laravel 11 and 12 upgrades
 | Membership request | Belongs to the applicant. Approval of a pending request creates the complex, its initial manager role and its chat group in one transaction. Any submitted coordinates are copied to the complex at approval. |
 | Announcement and read | Belongs to a complex and its authoring manager. Cancellation archives it. Pins retain their actor and time; reads link one user to one announcement. |
 | Monthly charge and charge payment | A charge belongs to a complex and its author. A payment links the charge to the paying role and a Jalali month. |
-| Transaction | An online attempt belongs to a payer and role and links to a charge or incidental cost. |
+| Transaction and transition | An online attempt belongs to a payer and role, links to a charge or cost, and stores the completed payment ID. Transition rows record state, actor and time. Callback issue rows flag mismatches and replays. |
 | SMS log | Records the recipient, template, driver and delivery outcome of an SMS attempt. |
 | Incidental cost and additional cost payment | A cost belongs to a complex. Its payment links the cost to the paying role. |
 | Poll, option and vote | A poll belongs to a complex and owns numbered options. A vote links a role to one option in that poll. |
@@ -35,6 +35,8 @@ Admin is global. Manager and resident permissions require an active role in the 
 | Add a unit | No | Yes | Yes | No |
 | Edit a unit | No | Any unit in the complex | Unit tied to the resident's active role | No |
 | Record payments | No | Own unit | Own unit | No |
+| View payment receipts | All | Complex payments | Own payments | Own payments only |
+| Review online payment attempts | All | Own complex | No | No |
 | Use group chat | No | Yes | Yes | No |
 | View named read receipts | No | Any message in the complex | Own message | No |
 | Edit a chat message | No | Own message | Own message | No |
@@ -81,6 +83,15 @@ Search uses the digit mapping from the typed input boundary plus Arabic/Persian 
 
 Typing uses `client-typing` whispers on the private channel, throttled to one active signal per 1.5 seconds. Stops bypass that throttle. Peers expire five seconds after the latest signal. Client events require the broadcasting app's Client Events setting. Names are advisory client data rendered as text, and no typing state is stored by the server.
 
+## Reports and payment records
+
+The report covers completed payments. Filters combine a Jalali charge year and month, an inclusive Jalali paid-at range, unit number and payment type. Selecting a charge period restricts the report to charges. The first role per unit remains the report's selection rule. Both its JSON and CSV use the same scoped row generator. Screen queries use eager loading, while the CSV streams in batches of up to 100 units. Print includes the complex and active filter labels.
+
+Receipt routes authorize the original payer, an active manager of the owning complex or a global admin. The receipt number combines the payment type and ID. Charge receipts display the stored Jalali period. Cost receipts use the paid-at month. Successful online callbacks save the payment ID with the paid state. The migration links historical rows when one payment and one paid attempt match by role, item, amount and the attempt's lifetime. Ambiguous historical matches display an unknown method and omit the tracking code.
+
+The payment service inserts the initial pending transition and appends each subsequent state change in the same database transaction as the state write. Model guards and SQLite and MySQL triggers reject transition updates and deletes. The actor field holds the payer for initiation and authenticated mock callbacks. Gateway callbacks and system failures use a null actor. Duplicate callback issues record the first occurrence per kind for a transaction. Historical transactions begin with their existing state and an empty timeline.
+
+Staff reconciliation shows failed, expired and overdue pending attempts and attempts with callback issues. It displays the last four characters of long references and masks shorter values in full. The timeline uses the stored transitions. Global admins can review all complexes and managers are scoped to the payable's complex, with the stored role supplying the scope when the item is unavailable. Payer history uses descending transaction IDs with a strict before-ID cursor and 15 rows per page.
 ## Online payment lifecycle
 
 Initiation checks the active role and unit in the payable's complex, reads the amount from the charge or cost, and creates a pending transaction. A second active attempt for that role and payable is refused. The `gateway` column identifies the configured driver. Its combination with the authority token is unique.

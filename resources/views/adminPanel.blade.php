@@ -48,6 +48,10 @@
                 </button></form>
             </div>
         </div>
+        <nav class="flex flex-wrap gap-2 mb-4" aria-label="مدیریت پرداخت‌ها">
+            <a class="action" href="{{ route('payments.reconciliation.admin') }}">بررسی پرداخت‌ها</a>
+            <a class="action" href="{{ route('payments.receipts.admin') }}">رسیدهای پرداخت</a>
+        </nav>
         @if (config('payments.enabled') || config('sms.enabled'))
             <section class="mb-4 space-y-1">
                 <h2 class="font-bold">وضعیت پرداخت و پیامک</h2>

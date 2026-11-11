@@ -5,13 +5,12 @@ namespace App\Http\Controllers;
 use App\Http\Middleware\AccessMiddleware;
 use App\Models\Complex;
 use App\Models\Group;
-use App\Models\IncidentalCost;
 use App\Models\MonthlyCharge;
-use App\Models\Transaction;
 use App\Models\User;
 use App\Models\UserRole;
 use App\Models\Vote;
 use App\Services\AnnouncementService;
+use App\Services\Payments\OnlineHistory;
 use Carbon\Carbon;
 use Morilog\Jalali\Jalalian;
 
@@ -116,9 +115,7 @@ class BuildingDashboardController extends Controller
         ]);
 
         if (config('payments.enabled')) {
-            $view->with('onlineTransactions', Transaction::with('payable')->where('user_id', $userLogInId)
-                ->whereHasMorph('payable', [MonthlyCharge::class, IncidentalCost::class], fn ($query) => $query->where('complex_id', $complex->id))
-                ->latest('id')->get());
+            $view->with(app(OnlineHistory::class)->page($complex->id, $userLogInId));
         }
 
         return $view;

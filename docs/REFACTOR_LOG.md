@@ -1347,3 +1347,61 @@ The PHP suite passed 532 cases with 1,939 assertions, up from 521 and 1,805. All
 The PHP suite passed 569 cases with 2,078 assertions, up from 532 and 1,939. The 37 new cases in AnnouncementPollPackTest.php include the management authorization matrix, pin order/audit, archive/search, read tracking, closure, ballot privacy and edit/current-choice rules. Existing query-budget tests passed unchanged. The full browser suite passed 67 cases with its one existing opt-in live skip in 13.0 minutes, up from 63 passed. The four new cases in announce-polls.spec.js cover all six items at 390 and 1440 in both themes. All 250 sweep states passed. A final focused rerun passed all four cases in 1.6 minutes after the dialog changes, including invalid-deadline recovery, retained values and the sticky results Close at 390px height. No existing test file was edited.
 
 Fresh SQLite migration and DemoSeeder, one rollback step and re-migration passed against a separate scratch database. The local environment was separately verified as local SQLite before applying its pending migrations: six older migrations (request coordinates, transaction authority index, queue jobs, audit events, chat social fields and deletion details) and the new announcement/poll migration were applied. No development database reset or demo reseed was used. Migration status is now fully applied. The frontend build, Pint, JavaScript syntax, whitespace and staged style/credential checks passed. Twenty feature captures are under the ignored storage/app/test-screenshots/phase-11e directory. Existing route names and verbs remain unchanged; eight scoped routes were added. Existing migration files were not changed.
+
+### [Phase 11F, B09] Filter the completed-payment report
+- **Before** The report accepted the complex ID and returned all selected paid records.
+- **After** The existing request validates the Jalali charge period, inclusive paid-at range, unit and payment type. Completed is the report's status scope. The UI shows the complex and applied filters on screen and in print, with an action to reset them.
+- **Why** Filtering needs to preserve the report's first-role selection and authorize the exact complex ID used by the query. The shared query scopes both roles and payables to that complex.
+- **Files** PaymentsReportRequest, AccessMiddleware, PaymentsReportController, PaymentReport, payment panel and module, styles and the filtered report tests.
+- **Verified by** Each filter alone and combined, date validation, Persian and Arabic-Indic digits, foreign denial, foreign payable exclusion and five action queries at 2, 8 and 32 units. Existing unfiltered query-budget tests passed.
+- **Risk and rollback** A charge period selects charge rows. Removing the filters restores the original unfiltered report.
+
+### [Phase 11F, B10] Export the filtered report
+- **Before** The report supported browser printing.
+- **After** CSV uses the same scoped rows and the applied filter snapshot. It emits a UTF-8 BOM and streams batches of up to 100 units. Formula-like names receive a text prefix for spreadsheet safety. Print retains the scope and data columns.
+- **Why** Export and screen need one definition of report membership, ordering and filters. The request snapshot keeps a draft form edit from changing the downloaded scope.
+- **Files** PaymentsReportController, PaymentReport, routes, report panel and module, and the report tests.
+- **Verified by** PHP compares parsed CSV data with the filtered JSON rows and checks the BOM and foreign-manager denial. The browser downloads the filtered data after an unapplied form edit and checks the print labels and reset.
+- **Risk and rollback** CSV downloads contain the report's existing authorized data. Remove the export route and its control together.
+
+### [Phase 11F, B11] Issue payment receipts
+- **Before** Paid rows had report entries and some online attempts had tracking codes.
+- **After** Charge and cost receipts show the complex, unit, payer, item, Jalali period, paid date, amount, method and available tracking code. The number combines the payment type and ID. The payer, complex managers and global admins can open the printable document. A receipt directory covers records outside the report's first-role selection.
+- **Why** Online attempts need a direct completed-payment link. The migration links legacy rows only when a single payment and a single paid attempt match the role, item, amount and time window. Ambiguous legacy matches display an unknown method and omit the reference. Costs use their paid-at Jalali month.
+- **Files** The new payment history migration, payment models, PaymentService, OnlinePaymentService, receipt controller/routes/views, panel and admin links, print action and tests.
+- **Verified by** Exact fields and audience for both types and methods, historical-link and ambiguity checks, payer directory access, and manual and online receipt actions in the browser.
+- **Risk and rollback** Rollback drops the stored links and receipt navigation. Keep the existing payment records for a later migration.
+
+### [Phase 11F, Later] Append transaction state transitions
+- **Before** Attempts stored their latest state on one row.
+- **After** The initial pending write and each later state change append a transition with prior state, next state, actor and time. The state and transition share a database transaction. Existing attempts begin with their current state and an empty timeline.
+- **Why** Staff need the real sequence of changes. Model guards and database triggers reject updates and deletes on transition rows. Mock callbacks have an authenticated actor. Real gateway callbacks and initiation failures use the system actor.
+- **Files** The new migration, Transaction, TransactionTransition, OnlinePaymentService, staff timeline and payment records tests.
+- **Verified by** Mock success, cancellation, expiration and mismatch chains, timestamps, replay behavior and rejected transition mutations.
+- **Risk and rollback** Transition rows grow with state changes. The migration rollback removes recorded history.
+
+### [Phase 11F, Later] Reconcile online payment attempts
+- **Before** Staff had transaction states but no scoped review screen.
+- **After** Global admins can review all complexes and managers can review their own. The screen lists failed, expired and overdue pending attempts plus callback issues. It masks references and shows the recorded timeline. A callback issue records the first mismatch or duplicate of each kind for a known attempt.
+- **Why** Duplicate callbacks need a review flag even when their recorded payment state is already final. Staff need the status, context and a short reference suffix for review.
+- **Files** The new migration, TransactionCallbackIssue, OnlinePaymentService, reconciliation controller/routes/view and staff navigation, and the new tests.
+- **Verified by** Seeded failed and expired rows, local and global scopes, resident denial, masked references, hidden payload and authority, and browser timeline checks.
+- **Risk and rollback** Removing the callback issue table loses those flags. The screen is read-only.
+
+### [Phase 11F, Later] Page online payment history
+- **Before** The dashboard loaded the payer's complete online history for the complex.
+- **After** The first 15 attempts render on the dashboard. Load more requests IDs strictly below the last displayed ID and appends the next page. The history keeps its own empty state, with receipt actions on paid rows throughout.
+- **Why** A descending ID cursor is stable as newer attempts arrive. The user and payable complex scope applies to every page.
+- **Files** OnlineHistory, BuildingDashboardController, OnlinePaymentController, routes, history views and module, the new history index and tests.
+- **Verified by** PHP checks three pages of 32 attempts, exact order, a foreign denial and receipt links. The browser loads the older page and opens its paid receipt.
+- **Risk and rollback** Removing the pagination restores the old full history read.
+
+#### Phase 11F verification
+
+The PHP suite passed 599 tests with 2,392 assertions, up from 569 and 2,078. The 30 new cases are in FilteredPaymentReportTest.php and PaymentRecordsTest.php. The existing query-budget cases passed. The filtered report action used five queries at 2, 8 and 32 units. The first test run exposed the old incidental-cost relationship key, which now explicitly points to incidental_costs_id.
+
+The final browser run passed 71 cases with the existing opt-in live skip in 15.5 minutes. The four new cases in money-reports.spec.js cover the two widths and themes. All 250 sweep states passed. The first browser run caught reset event ordering, so reset now clears the form before querying. A build during that run interrupted one sweep. The final run used a completed build throughout. All test changes are additions.
+
+Scratch SQLite and MySQL 8.4.13 both passed fresh migration and DemoSeeder. SQLite rollback and re-migration passed. MySQL reused the history index for the existing payer foreign key, so rollback now restores the supporting index before dropping the history index. Corrected rollback and re-migration passed. Both engines rejected direct updates and deletes of transition rows. The new migration is applied to the local SQLite checkout. The temporary MySQL server was shut down.
+
+The production build, Pint, JavaScript syntax, whitespace and staged style and credential checks passed. Twelve captures are under the ignored storage/app/test-screenshots/phase-11f directory. Seven read-only routes were added. Existing migrations were untouched.

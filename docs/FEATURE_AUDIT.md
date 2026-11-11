@@ -131,3 +131,5 @@ Seven numbered findings, four medium and three low. The nine Later proposals hav
 The unchanged PHP suite passed 465 tests with 1,526 assertions. The production build passed. The default Playwright suite passed 41 cases with zero failures and one skip for the opt-in live broadcaster. Its regular 250-state capture sweep passed alongside the opened-state audit.
 
 B01–B08 completed in Phase 11E: multiple manual pins with scoped audit entries; manager-only archive search and restore; viewport read tracking and manager reader lists; irreversible early closure; manager-only named ballots after closure; pre-vote text/deadline edits with fixed options; and current-choice preselection. The original table records discovery-time behavior. Verification and capture locations are in REFACTOR_LOG.md.
+
+B09–B11 and the related Later rows are complete in Phase 11F. The completed-payment report has scoped filters, CSV and print. Authorized users can print individual receipts. Staff can review redacted attempts and their recorded transitions. Payer history uses cursor pagination. The discovery table records the prior state.

@@ -46,10 +46,14 @@ class User extends Authenticatable
         'password' => 'hashed',
     ];
 
-
     public function userRoles(): HasMany
     {
         return $this->hasMany(UserRole::class);
+    }
+
+    public function isGlobalAdmin(): bool
+    {
+        return $this->userRoles()->where('role', 'admin')->where('active', true)->exists();
     }
 
     public function announcements(): HasMany

@@ -62,7 +62,7 @@ class OnlinePaymentService
                 throw new PaymentException('invalid_amount');
             }
 
-            return Transaction::create([
+            $transaction = Transaction::create([
                 'payable_type' => $payable->getMorphClass(),
                 'payable_id' => $payable->id,
                 'user_id' => $user->id,
@@ -71,6 +71,9 @@ class OnlinePaymentService
                 'gateway' => $driver,
                 'status' => Transaction::PENDING,
             ]);
+            $transaction->transitions()->create(['from_state' => null, 'to_state' => Transaction::PENDING, 'actor_id' => $user->id]);
+
+            return $transaction;
         });
 
         try {
@@ -97,19 +100,25 @@ class OnlinePaymentService
             (clone $attempt)->toBase()->update(['status' => DB::raw('status')]);
             $transaction = $attempt->firstOrFail();
             abort_if($driver === 'mock' && $transaction->user_id !== $viewerId, 403);
+            $actorId = $driver === 'mock' ? $viewerId : null;
 
             if ($transaction->status !== Transaction::PENDING) {
+                $transaction->callbackIssues()->firstOrCreate(['kind' => 'duplicate_callback']);
+
                 return $transaction;
             }
             if ($transaction->created_at->lte($this->expiryCutoff())) {
-                return $this->finish($transaction, Transaction::EXPIRED, 'expired');
+                return $this->finish($transaction, Transaction::EXPIRED, 'expired', actorId: $actorId);
             }
 
             $verification = $this->gateways->driver($driver)->verify(['transaction' => $transaction, 'payload' => $payload]);
             if (! $verification->success) {
                 $status = $verification->failureReason === 'cancelled' ? Transaction::CANCELLED : Transaction::FAILED;
+                if (in_array($verification->failureReason, ['amount_mismatch', 'invalid_status'], true)) {
+                    $transaction->callbackIssues()->firstOrCreate(['kind' => 'mismatch']);
+                }
 
-                return $this->finish($transaction, $status, $verification->failureReason);
+                return $this->finish($transaction, $status, $verification->failureReason, actorId: $actorId);
             }
 
             $payable = $transaction->payable;
@@ -119,17 +128,21 @@ class OnlinePaymentService
                 || $role->complex_id !== $payable->complex_id
                 || ! $transaction->matchesAmount($this->payments->payableAmount($payable))
                 || $this->payments->alreadyPaid($payable, $role, $period)) {
-                return $this->finish($transaction, Transaction::FAILED, 'payment_conflict', $verification->referenceId);
+                $transaction->callbackIssues()->firstOrCreate(['kind' => 'mismatch']);
+
+                return $this->finish($transaction, Transaction::FAILED, 'payment_conflict', $verification->referenceId, $actorId);
             }
 
             try {
-                $this->payments->recordPayment($payable, $role, $period);
+                $payment = $this->payments->recordPayment($payable, $role, $period);
             } catch (UniqueConstraintViolationException) {
-                return $this->finish($transaction, Transaction::FAILED, 'payment_conflict', $verification->referenceId);
+                $transaction->callbackIssues()->firstOrCreate(['kind' => 'mismatch']);
+
+                return $this->finish($transaction, Transaction::FAILED, 'payment_conflict', $verification->referenceId, $actorId);
             }
             $completed = true;
 
-            return $this->finish($transaction, Transaction::PAID, reference: $verification->referenceId);
+            return $this->finish($transaction, Transaction::PAID, reference: $verification->referenceId, actorId: $actorId, paymentId: $payment->id);
         });
 
         if ($completed) {
@@ -144,14 +157,27 @@ class OnlinePaymentService
         return now()->subMinutes(max(1, config('payments.expiry_minutes')));
     }
 
-    private function finish(Transaction $transaction, string $status, ?string $reason = null, ?string $reference = null): Transaction
+    private function finish(Transaction $transaction, string $status, ?string $reason = null, ?string $reference = null, ?int $actorId = null, ?int $paymentId = null): Transaction
     {
-        $transaction->update([
-            'status' => $status,
-            'reference_id' => $reference,
-            'meta' => $reason === null ? $transaction->meta : ['failure_reason' => $reason],
-        ]);
+        return DB::transaction(function () use ($transaction, $status, $reason, $reference, $actorId, $paymentId) {
+            $transaction = Transaction::lockForUpdate()->findOrFail($transaction->id);
+            if ($transaction->status !== Transaction::PENDING) {
+                return $transaction;
+            }
 
-        return $transaction;
+            $transaction->update([
+                'status' => $status,
+                'reference_id' => $reference,
+                'payment_id' => $paymentId,
+                'meta' => $reason === null ? $transaction->meta : ['failure_reason' => $reason],
+            ]);
+            $transaction->transitions()->create([
+                'from_state' => Transaction::PENDING,
+                'to_state' => $status,
+                'actor_id' => $actorId,
+            ]);
+
+            return $transaction;
+        });
     }
 }
